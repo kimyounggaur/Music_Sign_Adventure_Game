@@ -3,6 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+  <meta name="theme-color" content="#111318">
+  <link rel="manifest" href="manifest.webmanifest">
   <!-- ?debug=1 : FPS 표시 · ?test=1 : 자동 테스트 모드 · ?seed=N : 퍼즐 난수 고정 -->
   <title>멜로디아: 끝나지 않는 노래 v0.1</title>
   <style>
@@ -79,6 +81,7 @@
       DEBUG: PARAMS.has('debug'),
       TEST: PARAMS.get('test') === '1',
       SEED: seedRaw !== null && seedRaw !== '' && Number.isFinite(Number(seedRaw)) ? Number(seedRaw) : null,
+      REDUCED_MOTION: Boolean(window.matchMedia?.('(prefers-reduced-motion: reduce)').matches),
       colors: {
         ink: '#202026',
         panel: '#fffaf0',
@@ -154,7 +157,13 @@
       gameState = next;
       document.body.dataset.prevState = prevState;
       document.body.dataset.gameState = next;
+      document.title = next === 'Title' ? '멜로디아 - 타이틀' : '멜로디아 - 모험 중';
       if (next === 'Title') refreshTitleHasSave();
+      try {
+        HINT.reset();
+      } catch (err) {
+        // HINT is initialized later.
+      }
       if (next !== 'Dialogue') INPUT.clearMovement();
     }
 
@@ -176,8 +185,8 @@
 
     function resize() {
       const ratio = CONFIG.W / CONFIG.H;
-      let cssW = window.innerWidth;
-      let cssH = window.innerHeight;
+      let cssW = window.visualViewport?.width || window.innerWidth;
+      let cssH = window.visualViewport?.height || window.innerHeight;
       if (cssW / cssH > ratio) cssW = Math.floor(cssH * ratio);
       else cssH = Math.floor(cssW / ratio);
       dpr = Math.max(1, Math.min(3, window.devicePixelRatio || 1));
@@ -645,7 +654,7 @@
       push: { id: null, timer: 0 },
       addParticle(x, y, text, color = CONFIG.colors.gold) {
         if (this.particles.length > 48) this.particles.shift();
-        this.particles.push({ x, y, text, color, life: 1, vy: -22 });
+        this.particles.push({ x, y, text, color, life: CONFIG.REDUCED_MOTION ? 0.5 : 1, vy: -22 });
       },
       playerRect(nx = this.player.x, ny = this.player.y) {
         return { x: nx, y: ny, w: CONFIG.PLAYER_W, h: CONFIG.PLAYER_H };
@@ -658,6 +667,7 @@
           const mv = INPUT.movementVector();
           this.player.moving = Math.hypot(mv.x, mv.y) > 0.05;
           if (this.player.moving) {
+            HINT.reset();
             this.player.faceX = Math.abs(mv.x) > Math.abs(mv.y) ? Math.sign(mv.x) : 0;
             this.player.faceY = Math.abs(mv.y) >= Math.abs(mv.x) ? Math.sign(mv.y) : 0;
             const step = CONFIG.PLAYER_SPEED * dt;
@@ -1030,6 +1040,79 @@
       return true;
     }
 
+    const HINTS = {
+      prologue_find_clef: {
+        when: { flag: 'tower_examined', notFlag: 'got_clef_g' },
+        map: 'village',
+        idle: 30,
+        t1: '템포: 피치가 뭔가 봤다던데, 물어볼까?',
+        t2: '템포: 우물 뒤 수풀이 반짝이고 있어!'
+      },
+      prologue_attach: {
+        when: { flag: 'got_clef_g', notFlag: 'tower_door_open' },
+        map: 'village',
+        idle: 30,
+        t1: '템포: 팔레트(♪ 버튼)에서 기호를 골라 보자.',
+        t2: '템포: 높은음자리표를 탑 문에 붙이면 돼!'
+      },
+      forest_bridge: {
+        when: { flag: 'got_note_g', notFlag: 'staff_door_open' },
+        map: 'forest',
+        idle: 45,
+        t1: '라라: 세 음을 오선의 제자리에 놓아 보렴.',
+        t2: '라라: 도는 덧줄, 미는 첫째 줄, 솔은 둘째 줄. 낮은 음부터 밟는 거야.'
+      },
+      crow_song: {
+        whenFn: () => PUZZLES.bird.active && !DATA.flags.got_note_e,
+        map: 'forest',
+        idle: 30,
+        t1: '템포: 첫 음이 제일 낮았어? 높았어?',
+        t2: '템포: 종에 적힌 글자를 봐. 들린 순서대로만 밟으면 돼!'
+      }
+    };
+
+    const HINT = {
+      idle: 0,
+      activeKey: null,
+      seen: {},
+      reset() {
+        this.idle = 0;
+      },
+      update(dt) {
+        if (gameState !== 'Explore') return;
+        const match = Object.entries(HINTS).find(([, hint]) => this.matches(hint));
+        if (!match) {
+          this.activeKey = null;
+          this.idle = 0;
+          return;
+        }
+        const [key, hint] = match;
+        if (this.activeKey !== key) {
+          this.activeKey = key;
+          this.idle = 0;
+        }
+        this.idle += dt;
+        const speed = CONFIG.TEST ? 0.1 : 1;
+        const base = hint.idle * speed;
+        const level = this.seen[key] || 0;
+        if (level === 0 && this.idle >= base) {
+          UI.toast(hint.t1, 3);
+          this.seen[key] = 1;
+          this.idle = 0;
+        } else if (level === 1 && this.idle >= base * 1.5) {
+          UI.toast(hint.t2, 3);
+          this.seen[key] = 2;
+          this.idle = 0;
+        }
+      },
+      matches(hint) {
+        if (hint.map && DATA.currentMap !== hint.map) return false;
+        if (hint.when && !branchMatches(hint.when)) return false;
+        if (hint.whenFn && !hint.whenFn()) return false;
+        return true;
+      }
+    };
+
     // QUEST
     const QUEST = {
       order: ['not_started', 'active', 'completed', 'rewarded'],
@@ -1203,6 +1286,7 @@
       symbolMenu: { mode: 'closed', selected: null, slot: null, filter: null },
       cutscene: null,
       codex: null,
+      codexList: null,
       resetConfirm: null,
       toast(text, time = 1.4) {
         this.toastText = text;
@@ -1246,11 +1330,24 @@
         this.codex = { id, timer: 0 };
         setState('Cutscene');
       },
+      openCodexList() {
+        if (!DATA.codex.length) {
+          UI.toast('아직 모은 기호가 없어요');
+          return;
+        }
+        this.codexList = { items: DATA.codex.slice(), index: 0 };
+        setState('Cutscene');
+      },
       startCutscene(cards, onDone) {
         this.cutscene = { cards, index: 0, onDone };
         setState('Cutscene');
       },
       closeCutscene(skip = false) {
+        if (this.codexList) {
+          this.codexList = null;
+          setState('Pause');
+          return;
+        }
         if (this.codex) {
           this.codex = null;
           setState('Explore');
@@ -1265,6 +1362,14 @@
         this.cutscene = null;
         setState('Explore');
         if (done) done();
+      },
+      handleCodexListPointer(p) {
+        if (!this.codexList) return false;
+        const b = this.hitButton(p);
+        if (b?.id === 'codexPrev') this.codexList.index = Math.max(0, this.codexList.index - 1);
+        if (b?.id === 'codexNext') this.codexList.index = Math.min(this.codexList.items.length - 1, this.codexList.index + 1);
+        if (b?.id === 'codexClose') this.closeCutscene();
+        return Boolean(b);
       },
       openPalette(options = {}) {
         if (gameState !== 'Explore') return;
@@ -1316,6 +1421,7 @@
       interact() {
         const obj = this.getInteractTarget();
         if (!obj) return;
+        HINT.reset();
         handleObjectInteraction(obj);
       },
       update(dt) {
@@ -1466,7 +1572,7 @@
             }
           }
         }
-        this.shake = Math.max(0, this.shake - dt);
+        this.shake = CONFIG.REDUCED_MOTION ? 0 : Math.max(0, this.shake - dt);
       }
     };
 
@@ -1485,13 +1591,6 @@
           if (this.endingDelay <= 0) {
             this.endingDelay = 0;
             startEnding();
-          }
-        }
-        if (this.bird.active) {
-          this.bird.idle += dt;
-          if (this.bird.idle > 30) {
-            this.bird.idle = 0;
-            UI.toast('템포: 첫 음이 제일 낮았어? 높았어?');
           }
         }
         if (this.bird.playback) {
@@ -1936,7 +2035,7 @@
 
     function drawButton(b) {
       ctx.save();
-      ctx.globalAlpha = b.enabled ? 1 : 0.45;
+      ctx.globalAlpha = b.enabled && b.variant !== 'disabled' ? 1 : 0.45;
       ctx.fillStyle = b.variant === 'danger' ? CONFIG.colors.danger : (b.id === 'new' ? '#3F8E64' : '#FFFDF6');
       ctx.strokeStyle = '#3F332B';
       ctx.lineWidth = 2;
@@ -1976,7 +2075,7 @@
       ctx.save();
       let sx = -SCENES.camera.x;
       let sy = -SCENES.camera.y;
-      if (SCENES.shake > 0) {
+      if (!CONFIG.REDUCED_MOTION && SCENES.shake > 0) {
         sx += Math.sin(performance.now() * 0.04) * 3;
         sy += Math.cos(performance.now() * 0.036) * 2;
       }
@@ -2088,7 +2187,7 @@
         const s = SYMBOLS[obj.symbol];
         ctx.fillStyle = CONFIG.colors.gold;
         ctx.beginPath();
-        ctx.arc(cx, cy, 12 + Math.sin(performance.now() * 0.006) * 2, 0, Math.PI * 2);
+        ctx.arc(cx, cy, 12 + (CONFIG.REDUCED_MOTION ? 0 : Math.sin(performance.now() * 0.006) * 2), 0, Math.PI * 2);
         ctx.fill();
         ctx.fillStyle = CONFIG.colors.text;
         ctx.font = '22px serif';
@@ -2197,7 +2296,7 @@
         const r = objectRect(obj);
         ctx.strokeStyle = CONFIG.colors.cyan;
         ctx.lineWidth = 3;
-        ctx.globalAlpha = 0.65 + Math.sin(performance.now() * 0.008) * 0.25;
+        ctx.globalAlpha = CONFIG.REDUCED_MOTION ? 0.8 : 0.65 + Math.sin(performance.now() * 0.008) * 0.25;
         ctx.strokeRect(r.x - 4, r.y - 4, r.w + 8, r.h + 8);
         ctx.globalAlpha = 1;
       });
@@ -2228,7 +2327,7 @@
       const active = QUEST.activeQuest();
       ctx.fillText(active ? `${QUEST.defs[active[0]].title}: ${active[1].objective}` : '자유 탐험', 20, 47);
 
-      UI.button('pause', 314, 12, 36, 36, 'Ⅱ');
+      UI.button('pause', 308, 6, 48, 48, 'Ⅱ');
       ctx.fillStyle = 'rgba(255,250,240,.92)';
       drawRoundRect(314, 12, 36, 36, 8);
       ctx.fill();
@@ -2364,6 +2463,45 @@
     function drawCutscene() {
       ctx.fillStyle = 'rgba(0,0,0,.62)';
       ctx.fillRect(0, 0, CONFIG.W, CONFIG.H);
+      if (UI.codexList) {
+        const total = UI.codexList.items.length;
+        const index = clamp(UI.codexList.index, 0, Math.max(0, total - 1));
+        UI.codexList.index = index;
+        const s = SYMBOLS[UI.codexList.items[index]];
+        ctx.fillStyle = CONFIG.colors.panel;
+        drawRoundRect(34, 76, 292, 512, 8);
+        ctx.fill();
+        ctx.strokeStyle = CONFIG.colors.gold;
+        ctx.lineWidth = 3;
+        ctx.stroke();
+        const img = ASSETS[s.asset];
+        if (img && img.complete && img.naturalWidth) {
+          ctx.drawImage(img, 130, 108, 100, 100);
+        } else {
+          ctx.fillStyle = CONFIG.colors.gold;
+          ctx.font = '88px serif';
+          ctx.textAlign = 'center';
+          ctx.fillText(s.glyph, 180, 190);
+        }
+        ctx.fillStyle = CONFIG.colors.text;
+        ctx.font = '900 22px system-ui';
+        ctx.textAlign = 'center';
+        ctx.fillText(s.name, 180, 246);
+        ctx.font = '700 16px system-ui';
+        fillTextWrapped(s.theory, 58, 286, 244, 24, 4);
+        ctx.fillStyle = '#3F8E64';
+        ctx.font = '700 15px system-ui';
+        fillTextWrapped(s.effect, 58, 402, 244, 22, 3);
+        UI.button('codexPrev', 58, 484, 76, 48, '이전', index > 0);
+        UI.button('codexNext', 226, 484, 76, 48, '다음', index < total - 1);
+        UI.button('codexClose', 132, 538, 96, 42, '닫기');
+        UI.buttons.filter((b) => ['codexPrev', 'codexNext', 'codexClose'].includes(b.id)).forEach(drawButton);
+        ctx.fillStyle = 'rgba(43,39,36,.72)';
+        ctx.font = '800 13px system-ui';
+        ctx.textAlign = 'center';
+        ctx.fillText(`${index + 1} / ${total}`, 180, 514);
+        return;
+      }
       if (UI.codex) {
         const s = SYMBOLS[UI.codex.id];
         ctx.fillStyle = CONFIG.colors.panel;
@@ -2414,7 +2552,7 @@
         ctx.fillStyle = 'rgba(43,39,36,.62)';
         ctx.textAlign = 'center';
         ctx.fillText('탭해서 계속 · 오른쪽 위 SKIP', 180, 394);
-        UI.button('skip', 284, 22, 58, 36, 'SKIP');
+        UI.button('skip', 281, 16, 64, 48, 'SKIP');
         ctx.fillStyle = 'rgba(255,255,255,.88)';
         drawRoundRect(284, 22, 58, 36, 8);
         ctx.fill();
@@ -2428,17 +2566,18 @@
       ctx.fillStyle = 'rgba(0,0,0,.48)';
       ctx.fillRect(0, 0, CONFIG.W, CONFIG.H);
       ctx.fillStyle = CONFIG.colors.panel;
-      drawRoundRect(50, 160, 260, 342, 8);
+      drawRoundRect(50, 128, 260, 428, 8);
       ctx.fill();
       ctx.fillStyle = CONFIG.colors.text;
       ctx.font = '900 22px system-ui';
       ctx.textAlign = 'center';
-      ctx.fillText('일시정지', 180, 206);
-      UI.button('resume', 72, 238, 216, 50, '계속');
-      UI.button('toggleSound', 72, 300, 216, 50, DATA.soundOn ? '소리 끄기' : '소리 켜기');
-      UI.button('title', 72, 362, 216, 50, '타이틀로');
-      UI.button('resetSave', 72, 424, 216, 50, '저장 초기화', SCENES.titleHasSave, 'danger');
-      UI.buttons.filter((b) => ['resume', 'toggleSound', 'title', 'resetSave'].includes(b.id)).forEach(drawButton);
+      ctx.fillText('일시정지', 180, 174);
+      UI.button('resume', 72, 206, 216, 50, '계속');
+      UI.button('toggleSound', 72, 268, 216, 50, DATA.soundOn ? '소리 끄기' : '소리 켜기');
+      UI.button('title', 72, 330, 216, 50, '타이틀로');
+      UI.button('codexList', 72, 392, 216, 50, '악전 도감', true, DATA.codex.length ? 'default' : 'disabled');
+      UI.button('resetSave', 72, 462, 216, 50, '저장 초기화', SCENES.titleHasSave, 'danger');
+      UI.buttons.filter((b) => ['resume', 'toggleSound', 'title', 'codexList', 'resetSave'].includes(b.id)).forEach(drawButton);
       if (UI.resetConfirm?.type === 'clear') {
         drawConfirmPanel(
           '정말 저장을 지울까요?',
@@ -2484,6 +2623,7 @@
       SCENES.update(dt);
       ENTITIES.update(dt);
       PUZZLES.update(dt);
+      HINT.update(dt);
       UI.update(dt);
       if (gameState === 'Explore' && DATA.currentMap === 'village') {
         AUDIO.setBgm(DATA.scoreParts.melody ? 'villageMelody' : 'villageQuiet');
@@ -2545,6 +2685,10 @@
         return;
       }
       if (gameState === 'Cutscene') {
+        if (UI.codexList) {
+          if (!UI.handleCodexListPointer(p)) UI.closeCutscene();
+          return;
+        }
         const b = UI.hitButton(p, 'skip');
         UI.closeCutscene(Boolean(b));
         return;
@@ -2576,6 +2720,7 @@
           UI.resetConfirm = null;
           setState('Title');
         }
+        if (b?.id === 'codexList') UI.openCodexList();
         if (b?.id === 'resetSave') UI.resetConfirm = { type: 'clear' };
         return;
       }
@@ -2613,6 +2758,7 @@
       if (e.code === 'Escape') {
         if (gameState === 'Explore') setState('Pause');
         else if (gameState === 'Pause') setState('Explore');
+        else if (gameState === 'Cutscene' && UI.codexList) UI.closeCutscene();
       }
       if ((gameState === 'Dialogue' || gameState === 'Cutscene') && (e.code === 'Space' || e.code === 'Enter')) {
         if (gameState === 'Dialogue') DIALOGUE.advance();
@@ -2651,12 +2797,22 @@
       saveBackgroundProgress();
     }
 
+    function registerServiceWorker() {
+      if (CONFIG.TEST || !('serviceWorker' in navigator)) return;
+      try {
+        navigator.serviceWorker.register('sw.js');
+      } catch (err) {
+        // PWA support is optional; the game still runs as a normal page.
+      }
+    }
+
     function init() {
       resize();
       loadAssets();
       buildMaps();
       SCENES.titleHasSave = SAVE.hasSave();
       if (PARAMS.get('selftest') === '1') SELFTEST.run();
+      registerServiceWorker();
       window.addEventListener('resize', resize);
       canvas.addEventListener('pointerdown', pointerDown);
       canvas.addEventListener('pointermove', pointerMove);
@@ -2685,6 +2841,8 @@
         DIALOGUE,
         QUEST,
         PUZZLES,
+        HINTS,
+        HINT,
         SAVE,
         UI,
         SCENES,
