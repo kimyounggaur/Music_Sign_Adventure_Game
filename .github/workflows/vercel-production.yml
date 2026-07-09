@@ -1,0 +1,42 @@
+name: Deploy to Vercel
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: vercel-production
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    name: Deploy production
+    runs-on: ubuntu-latest
+    env:
+      VERCEL_ORG_ID: team_LVPR6NYP0tQeNt45mw0XXfH0
+      VERCEL_PROJECT_ID: prj_kkRiD8Ta0HJhzBiaz56aA7QDaWEt
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check Vercel token
+        if: ${{ env.VERCEL_TOKEN == '' }}
+        run: |
+          echo "VERCEL_TOKEN repository secret is required for automatic Vercel deployment."
+          exit 1
+
+      - name: Install Vercel CLI
+        run: npm install --global vercel@latest
+
+      - name: Pull Vercel project settings
+        run: vercel pull --yes --environment=production --token="$VERCEL_TOKEN"
+
+      - name: Build static deployment
+        run: vercel build --prod --token="$VERCEL_TOKEN"
+
+      - name: Deploy to Vercel production
+        run: vercel deploy --prebuilt --prod --token="$VERCEL_TOKEN"
