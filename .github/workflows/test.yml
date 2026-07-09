@@ -1,0 +1,92 @@
+name: Test Suite
+
+on:
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 20 * * *'
+    - cron: '0 21 * * 0'
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  e2e:
+    name: E2E
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Run full test suite
+        run: npm run test:full
+
+      - name: Run visual suite
+        if: ${{ github.event_name == 'workflow_dispatch' || github.event.schedule == '0 21 * * 0' }}
+        run: npm run test:visual
+
+      - name: Upload Playwright artifacts
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-${{ github.run_id }}
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 14
+
+  report-failure:
+    name: Report scheduled failure
+    needs:
+      - e2e
+    if: ${{ failure() && github.event_name == 'schedule' }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Create or update issue
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const label = 'automated-test-failure';
+            const { owner, repo } = context.repo;
+            try {
+              await github.rest.issues.getLabel({ owner, repo, name: label });
+            } catch {
+              await github.rest.issues.createLabel({ owner, repo, name: label, color: 'D95E59' });
+            }
+            const runUrl = `${context.serverUrl}/${owner}/${repo}/actions/runs/${context.runId}`;
+            const body = [
+              `Scheduled test failed.`,
+              ``,
+              `Run: ${runUrl}`,
+              `Commit: ${context.sha}`,
+              `Artifacts: playwright-report-${context.runId}`
+            ].join('\n');
+            const existing = await github.rest.search.issuesAndPullRequests({
+              q: `repo:${owner}/${repo} is:issue is:open label:${label}`
+            });
+            if (existing.data.items.length) {
+              await github.rest.issues.createComment({ owner, repo, issue_number: existing.data.items[0].number, body });
+            } else {
+              await github.rest.issues.create({
+                owner,
+                repo,
+                title: `[자동테스트] 주기 점검 실패 ${new Date().toISOString().slice(0, 10)}`,
+                labels: [label],
+                body
+              });
+            }

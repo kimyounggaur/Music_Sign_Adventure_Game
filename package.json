@@ -1,0 +1,17 @@
+{
+  "name": "music-sign-adventure-game",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "serve": "http-server . -p 4173 -c-1 --silent",
+    "test": "playwright test",
+    "test:smoke": "playwright test --grep @smoke",
+    "test:full": "playwright test --grep-invert @visual",
+    "test:visual": "playwright test --grep @visual --pass-with-no-tests",
+    "test:update-visual": "playwright test --grep @visual --update-snapshots --pass-with-no-tests"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.55.0",
+    "http-server": "^14.1.1"
+  }
+}

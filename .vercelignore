@@ -1,0 +1,9 @@
+01 Source/**/*.psd
+01 Source/**/*.eps
+01 Source/**/*.ai
+*.md
+.github
+tests
+package.json
+package-lock.json
+playwright.config.js

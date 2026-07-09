@@ -3,6 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+  <!-- ?debug=1 : FPS 표시 · ?test=1 : 자동 테스트 모드 · ?seed=N : 퍼즐 난수 고정 -->
   <title>멜로디아: 끝나지 않는 노래 v0.1</title>
   <style>
     html, body {
@@ -51,6 +52,20 @@
   'use strict';
 
   const Game = (() => {
+    const PARAMS = new URLSearchParams(window.location.search);
+    const seedRaw = PARAMS.get('seed');
+
+    function mulberry32(seed) {
+      let a = seed >>> 0;
+      return function seededRandom() {
+        a += 0x6D2B79F5;
+        let t = a;
+        t = Math.imul(t ^ (t >>> 15), t | 1);
+        t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+      };
+    }
+
     // CONFIG
     const CONFIG = {
       W: 360,
@@ -61,6 +76,9 @@
       PLAYER_H: 24,
       SAVE_KEY: 'melodia_v01_save',
       STEP: 'v0.1 Phase 1: Step 1-10',
+      DEBUG: PARAMS.has('debug'),
+      TEST: PARAMS.get('test') === '1',
+      SEED: seedRaw !== null && seedRaw !== '' && Number.isFinite(Number(seedRaw)) ? Number(seedRaw) : null,
       colors: {
         ink: '#202026',
         panel: '#fffaf0',
@@ -106,6 +124,7 @@
       },
       states: ['Boot', 'Title', 'Explore', 'Dialogue', 'SymbolSelect', 'TimelineEdit', 'Puzzle', 'Cutscene', 'Pause']
     };
+    const rng = CONFIG.SEED !== null ? mulberry32(CONFIG.SEED) : Math.random;
     const t2p = (v) => v * CONFIG.TILE;
     const p2t = (v) => Math.floor(v / CONFIG.TILE);
     const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
@@ -133,8 +152,26 @@
       if (gameState === next) return;
       prevState = gameState;
       gameState = next;
+      document.body.dataset.prevState = prevState;
       document.body.dataset.gameState = next;
+      if (next === 'Title') refreshTitleHasSave();
       if (next !== 'Dialogue') INPUT.clearMovement();
+    }
+
+    function refreshTitleHasSave() {
+      try {
+        SCENES.titleHasSave = SAVE.hasSave();
+      } catch (err) {
+        // SCENES/SAVE are initialized later; early state changes can skip this safely.
+      }
+    }
+
+    function markTitleHasSave(value) {
+      try {
+        SCENES.titleHasSave = value;
+      } catch (err) {
+        // SCENES is not available during initial object construction.
+      }
     }
 
     function resize() {
@@ -197,7 +234,7 @@
           if (!AC) return;
           this.ctx = new AC();
           this.master = this.ctx.createGain();
-          this.master.gain.value = DATA.soundOn ? 0.18 : 0;
+          this.master.gain.value = CONFIG.TEST ? 0 : (DATA.soundOn ? 0.18 : 0);
           this.master.connect(this.ctx.destination);
           const b = this.ctx.createBuffer(1, 1, 22050);
           const s = this.ctx.createBufferSource();
@@ -211,10 +248,19 @@
           this.onceWarned = true;
         }
       },
+      resume() {
+        try {
+          if (this.ctx && (this.ctx.state === 'suspended' || this.ctx.state === 'interrupted')) {
+            this.ctx.resume();
+          }
+        } catch (err) {
+          // Some mobile browsers reject resume outside a gesture; the next tap retries.
+        }
+      },
       setMuted(muted) {
         this.muted = muted;
         DATA.soundOn = !muted;
-        if (this.master) this.master.gain.value = DATA.soundOn ? 0.18 : 0;
+        if (this.master) this.master.gain.value = CONFIG.TEST ? 0 : (DATA.soundOn ? 0.18 : 0);
         SAVE.write('settings');
       },
       noteToMidi(name) {
@@ -302,7 +348,6 @@
       keys: new Set(),
       joy: { active: false, id: null, baseX: 0, baseY: 0, x: 0, y: 0, vx: 0, vy: 0 },
       lastTile: { x: -1, y: -1 },
-      holdReset: 0,
       down(p, id) {
         if (gameState === 'Explore' && p.x < CONFIG.W * 0.5 && p.y > 72) {
           this.joy.active = true;
@@ -525,7 +570,10 @@
     function syncObjectsFromFlags(map = currentMap()) {
       if (!map) return;
       map.objects.forEach((obj) => {
-        if (obj.type === 'staffSlot') obj.placed = Boolean(DATA.flags[`bridge_${obj.staffSlot}`]);
+        if (obj.type === 'staffSlot') {
+          obj.placed = Boolean(DATA.flags[`bridge_${obj.staffSlot}`]);
+          obj.placedSymbol = obj.placed ? obj.expected : null;
+        }
         if (obj.id === 'tower_door') obj.open = Boolean(DATA.flags.tower_door_open);
         if (obj.id === 'staff_door') obj.open = Boolean(DATA.flags.staff_door_open);
       });
@@ -905,7 +953,7 @@
       active: null,
       index: 0,
       chars: 0,
-      charRate: 30,
+      charRate: CONFIG.TEST ? 1000 : 30,
       start(key) {
         const data = DIALOGUES[key];
         if (!data) return;
@@ -1112,14 +1160,16 @@
           this.fallback = true;
           this.memory = this.snapshot();
         }
+        markTitleHasSave(true);
         if (['map', 'quest', 'pickup', 'puzzle', 'ending', 'new'].includes(reason)) UI.toast('저장됨 ♪', 1);
       },
       clear() {
         try {
           window.localStorage.removeItem(CONFIG.SAVE_KEY);
         } catch (err) {
-          this.memory = null;
         }
+        this.memory = null;
+        markTitleHasSave(false);
       }
     };
 
@@ -1148,20 +1198,23 @@
       buttons: [],
       toastText: '',
       toastTimer: 0,
+      toastLog: [],
       interactTarget: null,
       symbolMenu: { mode: 'closed', selected: null, slot: null, filter: null },
       cutscene: null,
       codex: null,
-      resetConfirm: false,
+      resetConfirm: null,
       toast(text, time = 1.4) {
         this.toastText = text;
         this.toastTimer = time;
+        this.toastLog.push({ text, t: performance.now() });
+        if (this.toastLog.length > 20) this.toastLog.shift();
       },
-      button(id, x, y, w, h, label, enabled = true) {
-        this.buttons.push({ id, x, y, w, h, label, enabled });
+      button(id, x, y, w, h, label, enabled = true, variant = 'default') {
+        this.buttons.push({ id, x, y, w, h, label, enabled, variant });
       },
       hitButton(p, id = null) {
-        return this.buttons.find((b) => (!id || b.id === id) && b.enabled && p.x >= b.x && p.x <= b.x + b.w && p.y >= b.y && p.y <= b.y + b.h);
+        return [...this.buttons].reverse().find((b) => (!id || b.id === id) && b.enabled && p.x >= b.x && p.x <= b.x + b.w && p.y >= b.y && p.y <= b.y + b.h);
       },
       getInteractTarget() {
         const map = currentMap();
@@ -1326,7 +1379,6 @@
       }
       if (obj.type === 'chest') {
         DIALOGUE.start('chest_note_g');
-        DATA.flags.got_note_g = true;
         return;
       }
       if (obj.type === 'staffSlot') {
@@ -1355,6 +1407,7 @@
       shake: 0,
       titleHasSave: false,
       startNewGame() {
+        UI.resetConfirm = null;
         DATA = defaultDataSafe();
         DATA.soundOn = !AUDIO.muted;
         buildMaps();
@@ -1369,6 +1422,7 @@
         });
       },
       continueGame() {
+        UI.resetConfirm = null;
         if (!SAVE.load()) {
           this.startNewGame();
           return;
@@ -1396,7 +1450,7 @@
           this.camera.y = lerp(this.camera.y, targetY, 0.1);
         }
         if (this.transition.active) {
-          const speed = dt / 0.3;
+          const speed = (dt / 0.3) * (CONFIG.TEST ? 4 : 1);
           if (this.transition.phase === 'out') {
             this.transition.alpha += speed;
             if (this.transition.alpha >= 1) {
@@ -1420,10 +1474,18 @@
       queueBirdStart: false,
       bird: { active: false, playback: false, sequence: [], input: [], timer: 0, index: 0, idle: 0 },
       bridge: { order: ['slot_c', 'slot_e', 'slot_g'], progress: 0 },
+      endingDelay: 0,
       update(dt) {
         if (this.queueBirdStart && gameState === 'Explore') {
           this.queueBirdStart = false;
           this.startBird();
+        }
+        if (this.endingDelay > 0 && gameState === 'Explore') {
+          this.endingDelay -= dt;
+          if (this.endingDelay <= 0) {
+            this.endingDelay = 0;
+            startEnding();
+          }
         }
         if (this.bird.active) {
           this.bird.idle += dt;
@@ -1452,7 +1514,7 @@
       startBird() {
         const base = ['C', 'E', 'G'];
         for (let i = base.length - 1; i > 0; i -= 1) {
-          const j = Math.floor(Math.random() * (i + 1));
+          const j = Math.floor(rng() * (i + 1));
           [base[i], base[j]] = [base[j], base[i]];
         }
         this.bird.active = true;
@@ -1525,11 +1587,12 @@
           ENTITIES.addParticle(t2p(31 + (i % 4)), t2p(10 + Math.floor(i / 4)), '♪', CONFIG.colors.gold);
         }
         SAVE.write('puzzle');
-        setTimeout(() => startEnding(), 700);
+        this.endingDelay = 0.7;
       }
     };
 
     function startEnding() {
+      PUZZLES.endingDelay = 0;
       DATA.flags.ending_seen = true;
       loadMap('village', 'ending');
       AUDIO.setBgm('villageMelody');
@@ -1543,6 +1606,208 @@
         setState('Title');
       });
     }
+
+    // SELFTEST
+    const SELFTEST = {
+      async run() {
+        const started = performance.now();
+        const results = [];
+        const add = async (id, name, fn) => {
+          try {
+            const detail = await fn();
+            const ok = detail === true || detail === undefined;
+            results.push({ id, name, ok, detail: ok ? 'ok' : String(detail) });
+          } catch (err) {
+            results.push({ id, name, ok: false, detail: err?.message || String(err) });
+          }
+        };
+        const allObjects = () => Object.values(MAPS).flatMap((map) => map.objects.map((obj) => ({ map, obj })));
+        const dialogueKeysForObject = (obj) => {
+          if (typeof obj.dialogue === 'string') return [obj.dialogue];
+          if (Array.isArray(obj.dialogue)) return obj.dialogue.map((branch) => branch.use);
+          return [];
+        };
+        const passablePath = (map, spawnName, targetIds) => {
+          const spawn = map.spawns[spawnName];
+          if (!spawn) return `spawn ${spawnName} 없음`;
+          const spawnTile = { x: Math.floor(spawn.x), y: Math.floor(spawn.y) };
+          const targets = new Set(targetIds);
+          const targetCells = new Set();
+          map.objects.forEach((obj) => {
+            if (!targets.has(obj.id)) return;
+            for (let y = obj.y - 1; y < obj.y + (obj.h || 1) + 1; y += 1) {
+              for (let x = obj.x - 1; x < obj.x + (obj.w || 1) + 1; x += 1) {
+                targetCells.add(`${x},${y}`);
+              }
+            }
+          });
+          if (map.id === 'forest') {
+            map.objects.filter((obj) => obj.type === 'staffSlot').forEach((obj) => targetCells.add(`${obj.x},${obj.y}`));
+          }
+          const seen = new Set();
+          const q = [spawnTile];
+          const reachable = new Set();
+          const walkable = (x, y) => {
+            if (x < 0 || y < 0 || x >= map.w || y >= map.h) return false;
+            return map.collision[y][x] === 0 || targetCells.has(`${x},${y}`);
+          };
+          while (q.length) {
+            const cur = q.shift();
+            const key = `${cur.x},${cur.y}`;
+            if (seen.has(key) || !walkable(cur.x, cur.y)) continue;
+            seen.add(key);
+            reachable.add(key);
+            [[1, 0], [-1, 0], [0, 1], [0, -1]].forEach(([dx, dy]) => q.push({ x: cur.x + dx, y: cur.y + dy }));
+          }
+          const missing = [];
+          map.objects.forEach((obj) => {
+            if (!targets.has(obj.id)) return;
+            let ok = false;
+            for (let y = obj.y - 1; y < obj.y + (obj.h || 1) + 1; y += 1) {
+              for (let x = obj.x - 1; x < obj.x + (obj.w || 1) + 1; x += 1) {
+                if (reachable.has(`${x},${y}`)) ok = true;
+              }
+            }
+            if (!ok) missing.push(obj.id);
+          });
+          return missing.length ? `도달 불가: ${missing.join(', ')}` : true;
+        };
+        const possibleFlags = new Set([
+          'pitch_hint', 'tower_examined', 'tower_door_open', 'forest_gate_open', 'staff_door_open',
+          'golden_note_01', 'world_score_seen', 'ending_seen', 'part_melody'
+        ]);
+        Object.keys(SYMBOLS).forEach((id) => possibleFlags.add(`got_${id}`));
+        ['ledger_below', 'line1', 'line2'].forEach((slot) => possibleFlags.add(`bridge_${slot}`));
+
+        await add('ST-01', '대화 참조 무결성', () => {
+          const missing = [];
+          allObjects().forEach(({ map, obj }) => {
+            dialogueKeysForObject(obj).forEach((key) => { if (!DIALOGUES[key]) missing.push(`${map.id}.${obj.id}:${key}`); });
+          });
+          return missing.length ? missing.join(', ') : true;
+        });
+        await add('ST-02', '대화 보상 기호 참조', () => {
+          const missing = Object.entries(DIALOGUES).filter(([, d]) => d.onEnd?.addSymbol && !SYMBOLS[d.onEnd.addSymbol]).map(([key]) => key);
+          return missing.length ? missing.join(', ') : true;
+        });
+        await add('ST-03', '오브젝트 기호 참조', () => {
+          const missing = [];
+          allObjects().forEach(({ map, obj }) => {
+            if (obj.symbol && !SYMBOLS[obj.symbol]) missing.push(`${map.id}.${obj.id}.symbol`);
+            if (obj.expected && !SYMBOLS[obj.expected]) missing.push(`${map.id}.${obj.id}.expected`);
+          });
+          return missing.length ? missing.join(', ') : true;
+        });
+        await add('ST-04', '부착 대상 참조', () => {
+          const missing = [];
+          allObjects().forEach(({ map, obj }) => (obj.attachTargets || []).forEach((id) => { if (!SYMBOLS[id]) missing.push(`${map.id}.${obj.id}:${id}`); }));
+          return missing.length ? missing.join(', ') : true;
+        });
+        await add('ST-05', '포털 참조', () => {
+          const missing = [];
+          allObjects().forEach(({ map, obj }) => {
+            if (obj.type !== 'portal') return;
+            if (!MAPS[obj.to]) missing.push(`${map.id}.${obj.id}:map`);
+            else if (!MAPS[obj.to].spawns[obj.spawn]) missing.push(`${map.id}.${obj.id}:spawn`);
+          });
+          return missing.length ? missing.join(', ') : true;
+        });
+        await add('ST-06', '숲 관문 트리거 위치', () => {
+          const gate = MAPS.village.objects.find((obj) => obj.id === 'forest_gate');
+          return gate && gate.x <= 29 && gate.x + (gate.w || 1) >= 28 && gate.y <= 11 && gate.y + (gate.h || 1) >= 10;
+        });
+        await add('ST-07', '스폰 타일 통행 가능', () => {
+          const blocked = [];
+          Object.values(MAPS).forEach((map) => Object.entries(map.spawns).forEach(([name, sp]) => {
+            const tx = Math.floor(sp.x);
+            const ty = Math.floor(sp.y);
+            if (map.collision[ty]?.[tx] !== 0) blocked.push(`${map.id}.${name}`);
+          }));
+          return blocked.length ? blocked.join(', ') : true;
+        });
+        await add('ST-08', '맵 경계 충돌', () => {
+          const bad = [];
+          Object.values(MAPS).forEach((map) => {
+            for (let x = 0; x < map.w; x += 1) {
+              if (map.collision[0][x] !== 1 || map.collision[map.h - 1][x] !== 1) bad.push(`${map.id}.x${x}`);
+            }
+            for (let y = 0; y < map.h; y += 1) {
+              if (map.collision[y][0] !== 1 || map.collision[y][map.w - 1] !== 1) bad.push(`${map.id}.y${y}`);
+            }
+          });
+          return bad.length ? bad.slice(0, 8).join(', ') : true;
+        });
+        await add('ST-09', '마을 주요 대상 도달성', () => passablePath(MAPS.village, 'start', ['clef', 'pitch', 'well', 'clef_bush', 'tower_door', 'forest_gate']));
+        await add('ST-10', '숲 주요 대상 도달성', () => passablePath(MAPS.forest, 'west', ['note_c_pickup', 'crow', 'bell_c', 'bell_e', 'bell_g', 'push_rock', 'stump_chest', 'slot_c', 'slot_e', 'slot_g', 'staff_door', 'golden_note_01', 'waterfall_sign']));
+        await add('ST-11', '음 높이 공식', () => (
+          AUDIO.noteToMidi('C4') === 60 && AUDIO.noteToMidi('A4') === 69 &&
+          Math.abs(AUDIO.noteToFreq('A4') - 440) < 0.001 &&
+          Math.abs(AUDIO.noteToFreq('C4') - 261.6256) < 0.01
+        ));
+        await add('ST-12', '오선 위치 매핑', () => (
+          SYMBOLS.note_c.staffSlot === 'ledger_below' && SYMBOLS.note_c.pitch === 'C4' &&
+          SYMBOLS.note_e.staffSlot === 'line1' && SYMBOLS.note_e.pitch === 'E4' &&
+          SYMBOLS.note_g.staffSlot === 'line2' && SYMBOLS.note_g.pitch === 'G4'
+        ));
+        await add('ST-13', '브릿지 순서', () => {
+          const orderOk = JSON.stringify(PUZZLES.bridge.order) === JSON.stringify(['slot_c', 'slot_e', 'slot_g']);
+          const slots = PUZZLES.bridge.order.map((id) => MAPS.forest.objects.find((obj) => obj.id === id));
+          const midis = slots.map((slot) => AUDIO.noteToMidi(SYMBOLS[slot.expected].pitch));
+          return orderOk && midis[0] < midis[1] && midis[1] < midis[2];
+        });
+        await add('ST-14', '슬롯 기대값 일치', () => {
+          const bad = MAPS.forest.objects.filter((obj) => obj.type === 'staffSlot' && SYMBOLS[obj.expected]?.staffSlot !== obj.staffSlot).map((obj) => obj.id);
+          return bad.length ? bad.join(', ') : true;
+        });
+        await add('ST-15', '퀘스트 기본 구조', () => {
+          const defKeys = Object.keys(QUEST.defs).sort().join(',');
+          const dataKeys = Object.keys(defaultData().quests).sort().join(',');
+          const safeKeys = Object.keys(defaultDataSafe().quests).sort().join(',');
+          return defKeys === dataKeys && dataKeys === safeKeys;
+        });
+        await add('ST-16', '기본 데이터 동등성', () => JSON.stringify(defaultData()) === JSON.stringify(defaultDataSafe()));
+        await add('ST-17', '저장 스냅샷 구조', () => {
+          const parsed = JSON.parse(SAVE.snapshot());
+          const required = ['version', 'currentMap', 'symbols', 'quests', 'flags', 'scoreParts', 'codex', 'goldenNotes'];
+          const missing = required.filter((key) => !(key in parsed));
+          return missing.length ? missing.join(', ') : true;
+        });
+        await add('ST-18', '상태 목록', () => CONFIG.states.includes('TimelineEdit') && CONFIG.states.includes('Puzzle') && CONFIG.states.includes('Pause'));
+        await add('ST-19', '이미지 에셋 로드', () => Promise.all(Object.values(CONFIG.assets).map((src) => new Promise((resolve) => {
+          const img = new Image();
+          const timer = setTimeout(() => resolve(src), 5000);
+          img.onload = () => { clearTimeout(timer); resolve(null); };
+          img.onerror = () => { clearTimeout(timer); resolve(src); };
+          img.src = src;
+        }))).then((failed) => {
+          const bad = failed.filter(Boolean);
+          return bad.length ? bad.join(', ') : true;
+        }));
+        await add('ST-20', '대사 라인 문자열', () => {
+          const bad = Object.entries(DIALOGUES).filter(([, d]) => !Array.isArray(d.lines) || d.lines.some((line) => typeof line !== 'string' || !line.trim())).map(([key]) => key);
+          return bad.length ? bad.join(', ') : true;
+        });
+        await add('ST-21', 'flag 참조 화이트리스트', () => {
+          const bad = [];
+          allObjects().forEach(({ map, obj }) => {
+            if (obj.hideIfFlag && !possibleFlags.has(obj.hideIfFlag)) bad.push(`${map.id}.${obj.id}:${obj.hideIfFlag}`);
+            (obj.requiresFlags || []).forEach((flag) => { if (!possibleFlags.has(flag)) bad.push(`${map.id}.${obj.id}:${flag}`); });
+          });
+          return bad.length ? bad.join(', ') : true;
+        });
+        await add('ST-22', '상호작용 타입 분기', () => {
+          const expected = ['npc', 'sign', 'pickup', 'towerDoor', 'worldScore', 'portal', 'forestGate', 'crow', 'chest', 'staffSlot', 'staffDoor', 'golden', 'rock'];
+          const bad = expected.filter((type) => !UI.isInteractive({ type }));
+          return bad.length ? bad.join(', ') : true;
+        });
+
+        const fail = results.filter((r) => !r.ok).length;
+        const payload = { done: true, pass: results.length - fail, fail, ms: Math.round(performance.now() - started), results };
+        window.__MELODIA_SELFTEST__ = payload;
+        console.table(results);
+        return payload;
+      }
+    };
 
     // RENDER
     function drawRoundRect(x, y, w, h, r) {
@@ -1591,10 +1856,13 @@
       ctx.clearRect(0, 0, CONFIG.W, CONFIG.H);
       if (gameState === 'Boot') {
         drawBoot();
+        drawSelfTestBadge();
         return;
       }
       if (gameState === 'Title') {
         drawTitle();
+        drawToast();
+        drawSelfTestBadge();
         return;
       }
       drawWorld();
@@ -1608,6 +1876,7 @@
         ctx.fillStyle = `rgba(0,0,0,${SCENES.transition.alpha})`;
         ctx.fillRect(0, 0, CONFIG.W, CONFIG.H);
       }
+      drawSelfTestBadge();
     }
 
     function drawBoot() {
@@ -1644,7 +1913,7 @@
       ctx.font = '15px system-ui';
       ctx.fillText('v0.1 프롤로그 + 1막', CONFIG.W / 2, 294);
 
-      const has = SAVE.hasSave();
+      const has = SCENES.titleHasSave;
       UI.button('new', 56, 348, 248, 56, '새로 시작');
       UI.button('continue', 56, 416, 248, 56, has ? '이어하기' : '이어하기 없음', has);
       UI.button('sound', 56, 484, 248, 56, DATA.soundOn ? '소리 OFF' : '소리 ON');
@@ -1654,22 +1923,50 @@
       ctx.fillStyle = 'rgba(43,39,36,.72)';
       ctx.font = '12px system-ui';
       ctx.fillText('자료 기반: 01 Source 음악 기호 이미지 · Canvas 2D', CONFIG.W / 2, 582);
+      if (UI.resetConfirm?.type === 'new') {
+        drawConfirmPanel(
+          '저장된 모험이 있어요. 처음부터 시작할까요?',
+          'confirmNew',
+          'cancelNew',
+          '처음부터',
+          '돌아가기'
+        );
+      }
     }
 
     function drawButton(b) {
       ctx.save();
       ctx.globalAlpha = b.enabled ? 1 : 0.45;
-      ctx.fillStyle = b.id === 'new' ? '#3F8E64' : '#FFFDF6';
+      ctx.fillStyle = b.variant === 'danger' ? CONFIG.colors.danger : (b.id === 'new' ? '#3F8E64' : '#FFFDF6');
       ctx.strokeStyle = '#3F332B';
       ctx.lineWidth = 2;
       drawRoundRect(b.x, b.y, b.w, b.h, 8);
       ctx.fill();
       ctx.stroke();
-      ctx.fillStyle = b.id === 'new' ? '#FFFDF6' : '#3F332B';
+      ctx.fillStyle = (b.id === 'new' || b.variant === 'danger') ? '#FFFDF6' : '#3F332B';
       ctx.font = '800 18px system-ui';
       ctx.textAlign = 'center';
       ctx.fillText(b.label, b.x + b.w / 2, b.y + 35);
       ctx.restore();
+    }
+
+    function drawConfirmPanel(message, confirmId, cancelId, confirmLabel, cancelLabel) {
+      ctx.fillStyle = 'rgba(0,0,0,.46)';
+      ctx.fillRect(0, 0, CONFIG.W, CONFIG.H);
+      ctx.fillStyle = CONFIG.colors.panel;
+      drawRoundRect(38, 222, 284, 196, 8);
+      ctx.fill();
+      ctx.strokeStyle = '#3F332B';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      ctx.fillStyle = CONFIG.colors.text;
+      ctx.font = '900 19px system-ui';
+      ctx.textAlign = 'left';
+      fillTextWrapped(message, 62, 264, 236, 27, 3);
+      UI.button(confirmId, 62, 336, 108, 48, confirmLabel, true, 'danger');
+      UI.button(cancelId, 190, 336, 108, 48, cancelLabel);
+      drawButton(UI.buttons.find((b) => b.id === confirmId));
+      drawButton(UI.buttons.find((b) => b.id === cancelId));
     }
 
     function drawWorld() {
@@ -1963,10 +2260,12 @@
       ctx.globalAlpha = 1;
 
       if (INPUT.joy.active) drawJoystick();
-      ctx.fillStyle = 'rgba(32,32,38,.62)';
-      ctx.font = '10px monospace';
-      ctx.textAlign = 'left';
-      ctx.fillText(`${Math.round(fps)} FPS · ${CONFIG.STEP}`, 10, 632);
+      if (CONFIG.DEBUG) {
+        ctx.fillStyle = 'rgba(32,32,38,.62)';
+        ctx.font = '10px monospace';
+        ctx.textAlign = 'left';
+        ctx.fillText(`${Math.round(fps)} FPS · ${CONFIG.STEP}`, 10, 632);
+      }
     }
 
     function drawJoystick() {
@@ -2129,16 +2428,26 @@
       ctx.fillStyle = 'rgba(0,0,0,.48)';
       ctx.fillRect(0, 0, CONFIG.W, CONFIG.H);
       ctx.fillStyle = CONFIG.colors.panel;
-      drawRoundRect(50, 192, 260, 256, 8);
+      drawRoundRect(50, 160, 260, 342, 8);
       ctx.fill();
       ctx.fillStyle = CONFIG.colors.text;
       ctx.font = '900 22px system-ui';
       ctx.textAlign = 'center';
-      ctx.fillText('일시정지', 180, 238);
-      UI.button('resume', 72, 270, 216, 50, '계속');
-      UI.button('toggleSound', 72, 332, 216, 50, DATA.soundOn ? '소리 끄기' : '소리 켜기');
-      UI.button('title', 72, 394, 216, 50, '타이틀로');
-      UI.buttons.filter((b) => ['resume', 'toggleSound', 'title'].includes(b.id)).forEach(drawButton);
+      ctx.fillText('일시정지', 180, 206);
+      UI.button('resume', 72, 238, 216, 50, '계속');
+      UI.button('toggleSound', 72, 300, 216, 50, DATA.soundOn ? '소리 끄기' : '소리 켜기');
+      UI.button('title', 72, 362, 216, 50, '타이틀로');
+      UI.button('resetSave', 72, 424, 216, 50, '저장 초기화', SCENES.titleHasSave, 'danger');
+      UI.buttons.filter((b) => ['resume', 'toggleSound', 'title', 'resetSave'].includes(b.id)).forEach(drawButton);
+      if (UI.resetConfirm?.type === 'clear') {
+        drawConfirmPanel(
+          '정말 저장을 지울까요?',
+          'confirmClear',
+          'cancelClear',
+          '지울게요',
+          '돌아가기'
+        );
+      }
     }
 
     function drawToast() {
@@ -2154,9 +2463,21 @@
       ctx.globalAlpha = 1;
     }
 
+    function drawSelfTestBadge() {
+      const result = window.__MELODIA_SELFTEST__;
+      if (!result?.done || result.fail <= 0) return;
+      ctx.fillStyle = CONFIG.colors.danger;
+      drawRoundRect(8, 8, 128, 28, 6);
+      ctx.fill();
+      ctx.fillStyle = '#FFFDF6';
+      ctx.font = '800 12px system-ui';
+      ctx.textAlign = 'center';
+      ctx.fillText(`SELFTEST FAIL ${result.fail}`, 72, 27);
+    }
+
     // MAIN
     function update(dt) {
-      DATA.playTime += dt;
+      if (['Explore', 'Dialogue', 'SymbolSelect', 'Cutscene'].includes(gameState)) DATA.playTime += dt;
       AUDIO.update(dt);
       RHYTHM.update(dt);
       DIALOGUE.update(dt);
@@ -2200,11 +2521,21 @@
     function pointerDown(e) {
       e.preventDefault();
       AUDIO.unlock();
+      AUDIO.resume();
       const p = screenToGame(e);
       canvas.setPointerCapture?.(e.pointerId);
       if (gameState === 'Title') {
+        if (UI.resetConfirm?.type === 'new') {
+          const b = UI.hitButton(p);
+          if (b?.id === 'confirmNew') SCENES.startNewGame();
+          if (b?.id === 'cancelNew') UI.resetConfirm = null;
+          return;
+        }
         const b = UI.hitButton(p);
-        if (b?.id === 'new') SCENES.startNewGame();
+        if (b?.id === 'new') {
+          if (SCENES.titleHasSave) UI.resetConfirm = { type: 'new' };
+          else SCENES.startNewGame();
+        }
         if (b?.id === 'continue') SCENES.continueGame();
         if (b?.id === 'sound') AUDIO.setMuted(DATA.soundOn);
         return;
@@ -2223,10 +2554,29 @@
         return;
       }
       if (gameState === 'Pause') {
+        if (UI.resetConfirm?.type === 'clear') {
+          const b = UI.hitButton(p);
+          if (b?.id === 'confirmClear') {
+            SAVE.clear();
+            DATA = defaultDataSafe();
+            DATA.soundOn = !AUDIO.muted;
+            buildMaps();
+            loadMap('village', 'start', false);
+            UI.resetConfirm = null;
+            UI.toast('저장이 초기화되었습니다');
+            setState('Title');
+          }
+          if (b?.id === 'cancelClear') UI.resetConfirm = null;
+          return;
+        }
         const b = UI.hitButton(p);
         if (b?.id === 'resume') setState('Explore');
         if (b?.id === 'toggleSound') AUDIO.setMuted(DATA.soundOn);
-        if (b?.id === 'title') setState('Title');
+        if (b?.id === 'title') {
+          UI.resetConfirm = null;
+          setState('Title');
+        }
+        if (b?.id === 'resetSave') UI.resetConfirm = { type: 'clear' };
         return;
       }
       if (gameState === 'Explore') {
@@ -2243,9 +2593,6 @@
           UI.openPalette();
           return;
         }
-        if (p.x < 90 && p.y < 60) {
-          INPUT.holdReset = performance.now();
-        }
         INPUT.down(p, e.pointerId);
       }
     }
@@ -2257,14 +2604,6 @@
 
     function pointerUp(e) {
       INPUT.up(e.pointerId);
-      if (INPUT.holdReset && performance.now() - INPUT.holdReset > 2000) {
-        if (window.confirm('저장을 초기화할까요?')) {
-          SAVE.clear();
-          UI.toast('저장이 초기화되었습니다');
-          setState('Title');
-        }
-      }
-      INPUT.holdReset = 0;
     }
 
     function keyDown(e) {
@@ -2285,11 +2624,39 @@
       INPUT.keys.delete(e.code);
     }
 
+    function clearHeldInput() {
+      INPUT.keys.clear();
+      INPUT.clearMovement();
+    }
+
+    function saveBackgroundProgress() {
+      if (gameState !== 'Boot' && gameState !== 'Title') SAVE.write('background');
+    }
+
+    function handleVisibilityChange() {
+      if (document.hidden) {
+        saveBackgroundProgress();
+        try {
+          AUDIO.ctx?.suspend?.();
+        } catch (err) {
+          // Suspending audio is best-effort only.
+        }
+        clearHeldInput();
+      } else {
+        AUDIO.resume();
+      }
+    }
+
+    function handlePageHide() {
+      saveBackgroundProgress();
+    }
+
     function init() {
       resize();
       loadAssets();
       buildMaps();
       SCENES.titleHasSave = SAVE.hasSave();
+      if (PARAMS.get('selftest') === '1') SELFTEST.run();
       window.addEventListener('resize', resize);
       canvas.addEventListener('pointerdown', pointerDown);
       canvas.addEventListener('pointermove', pointerMove);
@@ -2297,6 +2664,9 @@
       canvas.addEventListener('pointercancel', pointerUp);
       window.addEventListener('keydown', keyDown);
       window.addEventListener('keyup', keyUp);
+      window.addEventListener('blur', clearHeldInput);
+      window.addEventListener('pagehide', handlePageHide);
+      document.addEventListener('visibilitychange', handleVisibilityChange);
       setTimeout(() => setState('Title'), 160);
       requestAnimationFrame(loop);
     }
@@ -2314,6 +2684,7 @@
         RHYTHM,
         DIALOGUE,
         QUEST,
+        PUZZLES,
         SAVE,
         UI,
         SCENES,

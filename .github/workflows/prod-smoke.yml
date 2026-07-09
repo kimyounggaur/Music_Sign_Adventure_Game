@@ -1,0 +1,100 @@
+name: Production Smoke
+
+on:
+  schedule:
+    - cron: '30 20 * * *'
+  workflow_run:
+    workflows:
+      - Deploy to Vercel
+    types:
+      - completed
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  smoke:
+    name: Production smoke
+    if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    env:
+      PLAYWRIGHT_BASE_URL: ${{ vars.PROD_URL || 'https://music-sign-adventure-game.vercel.app' }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check production URL
+        if: ${{ env.PLAYWRIGHT_BASE_URL == '' }}
+        run: |
+          echo "Repository variable PROD_URL is required. Set it to the Vercel production domain."
+          exit 1
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Run smoke tests
+        run: npm run test:smoke
+
+      - name: Upload Playwright artifacts
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: prod-smoke-report-${{ github.run_id }}
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 14
+
+  report-failure:
+    name: Report smoke failure
+    needs:
+      - smoke
+    if: ${{ failure() }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Create or update issue
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const label = 'prod-smoke-failure';
+            const { owner, repo } = context.repo;
+            try {
+              await github.rest.issues.getLabel({ owner, repo, name: label });
+            } catch {
+              await github.rest.issues.createLabel({ owner, repo, name: label, color: 'D95E59' });
+            }
+            const runUrl = `${context.serverUrl}/${owner}/${repo}/actions/runs/${context.runId}`;
+            const body = [
+              `Production smoke test failed.`,
+              ``,
+              `Run: ${runUrl}`,
+              `Commit: ${context.sha}`,
+              `Target: ${process.env.PLAYWRIGHT_BASE_URL || 'PROD_URL missing'}`
+            ].join('\n');
+            const existing = await github.rest.search.issuesAndPullRequests({
+              q: `repo:${owner}/${repo} is:issue is:open label:${label}`
+            });
+            if (existing.data.items.length) {
+              await github.rest.issues.createComment({ owner, repo, issue_number: existing.data.items[0].number, body });
+            } else {
+              await github.rest.issues.create({
+                owner,
+                repo,
+                title: `[프로덕션 스모크] 점검 실패 ${new Date().toISOString().slice(0, 10)}`,
+                labels: [label],
+                body
+              });
+            }
