@@ -1,0 +1,2331 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+  <title>멜로디아: 끝나지 않는 노래 v0.1</title>
+  <style>
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      background: #111318;
+      overflow: hidden;
+      touch-action: none;
+      user-select: none;
+      overscroll-behavior: none;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    #game {
+      display: block;
+      margin: 0 auto;
+      image-rendering: crisp-edges;
+      image-rendering: pixelated;
+      outline: none;
+      touch-action: none;
+    }
+    #rotateOverlay {
+      position: fixed;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 32px;
+      z-index: 5;
+      color: #fffdf7;
+      background: #111318;
+      text-align: center;
+      font-size: 22px;
+      font-weight: 800;
+      line-height: 1.45;
+    }
+    @media (orientation: landscape) and (max-height: 560px) {
+      #rotateOverlay { display: flex; }
+    }
+  </style>
+</head>
+<body>
+  <canvas id="game" aria-label="멜로디아 게임 화면"></canvas>
+  <div id="rotateOverlay">세로 화면으로 돌려주세요.<br>멜로디아는 모바일 세로 모드에 맞춰져 있어요.</div>
+  <script>
+  'use strict';
+
+  const Game = (() => {
+    // CONFIG
+    const CONFIG = {
+      W: 360,
+      H: 640,
+      TILE: 32,
+      PLAYER_SPEED: 116,
+      PLAYER_W: 20,
+      PLAYER_H: 24,
+      SAVE_KEY: 'melodia_v01_save',
+      STEP: 'v0.1 Phase 1: Step 1-10',
+      colors: {
+        ink: '#202026',
+        panel: '#fffaf0',
+        panelDark: '#42362f',
+        text: '#2b2724',
+        village: '#FFF3E0',
+        villageRoad: '#E8CDA7',
+        villageWood: '#8D6E63',
+        forest: '#66BB6A',
+        forestDeep: '#2F7D46',
+        forestRoad: '#B7D982',
+        canyon: '#9575CD',
+        ruin: '#A1887F',
+        mountain: '#90CAF9',
+        catacomb: '#4A148C',
+        hall: '#FFB300',
+        water: '#4CA7C7',
+        wall: '#4D4B50',
+        gold: '#FFD54F',
+        cyan: '#4DD0E1',
+        blue: '#42A5F5',
+        green: '#43A047',
+        danger: '#D95E59'
+      },
+      assets: {
+        clef_g: '01 Source/G Clef/G Clef.png',
+        clef_f: '01 Source/F Clef/F Clef.png',
+        clef_c: '01 Source/C Clef/C Clef.png',
+        rest_eighth: '01 Source/Eight Rest/Eight Rest.png',
+        fermata: '01 Source/Fermata/Fermata.png',
+        segno: '01 Source/Segno/Segno.png',
+        repeat_start: '01 Source/Repeat-Sign 1/Repeat-Sign 1.png',
+        repeat_end: '01 Source/Repeat-Sign 2/Repeat-Sign 2.png',
+        coda: '01 Source/Coda.png',
+        ending_one: '01 Source/1st Ending.jpg',
+        ending_two: '01 Source/2nd Ending.jpg',
+        ending_both: '01 Source/1st&2nd Ending.jpg'
+      },
+      palettes: {
+        village: { ground: '#FFF3E0', alt: '#F8E1BD', road: '#E8CDA7', wall: '#8D6E63' },
+        tower: { ground: '#F5E6C8', alt: '#E6D2AA', road: '#C49A6C', wall: '#6D4C41' },
+        forest: { ground: '#66BB6A', alt: '#55A95A', road: '#B7D982', wall: '#2F7D46' }
+      },
+      states: ['Boot', 'Title', 'Explore', 'Dialogue', 'SymbolSelect', 'TimelineEdit', 'Puzzle', 'Cutscene', 'Pause']
+    };
+    const t2p = (v) => v * CONFIG.TILE;
+    const p2t = (v) => Math.floor(v / CONFIG.TILE);
+    const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+    const lerp = (a, b, t) => a + (b - a) * t;
+    const rectsOverlap = (a, b) => a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
+    const centerOf = (rect) => ({ x: rect.x + rect.w / 2, y: rect.y + rect.h / 2 });
+
+    const canvas = document.getElementById('game');
+    const ctx = canvas.getContext('2d', { alpha: false });
+    let dpr = 1;
+    let gameState = 'Boot';
+    let prevState = 'Boot';
+    let lastTime = 0;
+    let accumulator = 0;
+    let fps = 0;
+    let frameCount = 0;
+    let fpsClock = 0;
+    let positionSaveTimer = 0;
+
+    function setState(next) {
+      if (!CONFIG.states.includes(next)) {
+        console.warn('알 수 없는 GameState:', next);
+        return;
+      }
+      if (gameState === next) return;
+      prevState = gameState;
+      gameState = next;
+      document.body.dataset.gameState = next;
+      if (next !== 'Dialogue') INPUT.clearMovement();
+    }
+
+    function resize() {
+      const ratio = CONFIG.W / CONFIG.H;
+      let cssW = window.innerWidth;
+      let cssH = window.innerHeight;
+      if (cssW / cssH > ratio) cssW = Math.floor(cssH * ratio);
+      else cssH = Math.floor(cssW / ratio);
+      dpr = Math.max(1, Math.min(3, window.devicePixelRatio || 1));
+      canvas.style.width = `${cssW}px`;
+      canvas.style.height = `${cssH}px`;
+      canvas.width = Math.floor(CONFIG.W * dpr);
+      canvas.height = Math.floor(CONFIG.H * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.imageSmoothingEnabled = false;
+    }
+
+    function screenToGame(e) {
+      const r = canvas.getBoundingClientRect();
+      return {
+        x: (e.clientX - r.left) * CONFIG.W / r.width,
+        y: (e.clientY - r.top) * CONFIG.H / r.height
+      };
+    }
+
+    function screenToWorld(p) {
+      return {
+        x: p.x + SCENES.camera.x,
+        y: p.y + SCENES.camera.y
+      };
+    }
+
+    // AUDIO
+    const AUDIO = {
+      ctx: null,
+      master: null,
+      unlocked: false,
+      muted: false,
+      bgmKey: '',
+      bgmIndex: 0,
+      bgmTimer: 0,
+      bgmBeat: 0,
+      onceWarned: false,
+      sequences: {
+        villageQuiet: { bpm: 72, notes: [['C3', 4], [null, 4]] },
+        villageMelody: {
+          bpm: 90,
+          notes: [['C4', 2], ['E4', 1], ['G4', 1], ['C5', 2], ['G4', 2],
+            ['A4', 1], ['G4', 1], ['E4', 1], ['G4', 1], ['C4', 4],
+            ['D4', 1], ['E4', 1], ['F4', 1], ['G4', 1], ['E4', 2], ['C4', 2],
+            ['D4', 2], ['B3', 2], ['C4', 4]]
+        },
+        forest: { bpm: 72, notes: [['C4', 1], ['E4', 1], ['G4', 1], ['E4', 1], [null, 2]] },
+        tower: { bpm: 60, notes: [['C3', 2], ['G3', 2], [null, 2], ['E3', 2]] }
+      },
+      unlock() {
+        if (this.unlocked) return;
+        try {
+          const AC = window.AudioContext || window.webkitAudioContext;
+          if (!AC) return;
+          this.ctx = new AC();
+          this.master = this.ctx.createGain();
+          this.master.gain.value = DATA.soundOn ? 0.18 : 0;
+          this.master.connect(this.ctx.destination);
+          const b = this.ctx.createBuffer(1, 1, 22050);
+          const s = this.ctx.createBufferSource();
+          s.buffer = b;
+          s.connect(this.master);
+          s.start(0);
+          this.ctx.resume();
+          this.unlocked = true;
+        } catch (err) {
+          if (!this.onceWarned) console.warn('오디오 초기화 실패:', err);
+          this.onceWarned = true;
+        }
+      },
+      setMuted(muted) {
+        this.muted = muted;
+        DATA.soundOn = !muted;
+        if (this.master) this.master.gain.value = DATA.soundOn ? 0.18 : 0;
+        SAVE.write('settings');
+      },
+      noteToMidi(name) {
+        const m = /^([A-G])([#b]?)(-?\d)$/.exec(name);
+        if (!m) return 60;
+        const base = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 }[m[1]];
+        const acc = m[2] === '#' ? 1 : (m[2] === 'b' ? -1 : 0);
+        return (Number(m[3]) + 1) * 12 + base + acc;
+      },
+      noteToFreq(name) {
+        const midi = this.noteToMidi(name);
+        return 440 * Math.pow(2, (midi - 69) / 12);
+      },
+      playNote(name, dur = 0.35, when = 0, gain = 0.42) {
+        if (!this.unlocked || !this.ctx || !DATA.soundOn || !name) return;
+        const start = this.ctx.currentTime + when;
+        const freq = this.noteToFreq(name);
+        const out = this.ctx.createGain();
+        out.gain.setValueAtTime(0.0001, start);
+        out.gain.exponentialRampToValueAtTime(gain, start + 0.012);
+        out.gain.exponentialRampToValueAtTime(0.0001, start + dur);
+        out.connect(this.master);
+        const sine = this.ctx.createOscillator();
+        const tri = this.ctx.createOscillator();
+        sine.type = 'sine';
+        tri.type = 'triangle';
+        sine.frequency.value = freq;
+        tri.frequency.value = freq;
+        const sg = this.ctx.createGain();
+        const tg = this.ctx.createGain();
+        sg.gain.value = 0.58;
+        tg.gain.value = 0.24;
+        sine.connect(sg);
+        tri.connect(tg);
+        sg.connect(out);
+        tg.connect(out);
+        sine.start(start);
+        tri.start(start);
+        sine.stop(start + dur + 0.04);
+        tri.stop(start + dur + 0.04);
+      },
+      playChord(names, mode = 'arp') {
+        if (mode === 'arp') names.forEach((n, i) => this.playNote(n, 0.42, i * 0.08, 0.32));
+        names.forEach((n) => this.playNote(n, 0.55, mode === 'arp' ? 0.28 : 0, 0.18));
+      },
+      sfxPickup() {
+        this.playNote('C5', 0.16, 0, 0.32);
+        this.playNote('C6', 0.26, 0.08, 0.24);
+      },
+      sfxSuccess() {
+        this.playNote('C4', 0.16, 0, 0.26);
+        this.playNote('G4', 0.24, 0.09, 0.25);
+      },
+      sfxFail() {
+        this.playNote('C4', 0.12, 0, 0.15);
+        this.playNote('C#4', 0.14, 0.07, 0.12);
+      },
+      sfxDoor() {
+        this.playNote('C3', 0.18, 0, 0.25);
+        this.playNote('G3', 0.22, 0.09, 0.23);
+        this.playNote('C4', 0.32, 0.2, 0.20);
+      },
+      setBgm(key) {
+        if (this.bgmKey === key) return;
+        this.bgmKey = key;
+        this.bgmIndex = 0;
+        this.bgmTimer = 0;
+      },
+      update(dt) {
+        if (!this.unlocked || !DATA.soundOn || !this.bgmKey || gameState === 'Title') return;
+        const seq = this.sequences[this.bgmKey];
+        if (!seq) return;
+        this.bgmTimer -= dt;
+        if (this.bgmTimer > 0) return;
+        const item = seq.notes[this.bgmIndex % seq.notes.length];
+        const beatDur = 60 / seq.bpm;
+        if (item[0]) this.playNote(item[0], Math.min(0.55, beatDur * item[1] * 0.72), 0, 0.12);
+        this.bgmTimer = beatDur * item[1];
+        this.bgmIndex += 1;
+      }
+    };
+
+    // INPUT
+    const INPUT = {
+      keys: new Set(),
+      joy: { active: false, id: null, baseX: 0, baseY: 0, x: 0, y: 0, vx: 0, vy: 0 },
+      lastTile: { x: -1, y: -1 },
+      holdReset: 0,
+      down(p, id) {
+        if (gameState === 'Explore' && p.x < CONFIG.W * 0.5 && p.y > 72) {
+          this.joy.active = true;
+          this.joy.id = id;
+          this.joy.baseX = p.x;
+          this.joy.baseY = p.y;
+          this.joy.x = p.x;
+          this.joy.y = p.y;
+          this.updateJoy(p);
+        }
+      },
+      move(p, id) {
+        if (this.joy.active && this.joy.id === id) this.updateJoy(p);
+      },
+      up(id) {
+        if (this.joy.active && this.joy.id === id) this.clearMovement();
+      },
+      updateJoy(p) {
+        const dx = p.x - this.joy.baseX;
+        const dy = p.y - this.joy.baseY;
+        const len = Math.hypot(dx, dy);
+        const max = 48;
+        const scale = len > max ? max / len : 1;
+        this.joy.x = this.joy.baseX + dx * scale;
+        this.joy.y = this.joy.baseY + dy * scale;
+        if (len < 8) {
+          this.joy.vx = 0;
+          this.joy.vy = 0;
+        } else {
+          this.joy.vx = dx / Math.max(1, len);
+          this.joy.vy = dy / Math.max(1, len);
+        }
+      },
+      clearMovement() {
+        this.joy.active = false;
+        this.joy.id = null;
+        this.joy.vx = 0;
+        this.joy.vy = 0;
+      },
+      movementVector() {
+        let x = 0;
+        let y = 0;
+        if (this.keys.has('KeyA') || this.keys.has('ArrowLeft')) x -= 1;
+        if (this.keys.has('KeyD') || this.keys.has('ArrowRight')) x += 1;
+        if (this.keys.has('KeyW') || this.keys.has('ArrowUp')) y -= 1;
+        if (this.keys.has('KeyS') || this.keys.has('ArrowDown')) y += 1;
+        x += this.joy.vx;
+        y += this.joy.vy;
+        const len = Math.hypot(x, y);
+        if (len > 1) {
+          x /= len;
+          y /= len;
+        }
+        return { x, y };
+      }
+    };
+
+    // MAP
+    const MAPS = {};
+
+    function grid(w, h, fill = 0) {
+      return Array.from({ length: h }, () => Array.from({ length: w }, () => fill));
+    }
+
+    function rect(gridData, x, y, w, h, value) {
+      for (let yy = y; yy < y + h; yy += 1) {
+        for (let xx = x; xx < x + w; xx += 1) {
+          if (gridData[yy] && typeof gridData[yy][xx] !== 'undefined') gridData[yy][xx] = value;
+        }
+      }
+    }
+
+    function addBorder(collision, w, h) {
+      rect(collision, 0, 0, w, 1, 1);
+      rect(collision, 0, h - 1, w, 1, 1);
+      rect(collision, 0, 0, 1, h, 1);
+      rect(collision, w - 1, 0, 1, h, 1);
+    }
+
+    function buildMaps() {
+      const villageGround = grid(30, 20, 0);
+      const villageCollision = grid(30, 20, 0);
+      addBorder(villageCollision, 30, 20);
+      rect(villageGround, 13, 0, 5, 20, 1);
+      rect(villageGround, 0, 9, 30, 3, 1);
+      rect(villageGround, 2, 15, 7, 3, 1);
+      rect(villageGround, 21, 15, 6, 3, 1);
+      rect(villageCollision, 14, 2, 4, 4, 1);
+      rect(villageCollision, 3, 14, 4, 3, 1);
+      rect(villageCollision, 21, 14, 4, 3, 1);
+      rect(villageCollision, 4, 9, 2, 2, 1);
+      MAPS.village = {
+        id: 'village',
+        name: '하모니아 마을',
+        w: 30,
+        h: 20,
+        palette: 'village',
+        ground: villageGround,
+        collision: villageCollision,
+        spawns: {
+          start: { x: 15.5, y: 16 },
+          fromTower: { x: 15.5, y: 7.5 },
+          west: { x: 27, y: 10.5 },
+          ending: { x: 15.5, y: 8.4 }
+        },
+        objects: [
+          { id: 'tower_body', type: 'decor', x: 14, y: 2, w: 4, h: 4, glyph: '♪', label: '오르골 탑' },
+          { id: 'tower_door', type: 'towerDoor', x: 15, y: 6, w: 2, h: 1, attachTargets: ['clef_g'], label: '탑 문' },
+          { id: 'clef', type: 'npc', x: 15, y: 9, role: 'elder', label: '클레프', dialogue: [
+            { if: { quest: 'MQ01', is: 'not_started' }, use: 'clef_intro' },
+            { if: { flag: 'forest_gate_open' }, use: 'clef_after_gate' },
+            { use: 'clef_wait' }
+          ] },
+          { id: 'pitch', type: 'npc', x: 6, y: 10, role: 'child', label: '피치', dialogue: [
+            { if: { flag: 'tower_examined', notFlag: 'pitch_hint' }, use: 'pitch_hint' },
+            { if: { flag: 'got_clef_g' }, use: 'pitch_after_clef' },
+            { use: 'pitch_hello' }
+          ] },
+          { id: 'well', type: 'sign', x: 4, y: 9, w: 2, h: 2, label: '우물', dialogue: 'well_sign' },
+          { id: 'clef_bush', type: 'pickup', x: 5, y: 8, symbol: 'clef_g', label: '반짝이는 수풀',
+            requiresFlags: ['tower_examined', 'pitch_hint'], hideIfFlag: 'got_clef_g' },
+          { id: 'forest_gate', type: 'forestGate', x: 28, y: 10, w: 1, h: 2, label: '숲 관문' },
+          { id: 'forest_sign', type: 'sign', x: 26, y: 10, label: '숲 표지판', dialogue: 'forest_sign_closed' }
+        ],
+        above: [
+          { x: 2, y: 3, w: 3, h: 2, color: '#C4A06B' },
+          { x: 24, y: 3, w: 3, h: 2, color: '#C4A06B' }
+        ]
+      };
+
+      const towerGround = grid(14, 12, 5);
+      const towerCollision = grid(14, 12, 0);
+      addBorder(towerCollision, 14, 12);
+      rect(towerGround, 4, 2, 6, 7, 1);
+      MAPS.tower = {
+        id: 'tower',
+        name: '오르골 탑 내부',
+        w: 14,
+        h: 12,
+        palette: 'tower',
+        ground: towerGround,
+        collision: towerCollision,
+        spawns: { start: { x: 7, y: 10 }, exit: { x: 7, y: 10 } },
+        objects: [
+          { id: 'world_score', type: 'worldScore', x: 5, y: 3, w: 4, h: 2, label: '찢어진 세계악보' },
+          { id: 'tower_exit', type: 'portal', x: 6, y: 11, w: 2, h: 1, to: 'village', spawn: 'fromTower', label: '탑 출구' }
+        ],
+        above: []
+      };
+
+      const forestGround = grid(40, 25, 0);
+      const forestCollision = grid(40, 25, 0);
+      addBorder(forestCollision, 40, 25);
+      rect(forestGround, 0, 11, 27, 3, 2);
+      rect(forestGround, 27, 0, 3, 25, 3);
+      rect(forestCollision, 27, 0, 3, 25, 1);
+      rect(forestGround, 30, 11, 9, 3, 2);
+      rect(forestGround, 8, 17, 5, 5, 2);
+      rect(forestGround, 30, 3, 7, 4, 4);
+      rect(forestCollision, 33, 3, 5, 3, 1);
+      rect(forestCollision, 35, 6, 3, 1, 1);
+      MAPS.forest = {
+        id: 'forest',
+        name: '도레미 숲',
+        w: 40,
+        h: 25,
+        palette: 'forest',
+        ground: forestGround,
+        collision: forestCollision,
+        spawns: { west: { x: 2, y: 12 }, fromVillage: { x: 2, y: 12 }, east: { x: 31, y: 12 } },
+        objects: [
+          { id: 'forest_exit', type: 'portal', x: 0, y: 11, w: 1, h: 3, to: 'village', spawn: 'west', label: '마을 길' },
+          { id: 'lala', type: 'npc', x: 4, y: 12, role: 'bard', label: '라라', dialogue: [{ use: 'lala_forest' }] },
+          { id: 'note_c_pickup', type: 'pickup', x: 7, y: 11, symbol: 'note_c', label: '도 음표', hideIfFlag: 'got_note_c' },
+          { id: 'crow', type: 'crow', x: 17, y: 9, label: '까마귀 나무' },
+          { id: 'bell_c', type: 'bell', x: 14, y: 12, pitch: 'C4', note: 'C', label: '낮은 종' },
+          { id: 'bell_e', type: 'bell', x: 16, y: 12, pitch: 'E4', note: 'E', label: '가운데 종' },
+          { id: 'bell_g', type: 'bell', x: 18, y: 12, pitch: 'G4', note: 'G', label: '높은 종' },
+          { id: 'push_rock', type: 'rock', x: 10, y: 19, label: '밀기 바위' },
+          { id: 'stump_chest', type: 'chest', x: 10, y: 21, symbol: 'note_g', label: '그루터기 상자', hideIfFlag: 'got_note_g' },
+          { id: 'slot_c', type: 'staffSlot', x: 27, y: 12, staffSlot: 'ledger_below', expected: 'note_c', label: '오선 슬롯 1' },
+          { id: 'slot_e', type: 'staffSlot', x: 28, y: 12, staffSlot: 'line1', expected: 'note_e', label: '오선 슬롯 2' },
+          { id: 'slot_g', type: 'staffSlot', x: 29, y: 12, staffSlot: 'line2', expected: 'note_g', label: '오선 슬롯 3' },
+          { id: 'staff_door', type: 'staffDoor', x: 34, y: 12, w: 1, h: 2, label: '오선 문' },
+          { id: 'golden_note_01', type: 'golden', x: 36, y: 6, label: '황금 음표', hideIfFlag: 'golden_note_01' },
+          { id: 'waterfall_sign', type: 'sign', x: 35, y: 7, label: '폭포 뒤', dialogue: 'waterfall_hint' }
+        ],
+        above: [
+          { x: 12, y: 4, w: 6, h: 3, color: '#2F7D46' },
+          { x: 19, y: 15, w: 5, h: 3, color: '#2F7D46' },
+          { x: 31, y: 4, w: 7, h: 3, color: '#86CDE6' }
+        ]
+      };
+    }
+
+    function currentMap() {
+      return MAPS[DATA.currentMap];
+    }
+
+    function tileAt(map, tx, ty) {
+      if (!map || ty < 0 || tx < 0 || ty >= map.h || tx >= map.w) return 1;
+      return map.ground[ty][tx];
+    }
+
+    function objectRect(obj) {
+      return {
+        x: t2p(obj.x),
+        y: t2p(obj.y),
+        w: t2p(obj.w || 1),
+        h: t2p(obj.h || 1)
+      };
+    }
+
+    function isObjectVisible(obj) {
+      if (obj.hideIfFlag && DATA.flags[obj.hideIfFlag]) return false;
+      if (obj.requiresFlags && !obj.requiresFlags.every((f) => DATA.flags[f])) return false;
+      return true;
+    }
+
+    function syncObjectsFromFlags(map = currentMap()) {
+      if (!map) return;
+      map.objects.forEach((obj) => {
+        if (obj.type === 'staffSlot') obj.placed = Boolean(DATA.flags[`bridge_${obj.staffSlot}`]);
+        if (obj.id === 'tower_door') obj.open = Boolean(DATA.flags.tower_door_open);
+        if (obj.id === 'staff_door') obj.open = Boolean(DATA.flags.staff_door_open);
+      });
+    }
+
+    function loadMap(id, spawn = 'start', shouldSave = true) {
+      DATA.currentMap = id;
+      document.body.dataset.mapId = id;
+      const map = currentMap();
+      syncObjectsFromFlags(map);
+      const sp = map.spawns[spawn] || map.spawns.start || { x: 2, y: 2 };
+      ENTITIES.player.x = t2p(sp.x) - CONFIG.PLAYER_W / 2;
+      ENTITIES.player.y = t2p(sp.y) - CONFIG.PLAYER_H / 2;
+      ENTITIES.player.faceX = 0;
+      ENTITIES.player.faceY = 1;
+      SCENES.camera.x = clamp(ENTITIES.player.x - CONFIG.W / 2, 0, Math.max(0, t2p(map.w) - CONFIG.W));
+      SCENES.camera.y = clamp(ENTITIES.player.y - CONFIG.H / 2, 0, Math.max(0, t2p(map.h) - CONFIG.H));
+      INPUT.lastTile = { x: -1, y: -1 };
+      if (id === 'forest') AUDIO.setBgm('forest');
+      else if (id === 'tower') AUDIO.setBgm('tower');
+      else AUDIO.setBgm(DATA.scoreParts.melody ? 'villageMelody' : 'villageQuiet');
+      if (shouldSave) SAVE.write('map');
+    }
+
+    function transitionToMap(id, spawn = 'start') {
+      if (SCENES.transition.active) return;
+      SCENES.transition = { active: true, phase: 'out', alpha: 0, to: id, spawn };
+      INPUT.clearMovement();
+    }
+
+    function isBridgeOverride(tx, ty) {
+      const map = currentMap();
+      if (!map || map.id !== 'forest') return false;
+      return map.objects.some((obj) => obj.type === 'staffSlot' && obj.placed && obj.x === tx && obj.y === ty);
+    }
+
+    function isSolidObject(obj) {
+      if (!isObjectVisible(obj)) return false;
+      if (obj.type === 'rock') return true;
+      if (obj.type === 'forestGate') return !DATA.flags.forest_gate_open;
+      if (obj.type === 'staffDoor') return !DATA.flags.staff_door_open;
+      return false;
+    }
+
+    function isBlockedRect(rect, ignoreObject = null) {
+      const map = currentMap();
+      const corners = [
+        [rect.x, rect.y],
+        [rect.x + rect.w - 1, rect.y],
+        [rect.x, rect.y + rect.h - 1],
+        [rect.x + rect.w - 1, rect.y + rect.h - 1]
+      ];
+      for (const [x, y] of corners) {
+        const tx = p2t(x);
+        const ty = p2t(y);
+        if (!isBridgeOverride(tx, ty) && (!map || !map.collision[ty] || map.collision[ty][tx])) return true;
+      }
+      for (const obj of map.objects) {
+        if (obj === ignoreObject || !isSolidObject(obj)) continue;
+        if (rectsOverlap(rect, objectRect(obj))) return true;
+      }
+      return false;
+    }
+
+    // ENTITIES
+    const ENTITIES = {
+      player: { x: 0, y: 0, faceX: 0, faceY: 1, moving: false },
+      particles: [],
+      push: { id: null, timer: 0 },
+      addParticle(x, y, text, color = CONFIG.colors.gold) {
+        if (this.particles.length > 48) this.particles.shift();
+        this.particles.push({ x, y, text, color, life: 1, vy: -22 });
+      },
+      playerRect(nx = this.player.x, ny = this.player.y) {
+        return { x: nx, y: ny, w: CONFIG.PLAYER_W, h: CONFIG.PLAYER_H };
+      },
+      playerCenter() {
+        return { x: this.player.x + CONFIG.PLAYER_W / 2, y: this.player.y + CONFIG.PLAYER_H / 2 };
+      },
+      update(dt) {
+        if (gameState === 'Explore' && !SCENES.transition.active) {
+          const mv = INPUT.movementVector();
+          this.player.moving = Math.hypot(mv.x, mv.y) > 0.05;
+          if (this.player.moving) {
+            this.player.faceX = Math.abs(mv.x) > Math.abs(mv.y) ? Math.sign(mv.x) : 0;
+            this.player.faceY = Math.abs(mv.y) >= Math.abs(mv.x) ? Math.sign(mv.y) : 0;
+            const step = CONFIG.PLAYER_SPEED * dt;
+            const nx = this.player.x + mv.x * step;
+            if (!isBlockedRect(this.playerRect(nx, this.player.y))) this.player.x = nx;
+            const ny = this.player.y + mv.y * step;
+            if (!isBlockedRect(this.playerRect(this.player.x, ny))) this.player.y = ny;
+            this.updateRockPush(dt, mv);
+          } else {
+            this.push.timer = 0;
+            this.push.id = null;
+          }
+          this.checkStepTriggers();
+        }
+        for (let i = this.particles.length - 1; i >= 0; i -= 1) {
+          const p = this.particles[i];
+          p.life -= dt;
+          p.y += p.vy * dt;
+          if (p.life <= 0) this.particles.splice(i, 1);
+        }
+      },
+      updateRockPush(dt, mv) {
+        const target = UI.getInteractTarget();
+        if (!target || target.type !== 'rock') {
+          this.push.timer = 0;
+          this.push.id = null;
+          return;
+        }
+        const dirX = Math.abs(mv.x) > Math.abs(mv.y) ? Math.sign(mv.x) : 0;
+        const dirY = Math.abs(mv.y) >= Math.abs(mv.x) ? Math.sign(mv.y) : 0;
+        const pc = this.playerCenter();
+        const rc = centerOf(objectRect(target));
+        const toward = Math.sign(rc.x - pc.x) === dirX || Math.sign(rc.y - pc.y) === dirY;
+        if (!toward || (dirX === 0 && dirY === 0)) return;
+        if (this.push.id !== target.id) {
+          this.push.id = target.id;
+          this.push.timer = 0;
+        }
+        this.push.timer += dt;
+        if (this.push.timer < 0.4) return;
+        this.push.timer = 0;
+        const nx = target.x + dirX;
+        const ny = target.y + dirY;
+        const nextRect = { x: t2p(nx), y: t2p(ny), w: CONFIG.TILE, h: CONFIG.TILE };
+        if (!isBlockedRect(nextRect, target)) {
+          target.x = nx;
+          target.y = ny;
+          AUDIO.sfxSuccess();
+          UI.toast('바위가 한 칸 밀렸어요');
+        } else {
+          AUDIO.sfxFail();
+        }
+      },
+      checkStepTriggers() {
+        const c = this.playerCenter();
+        const tx = p2t(c.x);
+        const ty = p2t(c.y);
+        if (INPUT.lastTile.x === tx && INPUT.lastTile.y === ty) return;
+        INPUT.lastTile = { x: tx, y: ty };
+        const map = currentMap();
+        for (const obj of map.objects) {
+          if (!isObjectVisible(obj) || obj.x !== tx || obj.y !== ty) continue;
+          if (obj.type === 'bell') PUZZLES.stepBell(obj);
+          if (obj.type === 'staffSlot' && obj.placed) PUZZLES.stepBridgeSlot(obj);
+          if (obj.type === 'portal') transitionToMap(obj.to, obj.spawn);
+        }
+        if (map.id === 'village') {
+          const gate = map.objects.find((o) => o.id === 'forest_gate');
+          if (gate && DATA.flags.forest_gate_open && tx >= 28 && tx <= 29 && ty >= 10 && ty <= 11) {
+            transitionToMap('forest', 'fromVillage');
+          }
+        }
+      }
+    };
+
+    // SYMBOLS
+    const SYMBOLS = {
+      clef_g: {
+        name: '높은음자리표',
+        glyph: '𝄞',
+        asset: 'clef_g',
+        theory: '소용돌이가 감는 둘째 줄이 [솔]이에요.',
+        effect: '숨은 오선이 보이고 기호를 붙일 수 있어요.'
+      },
+      note_c: {
+        name: '도 음표',
+        glyph: '♩',
+        pitch: 'C4',
+        staffSlot: 'ledger_below',
+        solfege: '도',
+        theory: '도: 아래 첫째 덧줄에 살아요.',
+        effect: '낮은 출발음을 만드는 다리 열쇠예요.'
+      },
+      note_e: {
+        name: '미 음표',
+        glyph: '♪',
+        pitch: 'E4',
+        staffSlot: 'line1',
+        solfege: '미',
+        theory: '미: 오선의 첫째 줄에 앉아요.',
+        effect: '가운데 음을 이어 오선 다리를 채워요.'
+      },
+      note_g: {
+        name: '솔 음표',
+        glyph: '♫',
+        pitch: 'G4',
+        staffSlot: 'line2',
+        solfege: '솔',
+        theory: '솔: 높은음자리표가 알려 주는 둘째 줄이에요.',
+        effect: '가장 높은 다리 슬롯을 밝히는 음표예요.'
+      }
+    };
+
+    const ASSETS = {};
+    function loadAssets() {
+      Object.entries(CONFIG.assets).forEach(([key, src]) => {
+        const img = new Image();
+        img.src = src;
+        ASSETS[key] = img;
+      });
+    }
+
+    function hasSymbol(id) {
+      return DATA.symbols.includes(id);
+    }
+
+    function addSymbol(id, flag = `got_${id}`) {
+      if (!SYMBOLS[id]) return;
+      if (!DATA.symbols.includes(id)) DATA.symbols.push(id);
+      if (!DATA.codex.includes(id)) DATA.codex.push(id);
+      DATA.flags[flag] = true;
+      AUDIO.sfxPickup();
+      SAVE.write('pickup');
+      UI.showCodex(id);
+    }
+
+    function availableNotesForSlot() {
+      const placed = new Set();
+      const map = currentMap();
+      map.objects.forEach((obj) => {
+        if (obj.type === 'staffSlot' && obj.placedSymbol) placed.add(obj.placedSymbol);
+      });
+      return DATA.symbols.filter((id) => SYMBOLS[id] && SYMBOLS[id].pitch && !placed.has(id));
+    }
+
+    function tryAttachToObject(symbolId, obj) {
+      if (!obj.attachTargets || !obj.attachTargets.includes(symbolId)) {
+        AUDIO.sfxFail();
+        UI.toast('이 기호를 붙일 자리가 아니에요');
+        return false;
+      }
+      obj.attached = symbolId;
+      if (obj.id === 'tower_door') {
+        DATA.flags.tower_door_open = true;
+        QUEST.setObjective('MQ01', '탑 안에서 세계악보를 조사하자');
+        AUDIO.sfxDoor();
+        UI.toast('탑 문 위에 오선이 되살아났어요');
+      }
+      SAVE.write('puzzle');
+      setState('Explore');
+      return true;
+    }
+
+    function tryPlaceSlot(symbolId, slot) {
+      if (!SYMBOLS[symbolId] || !SYMBOLS[symbolId].pitch) return false;
+      if (SYMBOLS[symbolId].staffSlot !== slot.staffSlot) {
+        AUDIO.sfxFail();
+        SCENES.shake = 0.22;
+        UI.toast('오선 위치가 달라요');
+        setState('Explore');
+        return false;
+      }
+      slot.placed = true;
+      slot.placedSymbol = symbolId;
+      DATA.flags[`bridge_${slot.staffSlot}`] = true;
+      AUDIO.playNote(SYMBOLS[symbolId].pitch, 0.45);
+      ENTITIES.addParticle(t2p(slot.x) + 16, t2p(slot.y), SYMBOLS[symbolId].solfege, CONFIG.colors.gold);
+      if (PUZZLES.bridgeReady()) UI.toast('낮은 음에서 높은 음으로 밟아라');
+      SAVE.write('puzzle');
+      setState('Explore');
+      return true;
+    }
+
+    // RHYTHM
+    const RHYTHM = {
+      beat: 0,
+      bpm: 72,
+      timer: 0,
+      update(dt) {
+        this.timer += dt;
+        const beatDur = 60 / this.bpm;
+        if (this.timer >= beatDur) {
+          this.timer -= beatDur;
+          this.beat = (this.beat + 1) % 4;
+        }
+      }
+    };
+
+    // DIALOGUE
+    const DIALOGUES = {
+      clef_intro: {
+        speaker: '클레프',
+        lines: ['세계악보가 찢겨버렸다.', '우선 오르골 탑을 살펴보렴.'],
+        onEnd: { questStart: 'MQ01', objective: '오르골 탑을 조사하자' }
+      },
+      clef_wait: {
+        speaker: '클레프',
+        lines: ['탑 문의 자국을 잘 보렴. 무언가 끼워 넣는 자리 같지 않니?']
+      },
+      clef_after_gate: {
+        speaker: '클레프',
+        lines: ['흩어진 기호들을 모아야 한다.', '첫 기호들은 도레미 숲에 떨어졌어.']
+      },
+      pitch_hello: {
+        speaker: '피치',
+        lines: ['우물 근처에서 반짝이는 걸 본 것 같기도 하고 아닌 것 같기도 해.']
+      },
+      pitch_hint: {
+        speaker: '피치',
+        lines: ['우물 뒤에서 반짝이는 거 봤어!'],
+        onEnd: { flag: 'pitch_hint' }
+      },
+      pitch_after_clef: {
+        speaker: '피치',
+        lines: ['그 소용돌이 기호였구나. 탑 문에 꼭 맞을 것 같아!']
+      },
+      well_sign: {
+        speaker: '우물',
+        lines: ['맑은 물 아래로 희미한 오선이 비친다.']
+      },
+      forest_sign_closed: {
+        speaker: '표지판',
+        lines: ['숲으로 가는 길 — 지금은 굳게 닫혀 있다.']
+      },
+      forest_sign_open: {
+        speaker: '표지판',
+        lines: ['숲으로 가는 길 — 잃어버린 음표들이 기다린다.']
+      },
+      tower_mark: {
+        speaker: '템포',
+        lines: ['흐릿한 소용돌이 자국...', '이 자국... 어디서 봤는데?'],
+        onEnd: { flag: 'tower_examined', objective: ['MQ01', '피치에게 단서를 물어보자'] }
+      },
+      tower_need_clef: {
+        speaker: '템포',
+        lines: ['문 위의 자국은 높은음자리표 모양이야.', '팔레트에서 기호를 골라 문에 붙여보자.']
+      },
+      tower_open: {
+        speaker: '템포',
+        lines: ['문 위 오선이 다시 빛나고 있어.', '안으로 들어가 세계악보를 살펴보자.']
+      },
+      world_score_intro: {
+        speaker: '세계악보',
+        lines: ['찢어진 오선 사이로 어두운 지휘봉 그림자가 드리운다.', '곡이 끝나지 않으면, 실패한 연주도 없다.'],
+        onEnd: { prologueComplete: true }
+      },
+      tempo_start: {
+        speaker: '템포',
+        lines: ['조이스틱으로 광장까지 가보자. 하나, 둘!']
+      },
+      lala_forest: {
+        speaker: '라라',
+        lines: ['낮은 소리에서 높은 소리로— 길은 노래를 따라 열리지.']
+      },
+      crow_start: {
+        speaker: '까마귀',
+        lines: ['까악! 내가 부르는 세 음을 그대로 종으로 들려줘.']
+      },
+      crow_done: {
+        speaker: '까마귀',
+        lines: ['까악, 좋아! 미 음표는 이제 네 노래야.']
+      },
+      chest_note_g: {
+        speaker: '상자',
+        lines: ['그루터기 속에서 솔 음표가 환하게 떠오른다.'],
+        onEnd: { addSymbol: 'note_g' }
+      },
+      waterfall_hint: {
+        speaker: '폭포',
+        lines: ['물소리 뒤에 작은 금빛 음표가 숨어 있다.']
+      },
+      staff_door_closed: {
+        speaker: '오선 문',
+        lines: ['세 음이 제자리를 찾고, 낮은 음에서 높은 음으로 걸어야 열린다.']
+      },
+      ending_clef: {
+        speaker: '클레프',
+        lines: ['들리니? 노래가 돌아오고 있어.', '협곡의 문이 열렸다. 여정은 계속된다...']
+      }
+    };
+
+    const DIALOGUE = {
+      active: null,
+      index: 0,
+      chars: 0,
+      charRate: 30,
+      start(key) {
+        const data = DIALOGUES[key];
+        if (!data) return;
+        this.active = { key, ...data };
+        this.index = 0;
+        this.chars = 0;
+        setState('Dialogue');
+      },
+      update(dt) {
+        if (gameState !== 'Dialogue' || !this.active) return;
+        const line = this.active.lines[this.index] || '';
+        this.chars = Math.min(line.length, this.chars + this.charRate * dt);
+      },
+      advance() {
+        if (!this.active) return;
+        const line = this.active.lines[this.index] || '';
+        if (this.chars < line.length) {
+          this.chars = line.length;
+          return;
+        }
+        this.index += 1;
+        if (this.index < this.active.lines.length) {
+          this.chars = 0;
+          return;
+        }
+        const end = this.active.onEnd;
+        this.active = null;
+        this.index = 0;
+        this.chars = 0;
+        setState('Explore');
+        if (end) applyDialogueEnd(end);
+      }
+    };
+
+    function applyDialogueEnd(end) {
+      if (end.questStart) QUEST.start(end.questStart, end.objective);
+      if (end.objective) {
+        if (Array.isArray(end.objective)) QUEST.setObjective(end.objective[0], end.objective[1]);
+        else if (end.questStart) QUEST.setObjective(end.questStart, end.objective);
+      }
+      if (end.flag) {
+        DATA.flags[end.flag] = true;
+        SAVE.write('quest');
+      }
+      if (end.addSymbol) addSymbol(end.addSymbol);
+      if (end.prologueComplete) {
+        DATA.flags.world_score_seen = true;
+        QUEST.complete('MQ01');
+        QUEST.reward('MQ01');
+        QUEST.start('MQ02', '도레미 숲에서 사라진 음표를 되찾자');
+        DATA.flags.forest_gate_open = true;
+        UI.toast('숲 관문이 열렸어요');
+        SAVE.write('quest');
+      }
+    }
+
+    function resolveDialogueForObject(obj) {
+      if (typeof obj.dialogue === 'string') {
+        if (obj.id === 'forest_sign' && DATA.flags.forest_gate_open) return 'forest_sign_open';
+        return obj.dialogue;
+      }
+      if (Array.isArray(obj.dialogue)) {
+        for (const branch of obj.dialogue) {
+          if (!branch.if || branchMatches(branch.if)) return branch.use;
+        }
+      }
+      return null;
+    }
+
+    function branchMatches(cond) {
+      if (cond.quest && QUEST.state(cond.quest) !== cond.is) return false;
+      if (cond.flag && !DATA.flags[cond.flag]) return false;
+      if (cond.notFlag && DATA.flags[cond.notFlag]) return false;
+      return true;
+    }
+
+    // QUEST
+    const QUEST = {
+      order: ['not_started', 'active', 'completed', 'rewarded'],
+      defs: {
+        MQ01: { title: '멈춘 오르골', objective: '오르골 탑을 조사하자' },
+        MQ02: { title: '도레미 숲의 사라진 음표', objective: '도·미·솔 음표를 되찾자' }
+      },
+      state(id) {
+        return DATA.quests[id]?.state || 'not_started';
+      },
+      setState(id, next) {
+        if (!this.defs[id]) return;
+        const curr = this.state(id);
+        if (this.order.indexOf(next) < this.order.indexOf(curr)) {
+          console.warn('퀘스트 상태 역행 무시:', id, curr, next);
+          return;
+        }
+        DATA.quests[id] = DATA.quests[id] || { state: 'not_started', objective: this.defs[id].objective };
+        DATA.quests[id].state = next;
+        SAVE.write('quest');
+      },
+      start(id, objective) {
+        if (this.state(id) === 'not_started') this.setState(id, 'active');
+        if (objective) this.setObjective(id, objective);
+      },
+      complete(id) {
+        if (this.state(id) === 'active') this.setState(id, 'completed');
+      },
+      reward(id) {
+        if (this.state(id) === 'completed') this.setState(id, 'rewarded');
+      },
+      setObjective(id, objective) {
+        if (!this.defs[id]) return;
+        DATA.quests[id] = DATA.quests[id] || { state: this.state(id), objective: this.defs[id].objective };
+        DATA.quests[id].objective = objective;
+        SAVE.write('quest');
+      },
+      activeQuest() {
+        return Object.entries(DATA.quests).find(([, q]) => q.state === 'active');
+      }
+    };
+
+    // SAVE
+    function defaultData() {
+      return {
+        version: 1,
+        currentMap: 'village',
+        playerPosition: { x: 0, y: 0 },
+        symbols: [],
+        goldenNotes: [],
+        equip: null,
+        quests: {
+          MQ01: { state: 'not_started', objective: QUEST?.defs?.MQ01?.objective || '오르골 탑을 조사하자' },
+          MQ02: { state: 'not_started', objective: '도레미 숲에서 사라진 음표를 되찾자' }
+        },
+        flags: {},
+        codex: [],
+        scoreParts: { melody: false, accidental: false, rhythm: false, dynamics: false, harmony: false },
+        soundOn: true,
+        playTime: 0
+      };
+    }
+
+    let DATA = {
+      version: 1,
+      currentMap: 'village',
+      playerPosition: { x: 0, y: 0 },
+      symbols: [],
+      goldenNotes: [],
+      equip: null,
+      quests: {
+        MQ01: { state: 'not_started', objective: '오르골 탑을 조사하자' },
+        MQ02: { state: 'not_started', objective: '도레미 숲에서 사라진 음표를 되찾자' }
+      },
+      flags: {},
+      codex: [],
+      scoreParts: { melody: false, accidental: false, rhythm: false, dynamics: false, harmony: false },
+      soundOn: true,
+      playTime: 0
+    };
+
+    const SAVE = {
+      memory: null,
+      fallback: false,
+      readRaw() {
+        try {
+          return window.localStorage.getItem(CONFIG.SAVE_KEY);
+        } catch (err) {
+          this.fallback = true;
+          return this.memory;
+        }
+      },
+      hasSave() {
+        return Boolean(this.readRaw());
+      },
+      load() {
+        const raw = this.readRaw();
+        if (!raw) return false;
+        try {
+          const parsed = JSON.parse(raw);
+          if (!parsed || parsed.version !== 1) return false;
+          DATA = { ...defaultDataSafe(), ...parsed };
+          DATA.quests = { ...defaultDataSafe().quests, ...(parsed.quests || {}) };
+          DATA.flags = parsed.flags || {};
+          DATA.scoreParts = { ...defaultDataSafe().scoreParts, ...(parsed.scoreParts || {}) };
+          DATA.symbols = Array.isArray(parsed.symbols) ? parsed.symbols : [];
+          DATA.codex = Array.isArray(parsed.codex) ? parsed.codex : [];
+          DATA.goldenNotes = Array.isArray(parsed.goldenNotes) ? parsed.goldenNotes : [];
+          AUDIO.muted = !DATA.soundOn;
+          return true;
+        } catch (err) {
+          console.warn('저장 데이터가 손상되어 새로 시작합니다.');
+          return false;
+        }
+      },
+      snapshot() {
+        DATA.playerPosition = { x: ENTITIES.player.x, y: ENTITIES.player.y };
+        return JSON.stringify(DATA);
+      },
+      write(reason = 'auto') {
+        if (!DATA) return;
+        try {
+          const payload = this.snapshot();
+          window.localStorage.setItem(CONFIG.SAVE_KEY, payload);
+          this.memory = payload;
+        } catch (err) {
+          if (!this.fallback) console.warn('localStorage 대신 인메모리 저장을 사용합니다.');
+          this.fallback = true;
+          this.memory = this.snapshot();
+        }
+        if (['map', 'quest', 'pickup', 'puzzle', 'ending', 'new'].includes(reason)) UI.toast('저장됨 ♪', 1);
+      },
+      clear() {
+        try {
+          window.localStorage.removeItem(CONFIG.SAVE_KEY);
+        } catch (err) {
+          this.memory = null;
+        }
+      }
+    };
+
+    function defaultDataSafe() {
+      return {
+        version: 1,
+        currentMap: 'village',
+        playerPosition: { x: 0, y: 0 },
+        symbols: [],
+        goldenNotes: [],
+        equip: null,
+        quests: {
+          MQ01: { state: 'not_started', objective: '오르골 탑을 조사하자' },
+          MQ02: { state: 'not_started', objective: '도레미 숲에서 사라진 음표를 되찾자' }
+        },
+        flags: {},
+        codex: [],
+        scoreParts: { melody: false, accidental: false, rhythm: false, dynamics: false, harmony: false },
+        soundOn: true,
+        playTime: 0
+      };
+    }
+
+    // UI
+    const UI = {
+      buttons: [],
+      toastText: '',
+      toastTimer: 0,
+      interactTarget: null,
+      symbolMenu: { mode: 'closed', selected: null, slot: null, filter: null },
+      cutscene: null,
+      codex: null,
+      resetConfirm: false,
+      toast(text, time = 1.4) {
+        this.toastText = text;
+        this.toastTimer = time;
+      },
+      button(id, x, y, w, h, label, enabled = true) {
+        this.buttons.push({ id, x, y, w, h, label, enabled });
+      },
+      hitButton(p, id = null) {
+        return this.buttons.find((b) => (!id || b.id === id) && b.enabled && p.x >= b.x && p.x <= b.x + b.w && p.y >= b.y && p.y <= b.y + b.h);
+      },
+      getInteractTarget() {
+        const map = currentMap();
+        if (!map) return null;
+        const pc = ENTITIES.playerCenter();
+        const front = {
+          x: pc.x + ENTITIES.player.faceX * 28,
+          y: pc.y + ENTITIES.player.faceY * 28
+        };
+        let best = null;
+        let bestDist = 9999;
+        for (const obj of map.objects) {
+          if (!isObjectVisible(obj) || !this.isInteractive(obj)) continue;
+          const rc = objectRect(obj);
+          const oc = centerOf(rc);
+          const dist = Math.min(Math.hypot(oc.x - pc.x, oc.y - pc.y), Math.hypot(oc.x - front.x, oc.y - front.y));
+          if (dist < 44 && dist < bestDist) {
+            best = obj;
+            bestDist = dist;
+          }
+        }
+        return best;
+      },
+      isInteractive(obj) {
+        return ['npc', 'sign', 'pickup', 'towerDoor', 'worldScore', 'portal', 'forestGate', 'crow', 'chest', 'staffSlot', 'staffDoor', 'golden', 'rock'].includes(obj.type);
+      },
+      showCodex(id) {
+        const s = SYMBOLS[id];
+        this.codex = { id, timer: 0 };
+        setState('Cutscene');
+      },
+      startCutscene(cards, onDone) {
+        this.cutscene = { cards, index: 0, onDone };
+        setState('Cutscene');
+      },
+      closeCutscene(skip = false) {
+        if (this.codex) {
+          this.codex = null;
+          setState('Explore');
+          return;
+        }
+        if (!this.cutscene) return;
+        if (!skip && this.cutscene.index < this.cutscene.cards.length - 1) {
+          this.cutscene.index += 1;
+          return;
+        }
+        const done = this.cutscene.onDone;
+        this.cutscene = null;
+        setState('Explore');
+        if (done) done();
+      },
+      openPalette(options = {}) {
+        if (gameState !== 'Explore') return;
+        const list = options.filter || DATA.symbols.slice();
+        if (!list.length) {
+          UI.toast('아직 가진 기호가 없어요');
+          return;
+        }
+        this.symbolMenu = { mode: 'pick', selected: null, slot: options.slot || null, filter: list };
+        setState('SymbolSelect');
+      },
+      handleSymbolPointer(p) {
+        const menu = this.symbolMenu;
+        const list = menu.filter || DATA.symbols;
+        const x = 56;
+        const y = 128;
+        const w = 248;
+        const h = 56;
+        if (menu.mode === 'pick') {
+          for (let i = 0; i < list.length; i += 1) {
+            if (p.x >= x && p.x <= x + w && p.y >= y + i * (h + 8) && p.y <= y + i * (h + 8) + h) {
+              const symbolId = list[i];
+              if (menu.slot) {
+                tryPlaceSlot(symbolId, menu.slot);
+              } else {
+                menu.mode = 'target';
+                menu.selected = symbolId;
+              }
+              return;
+            }
+          }
+          setState('Explore');
+          return;
+        }
+        if (menu.mode === 'target') {
+          const wp = screenToWorld(p);
+          const map = currentMap();
+          const target = map.objects.find((obj) => {
+            if (!isObjectVisible(obj) || !obj.attachTargets || !obj.attachTargets.includes(menu.selected)) return false;
+            return rectsOverlap({ x: wp.x, y: wp.y, w: 1, h: 1 }, objectRect(obj));
+          });
+          if (target) tryAttachToObject(menu.selected, target);
+          else {
+            AUDIO.sfxFail();
+            setState('Explore');
+          }
+        }
+      },
+      interact() {
+        const obj = this.getInteractTarget();
+        if (!obj) return;
+        handleObjectInteraction(obj);
+      },
+      update(dt) {
+        this.toastTimer = Math.max(0, this.toastTimer - dt);
+        this.interactTarget = gameState === 'Explore' ? this.getInteractTarget() : null;
+      }
+    };
+
+    function handleObjectInteraction(obj) {
+      if (obj.type === 'npc' || obj.type === 'sign') {
+        DIALOGUE.start(resolveDialogueForObject(obj));
+        return;
+      }
+      if (obj.type === 'pickup') {
+        addSymbol(obj.symbol);
+        return;
+      }
+      if (obj.type === 'golden') {
+        DATA.flags.golden_note_01 = true;
+        if (!DATA.goldenNotes.includes('golden_note_01')) DATA.goldenNotes.push('golden_note_01');
+        AUDIO.sfxPickup();
+        UI.toast('황금 음표를 찾았어요');
+        SAVE.write('pickup');
+        return;
+      }
+      if (obj.type === 'towerDoor') {
+        if (DATA.flags.tower_door_open) {
+          transitionToMap('tower', 'start');
+          return;
+        }
+        if (!DATA.flags.tower_examined) {
+          DIALOGUE.start('tower_mark');
+        } else if (hasSymbol('clef_g')) {
+          DIALOGUE.start('tower_need_clef');
+        } else {
+          DIALOGUE.start('clef_wait');
+        }
+        return;
+      }
+      if (obj.type === 'forestGate') {
+        if (DATA.flags.forest_gate_open) transitionToMap('forest', 'fromVillage');
+        else DIALOGUE.start('forest_sign_closed');
+        return;
+      }
+      if (obj.type === 'worldScore') {
+        if (!DATA.flags.world_score_seen) DIALOGUE.start('world_score_intro');
+        else UI.toast('세계악보의 멜로디 파트가 아직 비어 있어요');
+        return;
+      }
+      if (obj.type === 'portal') {
+        transitionToMap(obj.to, obj.spawn);
+        return;
+      }
+      if (obj.type === 'crow') {
+        if (DATA.flags.got_note_e) DIALOGUE.start('crow_done');
+        else {
+          DIALOGUE.start('crow_start');
+          PUZZLES.queueBirdStart = true;
+        }
+        return;
+      }
+      if (obj.type === 'chest') {
+        DIALOGUE.start('chest_note_g');
+        DATA.flags.got_note_g = true;
+        return;
+      }
+      if (obj.type === 'staffSlot') {
+        if (obj.placed) {
+          UI.toast('이미 맞는 음표가 놓였어요');
+          return;
+        }
+        const notes = availableNotesForSlot();
+        UI.openPalette({ slot: obj, filter: notes });
+        return;
+      }
+      if (obj.type === 'staffDoor') {
+        if (DATA.flags.staff_door_open) return;
+        DIALOGUE.start('staff_door_closed');
+        return;
+      }
+      if (obj.type === 'rock') {
+        UI.toast('방향을 잡고 0.4초 동안 밀어보세요');
+      }
+    }
+
+    // SCENES
+    const SCENES = {
+      camera: { x: 0, y: 0 },
+      transition: { active: false, phase: 'in', alpha: 0, to: null, spawn: null },
+      shake: 0,
+      titleHasSave: false,
+      startNewGame() {
+        DATA = defaultDataSafe();
+        DATA.soundOn = !AUDIO.muted;
+        buildMaps();
+        loadMap('village', 'start');
+        SAVE.write('new');
+        UI.startCutscene([
+          '세계 멜로디아는 세계악보의 노래로 유지되었다.',
+          '어느 날 하늘이 찢기고 기호들이 흩어졌다.',
+          '오르골이 멈춘 아침, 견습 음악사 솔이 눈을 떴다.'
+        ], () => {
+          DIALOGUE.start('tempo_start');
+        });
+      },
+      continueGame() {
+        if (!SAVE.load()) {
+          this.startNewGame();
+          return;
+        }
+        buildMaps();
+        const mapId = DATA.currentMap || 'village';
+        loadMap(mapId, 'start', false);
+        if (DATA.playerPosition) {
+          ENTITIES.player.x = DATA.playerPosition.x || ENTITIES.player.x;
+          ENTITIES.player.y = DATA.playerPosition.y || ENTITIES.player.y;
+        }
+        const map = currentMap();
+        SCENES.camera.x = clamp(ENTITIES.player.x + CONFIG.PLAYER_W / 2 - CONFIG.W / 2, 0, Math.max(0, t2p(map.w) - CONFIG.W));
+        SCENES.camera.y = clamp(ENTITIES.player.y + CONFIG.PLAYER_H / 2 - CONFIG.H / 2, 0, Math.max(0, t2p(map.h) - CONFIG.H));
+        setState('Explore');
+      },
+      update(dt) {
+        const map = currentMap();
+        if (map) {
+          const maxX = Math.max(0, t2p(map.w) - CONFIG.W);
+          const maxY = Math.max(0, t2p(map.h) - CONFIG.H);
+          const targetX = clamp(ENTITIES.player.x + CONFIG.PLAYER_W / 2 - CONFIG.W / 2, 0, maxX);
+          const targetY = clamp(ENTITIES.player.y + CONFIG.PLAYER_H / 2 - CONFIG.H / 2, 0, maxY);
+          this.camera.x = lerp(this.camera.x, targetX, 0.1);
+          this.camera.y = lerp(this.camera.y, targetY, 0.1);
+        }
+        if (this.transition.active) {
+          const speed = dt / 0.3;
+          if (this.transition.phase === 'out') {
+            this.transition.alpha += speed;
+            if (this.transition.alpha >= 1) {
+              loadMap(this.transition.to, this.transition.spawn);
+              this.transition.phase = 'in';
+              this.transition.alpha = 1;
+            }
+          } else {
+            this.transition.alpha -= speed;
+            if (this.transition.alpha <= 0) {
+              this.transition.active = false;
+              this.transition.alpha = 0;
+            }
+          }
+        }
+        this.shake = Math.max(0, this.shake - dt);
+      }
+    };
+
+    const PUZZLES = {
+      queueBirdStart: false,
+      bird: { active: false, playback: false, sequence: [], input: [], timer: 0, index: 0, idle: 0 },
+      bridge: { order: ['slot_c', 'slot_e', 'slot_g'], progress: 0 },
+      update(dt) {
+        if (this.queueBirdStart && gameState === 'Explore') {
+          this.queueBirdStart = false;
+          this.startBird();
+        }
+        if (this.bird.active) {
+          this.bird.idle += dt;
+          if (this.bird.idle > 30) {
+            this.bird.idle = 0;
+            UI.toast('템포: 첫 음이 제일 낮았어? 높았어?');
+          }
+        }
+        if (this.bird.playback) {
+          this.bird.timer -= dt;
+          if (this.bird.timer <= 0) {
+            const note = this.bird.sequence[this.bird.index];
+            AUDIO.playNote(`${note}4`, 0.38);
+            ENTITIES.addParticle(t2p(17) + 16, t2p(9), note, CONFIG.colors.cyan);
+            this.bird.index += 1;
+            this.bird.timer = 0.6;
+            if (this.bird.index >= this.bird.sequence.length) {
+              this.bird.playback = false;
+              this.bird.index = 0;
+              this.bird.timer = 0;
+              this.bird.input = [];
+            }
+          }
+        }
+      },
+      startBird() {
+        const base = ['C', 'E', 'G'];
+        for (let i = base.length - 1; i > 0; i -= 1) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [base[i], base[j]] = [base[j], base[i]];
+        }
+        this.bird.active = true;
+        this.bird.playback = true;
+        this.bird.sequence = base;
+        this.bird.input = [];
+        this.bird.timer = 0.2;
+        this.bird.index = 0;
+        this.bird.idle = 0;
+        UI.toast('새의 노래를 들어보세요');
+      },
+      replayBird(delay = 2) {
+        this.bird.playback = true;
+        this.bird.input = [];
+        this.bird.index = 0;
+        this.bird.timer = delay;
+      },
+      stepBell(obj) {
+        AUDIO.playNote(obj.pitch, 0.32);
+        ENTITIES.addParticle(t2p(obj.x) + 16, t2p(obj.y), obj.note, CONFIG.colors.gold);
+        if (!this.bird.active || this.bird.playback || DATA.flags.got_note_e) return;
+        this.bird.idle = 0;
+        this.bird.input.push(obj.note);
+        const idx = this.bird.input.length - 1;
+        if (this.bird.input[idx] !== this.bird.sequence[idx]) {
+          AUDIO.sfxFail();
+          UI.toast('까마귀가 고개를 갸웃합니다');
+          this.replayBird(2);
+          return;
+        }
+        if (this.bird.input.length === this.bird.sequence.length) {
+          this.bird.active = false;
+          DATA.flags.got_note_e = true;
+          addSymbol('note_e');
+          UI.toast('미 음표를 되찾았어요');
+        }
+      },
+      bridgeReady() {
+        const map = currentMap();
+        return map && map.objects.filter((obj) => obj.type === 'staffSlot').every((obj) => obj.placed);
+      },
+      stepBridgeSlot(obj) {
+        if (!this.bridgeReady() || DATA.flags.staff_door_open) return;
+        const expected = this.bridge.order[this.bridge.progress];
+        const sym = obj.placedSymbol || obj.expected;
+        const s = SYMBOLS[sym];
+        if (s && s.pitch) {
+          AUDIO.playNote(s.pitch, 0.34);
+          ENTITIES.addParticle(t2p(obj.x) + 16, t2p(obj.y), s.solfege, CONFIG.colors.gold);
+        }
+        if (obj.id !== expected) {
+          this.bridge.progress = 0;
+          AUDIO.sfxFail();
+          UI.toast('낮은 음부터 다시 밟아보자');
+          return;
+        }
+        this.bridge.progress += 1;
+        if (this.bridge.progress >= this.bridge.order.length) this.completeBridge();
+      },
+      completeBridge() {
+        this.bridge.progress = 0;
+        DATA.flags.staff_door_open = true;
+        DATA.flags.part_melody = true;
+        DATA.scoreParts.melody = true;
+        QUEST.complete('MQ02');
+        QUEST.reward('MQ02');
+        AUDIO.playChord(['C4', 'E4', 'G4'], 'arp');
+        UI.toast('멜로디 파트 복원!');
+        for (let i = 0; i < 12; i += 1) {
+          ENTITIES.addParticle(t2p(31 + (i % 4)), t2p(10 + Math.floor(i / 4)), '♪', CONFIG.colors.gold);
+        }
+        SAVE.write('puzzle');
+        setTimeout(() => startEnding(), 700);
+      }
+    };
+
+    function startEnding() {
+      DATA.flags.ending_seen = true;
+      loadMap('village', 'ending');
+      AUDIO.setBgm('villageMelody');
+      UI.startCutscene([
+        '멜로디 파트가 세계악보로 날아올랐다.',
+        '들리니? 노래가 돌아오고 있어.',
+        '협곡의 문이 열렸다. 여정은 계속된다...',
+        'v0.1 프롤로그 완성\n도감: 높은음자리표 · 도 · 미 · 솔'
+      ], () => {
+        SAVE.write('ending');
+        setState('Title');
+      });
+    }
+
+    // RENDER
+    function drawRoundRect(x, y, w, h, r) {
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.arcTo(x + w, y, x + w, y + h, r);
+      ctx.arcTo(x + w, y + h, x, y + h, r);
+      ctx.arcTo(x, y + h, x, y, r);
+      ctx.arcTo(x, y, x + w, y, r);
+      ctx.closePath();
+    }
+
+    function fillTextWrapped(text, x, y, maxW, lineH, maxLines = 5) {
+      const oldAlign = ctx.textAlign;
+      ctx.textAlign = 'left';
+      const chars = Array.from(text);
+      let line = '';
+      let count = 0;
+      for (let i = 0; i < chars.length; i += 1) {
+        if (chars[i] === '\n') {
+          ctx.fillText(line, x, y + count * lineH);
+          line = '';
+          count += 1;
+          continue;
+        }
+        const test = line + chars[i];
+        if (ctx.measureText(test).width > maxW && line) {
+          ctx.fillText(line, x, y + count * lineH);
+          line = chars[i];
+          count += 1;
+          if (count >= maxLines) {
+            ctx.textAlign = oldAlign;
+            return;
+          }
+        } else {
+          line = test;
+        }
+      }
+      if (line && count < maxLines) ctx.fillText(line, x, y + count * lineH);
+      ctx.textAlign = oldAlign;
+    }
+
+    function render() {
+      UI.buttons = [];
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.clearRect(0, 0, CONFIG.W, CONFIG.H);
+      if (gameState === 'Boot') {
+        drawBoot();
+        return;
+      }
+      if (gameState === 'Title') {
+        drawTitle();
+        return;
+      }
+      drawWorld();
+      drawHud();
+      if (gameState === 'Dialogue') drawDialogue();
+      if (gameState === 'SymbolSelect') drawSymbolSelect();
+      if (gameState === 'Cutscene') drawCutscene();
+      if (gameState === 'Pause') drawPause();
+      drawToast();
+      if (SCENES.transition.active) {
+        ctx.fillStyle = `rgba(0,0,0,${SCENES.transition.alpha})`;
+        ctx.fillRect(0, 0, CONFIG.W, CONFIG.H);
+      }
+    }
+
+    function drawBoot() {
+      ctx.fillStyle = '#111318';
+      ctx.fillRect(0, 0, CONFIG.W, CONFIG.H);
+      ctx.fillStyle = CONFIG.colors.gold;
+      ctx.font = '700 22px system-ui';
+      ctx.textAlign = 'center';
+      ctx.fillText('MELODIA', CONFIG.W / 2, 286);
+      ctx.font = '15px system-ui';
+      ctx.fillText('로딩 중...', CONFIG.W / 2, 322);
+    }
+
+    function drawTitle() {
+      ctx.fillStyle = '#1a2420';
+      ctx.fillRect(0, 0, CONFIG.W, CONFIG.H);
+      const grad = ctx.createLinearGradient(0, 0, 0, CONFIG.H);
+      grad.addColorStop(0, '#2E6B5A');
+      grad.addColorStop(0.58, '#FFF3E0');
+      grad.addColorStop(1, '#E8CDA7');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, CONFIG.W, CONFIG.H);
+      drawStaff(34, 84, 292, 16, 'rgba(255,255,255,.8)');
+      ctx.fillStyle = '#3F332B';
+      ctx.textAlign = 'center';
+      ctx.font = '800 30px system-ui';
+      ctx.fillText('멜로디아', CONFIG.W / 2, 134);
+      ctx.font = '700 18px system-ui';
+      ctx.fillText('끝나지 않는 노래', CONFIG.W / 2, 164);
+      ctx.fillStyle = CONFIG.colors.gold;
+      ctx.font = '72px serif';
+      ctx.fillText('𝄞', CONFIG.W / 2, 260);
+      ctx.fillStyle = '#514237';
+      ctx.font = '15px system-ui';
+      ctx.fillText('v0.1 프롤로그 + 1막', CONFIG.W / 2, 294);
+
+      const has = SAVE.hasSave();
+      UI.button('new', 56, 348, 248, 56, '새로 시작');
+      UI.button('continue', 56, 416, 248, 56, has ? '이어하기' : '이어하기 없음', has);
+      UI.button('sound', 56, 484, 248, 56, DATA.soundOn ? '소리 OFF' : '소리 ON');
+      drawButton(UI.buttons[0]);
+      drawButton(UI.buttons[1]);
+      drawButton(UI.buttons[2]);
+      ctx.fillStyle = 'rgba(43,39,36,.72)';
+      ctx.font = '12px system-ui';
+      ctx.fillText('자료 기반: 01 Source 음악 기호 이미지 · Canvas 2D', CONFIG.W / 2, 582);
+    }
+
+    function drawButton(b) {
+      ctx.save();
+      ctx.globalAlpha = b.enabled ? 1 : 0.45;
+      ctx.fillStyle = b.id === 'new' ? '#3F8E64' : '#FFFDF6';
+      ctx.strokeStyle = '#3F332B';
+      ctx.lineWidth = 2;
+      drawRoundRect(b.x, b.y, b.w, b.h, 8);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = b.id === 'new' ? '#FFFDF6' : '#3F332B';
+      ctx.font = '800 18px system-ui';
+      ctx.textAlign = 'center';
+      ctx.fillText(b.label, b.x + b.w / 2, b.y + 35);
+      ctx.restore();
+    }
+
+    function drawWorld() {
+      const map = currentMap();
+      if (!map) return;
+      const pal = CONFIG.palettes[map.palette];
+      ctx.save();
+      let sx = -SCENES.camera.x;
+      let sy = -SCENES.camera.y;
+      if (SCENES.shake > 0) {
+        sx += Math.sin(performance.now() * 0.04) * 3;
+        sy += Math.cos(performance.now() * 0.036) * 2;
+      }
+      ctx.translate(Math.round(sx), Math.round(sy));
+      const startX = clamp(Math.floor(SCENES.camera.x / CONFIG.TILE) - 1, 0, map.w - 1);
+      const startY = clamp(Math.floor(SCENES.camera.y / CONFIG.TILE) - 1, 0, map.h - 1);
+      const endX = clamp(startX + Math.ceil(CONFIG.W / CONFIG.TILE) + 3, 0, map.w);
+      const endY = clamp(startY + Math.ceil(CONFIG.H / CONFIG.TILE) + 3, 0, map.h);
+      for (let y = startY; y < endY; y += 1) {
+        for (let x = startX; x < endX; x += 1) {
+          drawTile(x, y, tileAt(map, x, y), pal);
+        }
+      }
+      drawMapDetails(map);
+      const drawables = [];
+      map.objects.forEach((obj) => {
+        if (isObjectVisible(obj)) drawables.push({ y: t2p(obj.y + (obj.h || 1)), obj });
+      });
+      drawables.push({ y: ENTITIES.player.y + CONFIG.PLAYER_H, player: true });
+      drawables.sort((a, b) => a.y - b.y);
+      drawables.forEach((item) => item.player ? drawPlayer() : drawObject(item.obj));
+      map.above.forEach((a) => {
+        ctx.fillStyle = a.color;
+        ctx.globalAlpha = 0.82;
+        drawRoundRect(t2p(a.x), t2p(a.y), t2p(a.w), t2p(a.h), 8);
+        ctx.fill();
+        ctx.globalAlpha = 1;
+      });
+      ENTITIES.particles.forEach((p) => {
+        ctx.globalAlpha = Math.max(0, p.life);
+        ctx.fillStyle = p.color;
+        ctx.font = '800 18px system-ui';
+        ctx.textAlign = 'center';
+        ctx.fillText(p.text, p.x, p.y);
+        ctx.globalAlpha = 1;
+      });
+      if (gameState === 'SymbolSelect' && UI.symbolMenu.mode === 'target') drawAttachHighlights();
+      ctx.restore();
+    }
+
+    function drawTile(x, y, tile, pal) {
+      const px = t2p(x);
+      const py = t2p(y);
+      if (tile === 0) ctx.fillStyle = (x + y) % 2 ? pal.ground : pal.alt;
+      if (tile === 1 || tile === 2) ctx.fillStyle = pal.road;
+      if (tile === 3) ctx.fillStyle = CONFIG.colors.water;
+      if (tile === 4) ctx.fillStyle = '#E8F4FF';
+      if (tile === 5) ctx.fillStyle = '#F5E6C8';
+      ctx.fillRect(px, py, CONFIG.TILE, CONFIG.TILE);
+      if (tile === 3) {
+        ctx.strokeStyle = 'rgba(255,255,255,.28)';
+        ctx.beginPath();
+        ctx.moveTo(px + 4, py + 20);
+        ctx.quadraticCurveTo(px + 16, py + 12, px + 28, py + 20);
+        ctx.stroke();
+      }
+    }
+
+    function drawMapDetails(map) {
+      if (map.id === 'village') {
+        drawStaff(t2p(14), t2p(1.4), 128, 9, 'rgba(93,64,55,.22)');
+      }
+      if (map.id === 'forest') {
+        drawStaff(t2p(26.5), t2p(10.1), 112, 7, 'rgba(255,255,255,.75)');
+      }
+    }
+
+    function drawStaff(x, y, w, gap, color) {
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 2;
+      for (let i = 0; i < 5; i += 1) {
+        ctx.beginPath();
+        ctx.moveTo(x, y + i * gap);
+        ctx.lineTo(x + w, y + i * gap);
+        ctx.stroke();
+      }
+    }
+
+    function drawObject(obj) {
+      const r = objectRect(obj);
+      const cx = r.x + r.w / 2;
+      const cy = r.y + r.h / 2;
+      if (obj.type === 'decor') {
+        ctx.fillStyle = CONFIG.colors.villageWood;
+        drawRoundRect(r.x, r.y, r.w, r.h, 6);
+        ctx.fill();
+        ctx.fillStyle = CONFIG.colors.gold;
+        ctx.font = '24px serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('♪', cx, r.y + 30);
+        return;
+      }
+      if (obj.type === 'towerDoor') {
+        ctx.fillStyle = DATA.flags.tower_door_open ? '#B6E3A8' : '#6D4C41';
+        drawRoundRect(r.x, r.y, r.w, r.h, 4);
+        ctx.fill();
+        if (DATA.flags.tower_door_open) drawStaff(r.x + 4, r.y + 6, r.w - 8, 4, CONFIG.colors.gold);
+        return;
+      }
+      if (obj.type === 'npc') {
+        ctx.fillStyle = obj.role === 'child' ? '#FDD835' : (obj.role === 'bard' ? '#AB47BC' : CONFIG.colors.green);
+        drawRoundRect(r.x + 4, r.y + 6, 24, 24, 8);
+        ctx.fill();
+        ctx.fillStyle = '#fff';
+        ctx.font = '700 10px system-ui';
+        ctx.textAlign = 'center';
+        ctx.fillText(obj.label.slice(0, 2), cx, cy + 5);
+      } else if (obj.type === 'pickup') {
+        const s = SYMBOLS[obj.symbol];
+        ctx.fillStyle = CONFIG.colors.gold;
+        ctx.beginPath();
+        ctx.arc(cx, cy, 12 + Math.sin(performance.now() * 0.006) * 2, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = CONFIG.colors.text;
+        ctx.font = '22px serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(s.glyph, cx, cy + 8);
+      } else if (obj.type === 'golden') {
+        ctx.fillStyle = CONFIG.colors.gold;
+        ctx.font = '30px serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('♪', cx, cy + 10);
+      } else if (obj.type === 'forestGate') {
+        ctx.fillStyle = DATA.flags.forest_gate_open ? '#79C879' : '#5D4037';
+        drawRoundRect(r.x, r.y, r.w, r.h, 4);
+        ctx.fill();
+        ctx.fillStyle = CONFIG.colors.gold;
+        ctx.font = '22px serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(DATA.flags.forest_gate_open ? '𝄋' : '×', cx, cy + 8);
+      } else if (obj.type === 'sign') {
+        ctx.fillStyle = '#8D6E63';
+        ctx.fillRect(r.x + 8, r.y + 12, 16, 16);
+        ctx.fillStyle = '#5D4037';
+        ctx.fillRect(r.x + 14, r.y + 24, 4, 12);
+      } else if (obj.type === 'worldScore') {
+        ctx.fillStyle = '#FFFDF6';
+        drawRoundRect(r.x, r.y, r.w, r.h, 6);
+        ctx.fill();
+        drawStaff(r.x + 10, r.y + 14, r.w - 20, 6, '#6D4C41');
+        ctx.strokeStyle = CONFIG.colors.danger;
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(r.x + 28, r.y + 8);
+        ctx.lineTo(r.x + r.w - 18, r.y + r.h - 10);
+        ctx.stroke();
+      } else if (obj.type === 'portal') {
+        ctx.fillStyle = 'rgba(77,208,225,.35)';
+        ctx.fillRect(r.x, r.y, r.w, r.h);
+      } else if (obj.type === 'crow') {
+        ctx.fillStyle = '#5B4037';
+        ctx.fillRect(r.x + 13, r.y + 8, 8, 24);
+        ctx.fillStyle = '#2F7D46';
+        ctx.beginPath();
+        ctx.arc(cx, cy - 6, 18, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#202026';
+        ctx.font = '18px serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(DATA.flags.got_note_e ? '♪' : '까', cx, cy - 2);
+      } else if (obj.type === 'bell') {
+        ctx.fillStyle = '#F4B942';
+        ctx.beginPath();
+        ctx.moveTo(cx, r.y + 6);
+        ctx.lineTo(r.x + 8, r.y + 26);
+        ctx.lineTo(r.x + 24, r.y + 26);
+        ctx.closePath();
+        ctx.fill();
+        ctx.fillStyle = '#4A342A';
+        ctx.font = '700 11px system-ui';
+        ctx.textAlign = 'center';
+        ctx.fillText(obj.note, cx, r.y + 23);
+      } else if (obj.type === 'rock') {
+        ctx.fillStyle = '#757575';
+        drawRoundRect(r.x + 2, r.y + 4, 28, 24, 8);
+        ctx.fill();
+      } else if (obj.type === 'chest') {
+        ctx.fillStyle = '#8D6E63';
+        drawRoundRect(r.x + 3, r.y + 9, 26, 18, 4);
+        ctx.fill();
+        ctx.fillStyle = CONFIG.colors.gold;
+        ctx.fillRect(r.x + 14, r.y + 16, 4, 5);
+      } else if (obj.type === 'staffSlot') {
+        ctx.fillStyle = obj.placed ? 'rgba(255,213,79,.95)' : 'rgba(255,255,255,.6)';
+        ctx.strokeStyle = obj.placed ? CONFIG.colors.gold : CONFIG.colors.cyan;
+        ctx.lineWidth = 2;
+        drawRoundRect(r.x + 2, r.y + 4, 28, 24, 4);
+        ctx.fill();
+        ctx.stroke();
+        if (obj.placedSymbol) {
+          const s = SYMBOLS[obj.placedSymbol];
+          ctx.fillStyle = CONFIG.colors.text;
+          ctx.font = '20px serif';
+          ctx.textAlign = 'center';
+          ctx.fillText(s.glyph, cx, cy + 7);
+        }
+      } else if (obj.type === 'staffDoor') {
+        ctx.fillStyle = DATA.flags.staff_door_open ? '#B6E3A8' : '#315B43';
+        drawRoundRect(r.x, r.y, r.w, r.h, 5);
+        ctx.fill();
+        ctx.fillStyle = CONFIG.colors.gold;
+        ctx.font = '18px serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(DATA.flags.staff_door_open ? '열림' : '𝄞', cx, cy + 5);
+      }
+      if (UI.interactTarget === obj && gameState === 'Explore') {
+        ctx.fillStyle = CONFIG.colors.cyan;
+        ctx.font = '800 18px system-ui';
+        ctx.textAlign = 'center';
+        ctx.fillText('!', cx, r.y - 4);
+      }
+    }
+
+    function drawAttachHighlights() {
+      const selected = UI.symbolMenu.selected;
+      currentMap().objects.forEach((obj) => {
+        if (!isObjectVisible(obj) || !obj.attachTargets || !obj.attachTargets.includes(selected)) return;
+        const r = objectRect(obj);
+        ctx.strokeStyle = CONFIG.colors.cyan;
+        ctx.lineWidth = 3;
+        ctx.globalAlpha = 0.65 + Math.sin(performance.now() * 0.008) * 0.25;
+        ctx.strokeRect(r.x - 4, r.y - 4, r.w + 8, r.h + 8);
+        ctx.globalAlpha = 1;
+      });
+    }
+
+    function drawPlayer() {
+      const p = ENTITIES.player;
+      ctx.fillStyle = CONFIG.colors.blue;
+      drawRoundRect(p.x, p.y, CONFIG.PLAYER_W, CONFIG.PLAYER_H, 6);
+      ctx.fill();
+      ctx.fillStyle = '#FFFFFF';
+      const fx = p.x + CONFIG.PLAYER_W / 2 + p.faceX * 5;
+      const fy = p.y + 8 + p.faceY * 4;
+      ctx.beginPath();
+      ctx.arc(fx, fy, 2.5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    function drawHud() {
+      ctx.fillStyle = 'rgba(255,250,240,.9)';
+      drawRoundRect(10, 10, 164, 48, 8);
+      ctx.fill();
+      ctx.fillStyle = CONFIG.colors.text;
+      ctx.font = '800 13px system-ui';
+      ctx.textAlign = 'left';
+      ctx.fillText(currentMap()?.name || '', 20, 29);
+      ctx.font = '11px system-ui';
+      const active = QUEST.activeQuest();
+      ctx.fillText(active ? `${QUEST.defs[active[0]].title}: ${active[1].objective}` : '자유 탐험', 20, 47);
+
+      UI.button('pause', 314, 12, 36, 36, 'Ⅱ');
+      ctx.fillStyle = 'rgba(255,250,240,.92)';
+      drawRoundRect(314, 12, 36, 36, 8);
+      ctx.fill();
+      ctx.fillStyle = CONFIG.colors.text;
+      ctx.font = '800 18px system-ui';
+      ctx.textAlign = 'center';
+      ctx.fillText('Ⅱ', 332, 36);
+
+      const enabled = Boolean(UI.interactTarget);
+      UI.button('interact', 282, 500, 62, 62, 'E', enabled);
+      ctx.globalAlpha = enabled ? 1 : 0.38;
+      ctx.fillStyle = CONFIG.colors.cyan;
+      ctx.beginPath();
+      ctx.arc(313, 531, 31, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = '#15313A';
+      ctx.font = '900 20px system-ui';
+      ctx.fillText('!', 313, 538);
+
+      UI.button('palette', 280, 570, 64, 54, '♪', DATA.symbols.length > 0);
+      ctx.globalAlpha = DATA.symbols.length ? 1 : 0.38;
+      ctx.fillStyle = CONFIG.colors.gold;
+      drawRoundRect(280, 570, 64, 54, 8);
+      ctx.fill();
+      ctx.fillStyle = '#3F332B';
+      ctx.font = '900 27px serif';
+      ctx.fillText('♪', 312, 606);
+      ctx.globalAlpha = 1;
+
+      if (INPUT.joy.active) drawJoystick();
+      ctx.fillStyle = 'rgba(32,32,38,.62)';
+      ctx.font = '10px monospace';
+      ctx.textAlign = 'left';
+      ctx.fillText(`${Math.round(fps)} FPS · ${CONFIG.STEP}`, 10, 632);
+    }
+
+    function drawJoystick() {
+      const j = INPUT.joy;
+      ctx.strokeStyle = 'rgba(255,255,255,.48)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(j.baseX, j.baseY, 48, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.fillStyle = 'rgba(255,255,255,.42)';
+      ctx.beginPath();
+      ctx.arc(j.x, j.y, 20, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    function drawDialogue() {
+      const d = DIALOGUE.active;
+      if (!d) return;
+      ctx.fillStyle = 'rgba(0,0,0,.24)';
+      ctx.fillRect(0, 0, CONFIG.W, CONFIG.H);
+      ctx.fillStyle = CONFIG.colors.panel;
+      drawRoundRect(14, 454, 332, 150, 8);
+      ctx.fill();
+      ctx.strokeStyle = '#3F332B';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      ctx.fillStyle = '#3F8E64';
+      drawRoundRect(26, 438, 92, 30, 8);
+      ctx.fill();
+      ctx.fillStyle = '#FFFDF6';
+      ctx.font = '800 14px system-ui';
+      ctx.textAlign = 'center';
+      ctx.fillText(d.speaker, 72, 458);
+      ctx.textAlign = 'left';
+      ctx.fillStyle = CONFIG.colors.text;
+      ctx.font = '700 17px system-ui';
+      const line = d.lines[DIALOGUE.index] || '';
+      fillTextWrapped(Array.from(line).slice(0, Math.floor(DIALOGUE.chars)).join(''), 30, 492, 300, 25, 4);
+      ctx.fillStyle = 'rgba(43,39,36,.62)';
+      ctx.font = '12px system-ui';
+      ctx.textAlign = 'right';
+      ctx.fillText('탭해서 계속', 330, 586);
+    }
+
+    function drawSymbolSelect() {
+      ctx.fillStyle = 'rgba(0,0,0,.34)';
+      ctx.fillRect(0, 0, CONFIG.W, CONFIG.H);
+      ctx.fillStyle = CONFIG.colors.panel;
+      drawRoundRect(42, 78, 276, 400, 8);
+      ctx.fill();
+      ctx.strokeStyle = CONFIG.colors.text;
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      ctx.fillStyle = CONFIG.colors.text;
+      ctx.font = '800 18px system-ui';
+      ctx.textAlign = 'center';
+      const title = UI.symbolMenu.slot ? '오선 슬롯에 놓을 음표' : (UI.symbolMenu.selected ? '붙일 대상을 탭하세요' : '기호 팔레트');
+      ctx.fillText(title, 180, 108);
+      const list = UI.symbolMenu.filter || DATA.symbols;
+      if (UI.symbolMenu.mode === 'pick') {
+        list.forEach((id, i) => {
+          const s = SYMBOLS[id];
+          const x = 56;
+          const y = 128 + i * 64;
+          ctx.fillStyle = '#FFFDF6';
+          drawRoundRect(x, y, 248, 56, 8);
+          ctx.fill();
+          ctx.strokeStyle = '#BCA77E';
+          ctx.stroke();
+          ctx.fillStyle = CONFIG.colors.gold;
+          ctx.font = '30px serif';
+          ctx.textAlign = 'center';
+          ctx.fillText(s.glyph, x + 30, y + 38);
+          ctx.fillStyle = CONFIG.colors.text;
+          ctx.font = '800 14px system-ui';
+          ctx.textAlign = 'left';
+          ctx.fillText(`/${s.name}`, x + 62, y + 23);
+          ctx.font = '12px system-ui';
+          ctx.fillText(s.effect, x + 62, y + 42);
+        });
+      } else {
+        const s = SYMBOLS[UI.symbolMenu.selected];
+        ctx.fillStyle = CONFIG.colors.gold;
+        ctx.font = '52px serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(s.glyph, 180, 210);
+        ctx.fillStyle = CONFIG.colors.text;
+        ctx.font = '14px system-ui';
+        ctx.fillText('시안색으로 빛나는 오브젝트를 탭하세요', 180, 250);
+      }
+      ctx.fillStyle = 'rgba(43,39,36,.62)';
+      ctx.font = '12px system-ui';
+      ctx.fillText('빈 곳을 탭하면 취소', 180, 456);
+    }
+
+    function drawCutscene() {
+      ctx.fillStyle = 'rgba(0,0,0,.62)';
+      ctx.fillRect(0, 0, CONFIG.W, CONFIG.H);
+      if (UI.codex) {
+        const s = SYMBOLS[UI.codex.id];
+        ctx.fillStyle = CONFIG.colors.panel;
+        drawRoundRect(34, 114, 292, 392, 8);
+        ctx.fill();
+        ctx.strokeStyle = CONFIG.colors.gold;
+        ctx.lineWidth = 3;
+        ctx.stroke();
+        const img = ASSETS[s.asset];
+        if (img && img.complete && img.naturalWidth) {
+          ctx.drawImage(img, 130, 146, 100, 100);
+        } else {
+          ctx.fillStyle = CONFIG.colors.gold;
+          ctx.font = '88px serif';
+          ctx.textAlign = 'center';
+          ctx.fillText(s.glyph, 180, 230);
+        }
+        ctx.fillStyle = CONFIG.colors.text;
+        ctx.font = '900 22px system-ui';
+        ctx.textAlign = 'center';
+        ctx.fillText(s.name, 180, 282);
+        ctx.font = '700 16px system-ui';
+        fillTextWrapped(s.theory, 58, 324, 244, 24, 3);
+        ctx.fillStyle = '#3F8E64';
+        ctx.font = '700 15px system-ui';
+        fillTextWrapped(s.effect, 58, 408, 244, 22, 3);
+        ctx.fillStyle = 'rgba(43,39,36,.62)';
+        ctx.font = '12px system-ui';
+        ctx.textAlign = 'center';
+        ctx.fillText('탭해서 닫기', 180, 482);
+        return;
+      }
+      if (UI.cutscene) {
+        ctx.fillStyle = CONFIG.colors.panel;
+        drawRoundRect(28, 174, 304, 250, 8);
+        ctx.fill();
+        ctx.strokeStyle = CONFIG.colors.gold;
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        ctx.fillStyle = CONFIG.colors.gold;
+        ctx.font = '42px serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('𝄞', 180, 232);
+        ctx.fillStyle = CONFIG.colors.text;
+        ctx.font = '800 18px system-ui';
+        fillTextWrapped(UI.cutscene.cards[UI.cutscene.index], 58, 284, 244, 28, 4);
+        ctx.font = '12px system-ui';
+        ctx.fillStyle = 'rgba(43,39,36,.62)';
+        ctx.textAlign = 'center';
+        ctx.fillText('탭해서 계속 · 오른쪽 위 SKIP', 180, 394);
+        UI.button('skip', 284, 22, 58, 36, 'SKIP');
+        ctx.fillStyle = 'rgba(255,255,255,.88)';
+        drawRoundRect(284, 22, 58, 36, 8);
+        ctx.fill();
+        ctx.fillStyle = CONFIG.colors.text;
+        ctx.font = '800 12px system-ui';
+        ctx.fillText('SKIP', 313, 45);
+      }
+    }
+
+    function drawPause() {
+      ctx.fillStyle = 'rgba(0,0,0,.48)';
+      ctx.fillRect(0, 0, CONFIG.W, CONFIG.H);
+      ctx.fillStyle = CONFIG.colors.panel;
+      drawRoundRect(50, 192, 260, 256, 8);
+      ctx.fill();
+      ctx.fillStyle = CONFIG.colors.text;
+      ctx.font = '900 22px system-ui';
+      ctx.textAlign = 'center';
+      ctx.fillText('일시정지', 180, 238);
+      UI.button('resume', 72, 270, 216, 50, '계속');
+      UI.button('toggleSound', 72, 332, 216, 50, DATA.soundOn ? '소리 끄기' : '소리 켜기');
+      UI.button('title', 72, 394, 216, 50, '타이틀로');
+      UI.buttons.filter((b) => ['resume', 'toggleSound', 'title'].includes(b.id)).forEach(drawButton);
+    }
+
+    function drawToast() {
+      if (UI.toastTimer <= 0 || !UI.toastText) return;
+      ctx.globalAlpha = Math.min(1, UI.toastTimer * 2);
+      ctx.fillStyle = 'rgba(32,32,38,.88)';
+      drawRoundRect(78, 72, 204, 36, 8);
+      ctx.fill();
+      ctx.fillStyle = '#FFFDF6';
+      ctx.font = '800 13px system-ui';
+      ctx.textAlign = 'center';
+      ctx.fillText(UI.toastText, 180, 96);
+      ctx.globalAlpha = 1;
+    }
+
+    // MAIN
+    function update(dt) {
+      DATA.playTime += dt;
+      AUDIO.update(dt);
+      RHYTHM.update(dt);
+      DIALOGUE.update(dt);
+      SCENES.update(dt);
+      ENTITIES.update(dt);
+      PUZZLES.update(dt);
+      UI.update(dt);
+      if (gameState === 'Explore' && DATA.currentMap === 'village') {
+        AUDIO.setBgm(DATA.scoreParts.melody ? 'villageMelody' : 'villageQuiet');
+      }
+      if (gameState === 'Explore') {
+        positionSaveTimer += dt;
+        if (positionSaveTimer >= 2) {
+          positionSaveTimer = 0;
+          SAVE.write('position');
+        }
+      }
+    }
+
+    function loop(ts) {
+      if (!lastTime) lastTime = ts;
+      let delta = Math.min(0.1, (ts - lastTime) / 1000);
+      lastTime = ts;
+      accumulator += delta;
+      fpsClock += delta;
+      frameCount += 1;
+      if (fpsClock >= 0.5) {
+        fps = frameCount / fpsClock;
+        fpsClock = 0;
+        frameCount = 0;
+      }
+      const fixed = 1 / 60;
+      while (accumulator >= fixed) {
+        update(fixed);
+        accumulator -= fixed;
+      }
+      render();
+      requestAnimationFrame(loop);
+    }
+
+    function pointerDown(e) {
+      e.preventDefault();
+      AUDIO.unlock();
+      const p = screenToGame(e);
+      canvas.setPointerCapture?.(e.pointerId);
+      if (gameState === 'Title') {
+        const b = UI.hitButton(p);
+        if (b?.id === 'new') SCENES.startNewGame();
+        if (b?.id === 'continue') SCENES.continueGame();
+        if (b?.id === 'sound') AUDIO.setMuted(DATA.soundOn);
+        return;
+      }
+      if (gameState === 'Dialogue') {
+        DIALOGUE.advance();
+        return;
+      }
+      if (gameState === 'Cutscene') {
+        const b = UI.hitButton(p, 'skip');
+        UI.closeCutscene(Boolean(b));
+        return;
+      }
+      if (gameState === 'SymbolSelect') {
+        UI.handleSymbolPointer(p);
+        return;
+      }
+      if (gameState === 'Pause') {
+        const b = UI.hitButton(p);
+        if (b?.id === 'resume') setState('Explore');
+        if (b?.id === 'toggleSound') AUDIO.setMuted(DATA.soundOn);
+        if (b?.id === 'title') setState('Title');
+        return;
+      }
+      if (gameState === 'Explore') {
+        const b = UI.hitButton(p);
+        if (b?.id === 'pause') {
+          setState('Pause');
+          return;
+        }
+        if (b?.id === 'interact') {
+          UI.interact();
+          return;
+        }
+        if (b?.id === 'palette') {
+          UI.openPalette();
+          return;
+        }
+        if (p.x < 90 && p.y < 60) {
+          INPUT.holdReset = performance.now();
+        }
+        INPUT.down(p, e.pointerId);
+      }
+    }
+
+    function pointerMove(e) {
+      const p = screenToGame(e);
+      INPUT.move(p, e.pointerId);
+    }
+
+    function pointerUp(e) {
+      INPUT.up(e.pointerId);
+      if (INPUT.holdReset && performance.now() - INPUT.holdReset > 2000) {
+        if (window.confirm('저장을 초기화할까요?')) {
+          SAVE.clear();
+          UI.toast('저장이 초기화되었습니다');
+          setState('Title');
+        }
+      }
+      INPUT.holdReset = 0;
+    }
+
+    function keyDown(e) {
+      INPUT.keys.add(e.code);
+      if (e.code === 'KeyE' && gameState === 'Explore') UI.interact();
+      if (e.code === 'KeyQ' && gameState === 'Explore') UI.openPalette();
+      if (e.code === 'Escape') {
+        if (gameState === 'Explore') setState('Pause');
+        else if (gameState === 'Pause') setState('Explore');
+      }
+      if ((gameState === 'Dialogue' || gameState === 'Cutscene') && (e.code === 'Space' || e.code === 'Enter')) {
+        if (gameState === 'Dialogue') DIALOGUE.advance();
+        else UI.closeCutscene(false);
+      }
+    }
+
+    function keyUp(e) {
+      INPUT.keys.delete(e.code);
+    }
+
+    function init() {
+      resize();
+      loadAssets();
+      buildMaps();
+      SCENES.titleHasSave = SAVE.hasSave();
+      window.addEventListener('resize', resize);
+      canvas.addEventListener('pointerdown', pointerDown);
+      canvas.addEventListener('pointermove', pointerMove);
+      canvas.addEventListener('pointerup', pointerUp);
+      canvas.addEventListener('pointercancel', pointerUp);
+      window.addEventListener('keydown', keyDown);
+      window.addEventListener('keyup', keyUp);
+      setTimeout(() => setState('Title'), 160);
+      requestAnimationFrame(loop);
+    }
+
+    return {
+      init,
+      setState,
+      debug: {
+        CONFIG,
+        AUDIO,
+        INPUT,
+        MAPS,
+        ENTITIES,
+        SYMBOLS,
+        RHYTHM,
+        DIALOGUE,
+        QUEST,
+        SAVE,
+        UI,
+        SCENES,
+        get state() { return gameState; },
+        get DATA() { return DATA; },
+        noteToFreq: (name) => AUDIO.noteToFreq(name)
+      }
+    };
+  })();
+
+  window.MelodiaDebug = Game.debug;
+  window.addEventListener('DOMContentLoaded', Game.init);
+  </script>
+</body>
+</html>
