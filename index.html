@@ -90,6 +90,8 @@
       TEST: PARAMS.get('test') === '1',
       SEED: seedRaw !== null && seedRaw !== '' && Number.isFinite(Number(seedRaw)) ? Number(seedRaw) : null,
       REDUCED_MOTION: Boolean(window.matchMedia?.('(prefers-reduced-motion: reduce)').matches),
+      diorama: 'full',
+      dioramaWarned: false,
       colors: {
         ink: '#202026',
         panel: '#fffaf0',
@@ -114,6 +116,34 @@
         green: '#43A047',
         danger: '#D95E59'
       },
+      LA: {
+        grass: '#7ECB5A',
+        grassAlt: '#74C251',
+        grassDot: '#4FA043',
+        grassShade: '#3E8E41',
+        path: '#EAD08F',
+        pathEdge: '#F7E7B5',
+        pathDot: '#D9B96F',
+        waterDeep: '#3D9BE9',
+        waterShallow: '#6FC0F2',
+        foam: '#FFFFFF',
+        cliff: '#8A5A3B',
+        cliffTop: '#A9744C',
+        cliffLine: '#5D3B24',
+        cream: '#FFF1D6',
+        creamAlt: '#FFE7B9',
+        wood: '#9C6B4A',
+        ui: '#FDFDF5',
+        uiStroke: '#3A3A38',
+        uiShadow: 'rgba(30,25,20,.28)',
+        red: '#E5484D',
+        skin: '#F5C8A8',
+        hair: '#7B4F32',
+        robe: '#3F8E64',
+        blue: '#42A5F5',
+        purple: '#8E5BB8',
+        yellow: '#F7C948'
+      },
       assets: {
         clef_g: '01 Source/G Clef/G Clef.png',
         clef_f: '01 Source/F Clef/F Clef.png',
@@ -129,9 +159,9 @@
         ending_both: '01 Source/1st&2nd Ending.jpg'
       },
       palettes: {
-        village: { ground: '#FFF3E0', alt: '#F8E1BD', road: '#E8CDA7', wall: '#8D6E63' },
-        tower: { ground: '#F5E6C8', alt: '#E6D2AA', road: '#C49A6C', wall: '#6D4C41' },
-        forest: { ground: '#66BB6A', alt: '#55A95A', road: '#B7D982', wall: '#2F7D46' }
+        village: { ground: '#FFF1D6', alt: '#FFE7B9', road: '#EAD08F', wall: '#9C6B4A' },
+        tower: { ground: '#FFF1D6', alt: '#E9D2A3', road: '#EAD08F', wall: '#8A5A3B' },
+        forest: { ground: '#7ECB5A', alt: '#74C251', road: '#EAD08F', wall: '#3E8E41' }
       },
       states: ['Boot', 'Title', 'Explore', 'Dialogue', 'SymbolSelect', 'TimelineEdit', 'Puzzle', 'Cutscene', 'Pause']
     };
@@ -236,6 +266,7 @@
       bgmTimer: 0,
       bgmSwap: null,
       bgmBeat: 0,
+      ambientTimer: 8,
       onceWarned: false,
       sequences: {
         title: { bpm: 56, notes: [['C4', 2], ['G4', 2], ['E4', 2], [null, 2]], gain: 0.08 },
@@ -359,6 +390,21 @@
         osc.start(start);
         osc.stop(start + 0.04);
       },
+      sfxBlip(name = 'C4') {
+        if (!this.unlocked || !this.ctx || !DATA.soundOn) return;
+        const start = this.ctx.currentTime;
+        const out = this.ctx.createGain();
+        out.gain.setValueAtTime(0.0001, start);
+        out.gain.exponentialRampToValueAtTime(0.05, start + 0.004);
+        out.gain.exponentialRampToValueAtTime(0.0001, start + 0.028);
+        out.connect(this.master);
+        const osc = this.ctx.createOscillator();
+        osc.type = 'triangle';
+        osc.frequency.value = this.noteToFreq(name);
+        osc.connect(out);
+        osc.start(start);
+        osc.stop(start + 0.035);
+      },
       sfxDoor() {
         this.playNote('C3', 0.18, 0, 0.25);
         this.playNote('G3', 0.22, 0.09, 0.23);
@@ -404,6 +450,14 @@
         if (item[0]) this.playNote(item[0], Math.min(0.55, beatDur * item[1] * 0.72), 0, seq.gain || 0.12, 'bgm');
         this.bgmTimer = beatDur * item[1];
         this.bgmIndex += 1;
+        if (gameState === 'Explore' && DATA.scoreParts.melody) {
+          this.ambientTimer -= dt + beatDur * 0.08;
+          if (this.ambientTimer <= 0) {
+            this.ambientTimer = 12 + rng() * 8;
+            this.playNote(DATA.currentMap === 'forest' ? 'E6' : 'G5', 0.08, 0, 0.04);
+            this.playNote(DATA.currentMap === 'forest' ? 'G6' : 'C6', 0.12, 0.12, 0.035);
+          }
+        }
       }
     };
 
@@ -655,6 +709,11 @@
       DATA.currentMap = id;
       document.body.dataset.mapId = id;
       const map = currentMap();
+      try {
+        UI.regionBannerTimer = 2.2;
+      } catch (err) {
+        // UI may not be initialized during the first map build.
+      }
       syncObjectsFromFlags(map);
       const sp = map.spawns[spawn] || map.spawns.start || { x: 2, y: 2 };
       ENTITIES.player.x = t2p(sp.x) - CONFIG.PLAYER_W / 2;
@@ -712,7 +771,7 @@
 
     // ENTITIES
     const ENTITIES = {
-      player: { x: 0, y: 0, faceX: 0, faceY: 1, moving: false },
+      player: { x: 0, y: 0, faceX: 0, faceY: 1, moving: false, pose: 'normal' },
       particles: [],
       dustTimer: 0,
       push: { id: null, timer: 0 },
@@ -904,7 +963,7 @@
       AUDIO.sfxPickup();
       haptic(25);
       SAVE.write('pickup');
-      UI.showCodex(id);
+      UI.startItemGet(id);
     }
 
     function availableNotesForSlot() {
@@ -1071,6 +1130,7 @@
       index: 0,
       chars: 0,
       log: [],
+      lastBlipChars: 0,
       charRate: CONFIG.TEST ? 1000 : 30,
       start(key) {
         const data = DIALOGUES[key];
@@ -1078,12 +1138,20 @@
         this.active = { key, logged: {}, ...data };
         this.index = 0;
         this.chars = 0;
+        this.lastBlipChars = 0;
         setState('Dialogue');
       },
       update(dt) {
         if (gameState !== 'Dialogue' || !this.active) return;
         const line = this.active.lines[this.index] || '';
+        const prevChars = Math.floor(this.chars);
         this.chars = Math.min(line.length, this.chars + this.charRate * dt);
+        const shown = Math.floor(this.chars);
+        if (shown - this.lastBlipChars >= 2 && shown > prevChars && shown < line.length) {
+          const ch = line[shown - 1] || '';
+          if (!/[\s.,!?…:;·—-]/.test(ch)) AUDIO.sfxBlip(speakerBlipPitch(this.active.speaker));
+          this.lastBlipChars = shown;
+        }
       },
       rememberLine() {
         if (!this.active) return;
@@ -1107,12 +1175,14 @@
         this.index += 1;
         if (this.index < this.active.lines.length) {
           this.chars = 0;
+          this.lastBlipChars = 0;
           return;
         }
         const end = this.active.onEnd;
         this.active = null;
         this.index = 0;
         this.chars = 0;
+        this.lastBlipChars = 0;
         setState('Explore');
         if (end) applyDialogueEnd(end);
       }
@@ -1151,6 +1221,17 @@
 
     function speakerStyle(name) {
       return SPEAKER_STYLE[name] || SPEAKER_STYLE.object;
+    }
+
+    function speakerBlipPitch(name) {
+      const pitches = {
+        '클레프': 'G4',
+        '피치': 'E5',
+        '라라': 'B4',
+        '템포': 'D5',
+        '까마귀': 'A3'
+      };
+      return pitches[name] || 'C4';
     }
 
     function resolveDialogueForObject(obj) {
@@ -1281,6 +1362,11 @@
         if (!this.defs[id]) return;
         DATA.quests[id] = DATA.quests[id] || { state: this.state(id), objective: this.defs[id].objective };
         DATA.quests[id].objective = objective;
+        try {
+          UI.objectiveFlashTimer = 8;
+        } catch (err) {
+          // UI may not be initialized during early startup.
+        }
         SAVE.write('quest');
       },
       activeQuest() {
@@ -1422,6 +1508,12 @@
       interactTarget: null,
       lastInteractId: null,
       interactPulse: 0,
+      regionBannerTimer: 0,
+      objectiveBubbleTimer: 0,
+      objectiveFlashTimer: 0,
+      notePopTimer: 0,
+      lastGoldenCount: 0,
+      itemGet: null,
       debugTapCount: 0,
       debugTapTime: 0,
       symbolMenu: { mode: 'closed', selected: null, slot: null, filter: null },
@@ -1430,6 +1522,7 @@
       codexList: null,
       pauseView: 'main',
       codexDetail: null,
+      inventorySelected: 'clef_g',
       logOffset: 0,
       logDrag: null,
       pressedId: null,
@@ -1510,6 +1603,15 @@
         this.codex = { id, timer: 0 };
         setState('Cutscene');
       },
+      startItemGet(id) {
+        this.itemGet = { id, timer: 0, card: false, skipped: false };
+        ENTITIES.player.pose = 'lift';
+        setState('Cutscene');
+        AUDIO.playNote('C4', 0.14, 0, 0.22);
+        AUDIO.playNote('E4', 0.14, 0.08, 0.20);
+        AUDIO.playNote('G4', 0.16, 0.16, 0.18);
+        AUDIO.playNote('C5', 0.36, 0.26, 0.16);
+      },
       openCodexList() {
         if (!DATA.codex.length) {
           UI.toast('아직 모은 기호가 없어요');
@@ -1523,6 +1625,22 @@
         setState('Cutscene');
       },
       closeCutscene(skip = false) {
+        if (this.itemGet) {
+          if (!this.itemGet.card && !skip) {
+            this.itemGet.timer = 1.2;
+            this.itemGet.card = true;
+            return;
+          }
+          if (!this.itemGet.card && skip) {
+            this.itemGet.timer = 1.2;
+            this.itemGet.card = true;
+            return;
+          }
+          this.itemGet = null;
+          ENTITIES.player.pose = 'normal';
+          setState('Explore');
+          return;
+        }
         if (this.codexList) {
           this.codexList = null;
           setState('Pause');
@@ -1618,6 +1736,14 @@
       },
       update(dt) {
         this.toastTimer = Math.max(0, this.toastTimer - dt);
+        this.regionBannerTimer = Math.max(0, this.regionBannerTimer - dt);
+        this.objectiveBubbleTimer = Math.max(0, this.objectiveBubbleTimer - dt);
+        this.objectiveFlashTimer = Math.max(0, this.objectiveFlashTimer - dt);
+        this.notePopTimer = Math.max(0, this.notePopTimer - dt);
+        if (this.itemGet) {
+          this.itemGet.timer += dt;
+          if (this.itemGet.timer >= 1.2) this.itemGet.card = true;
+        }
         this.interactTarget = gameState === 'Explore' ? this.getInteractTarget() : null;
         const id = this.interactTarget?.id || null;
         if (id !== this.lastInteractId) {
@@ -1642,6 +1768,8 @@
         if (!DATA.goldenNotes.includes('golden_note_01')) DATA.goldenNotes.push('golden_note_01');
         AUDIO.sfxPickup();
         haptic(25);
+        UI.notePopTimer = 0.45;
+        UI.lastGoldenCount = DATA.goldenNotes.length;
         UI.toast('황금 음표를 찾았어요');
         SAVE.write('pickup');
         return;
@@ -2179,6 +2307,74 @@
       ctx.textAlign = oldAlign;
     }
 
+    function hash2(x, y, seed = 0) {
+      return Math.abs(Math.imul(x + seed * 17, 374761393) ^ Math.imul(y + seed * 31, 668265263)) >>> 0;
+    }
+
+    function drawUiBox(x, y, w, h, r = 12, fill = CONFIG.LA.ui, stroke = CONFIG.LA.uiStroke) {
+      ctx.save();
+      ctx.shadowColor = CONFIG.LA.uiShadow;
+      ctx.shadowBlur = 0;
+      ctx.shadowOffsetY = 4;
+      ctx.fillStyle = fill;
+      drawRoundRect(x, y, w, h, r);
+      ctx.fill();
+      ctx.shadowColor = 'transparent';
+      ctx.strokeStyle = stroke;
+      ctx.lineWidth = 3;
+      ctx.stroke();
+      const grad = ctx.createLinearGradient(x, y, x, y + Math.min(34, h));
+      grad.addColorStop(0, 'rgba(255,255,255,.48)');
+      grad.addColorStop(1, 'rgba(255,255,255,0)');
+      ctx.fillStyle = grad;
+      drawRoundRect(x + 4, y + 4, Math.max(0, w - 8), Math.min(26, h - 8), Math.max(4, r - 4));
+      ctx.fill();
+      ctx.restore();
+    }
+
+    function drawBlobShadow(cx, footY, w) {
+      ctx.save();
+      ctx.fillStyle = 'rgba(30,40,30,.22)';
+      ctx.beginPath();
+      ctx.ellipse(cx, footY, w * 0.45, Math.max(3, w * 0.14), 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    function drawGloss(cx, cy, rx = 7, ry = 4) {
+      ctx.save();
+      ctx.fillStyle = 'rgba(255,255,255,.38)';
+      ctx.beginPath();
+      ctx.ellipse(cx - rx * 0.25, cy - ry * 0.4, rx, ry, -0.55, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    function drawDioramaOverlay() {
+      if (CONFIG.diorama === 'off') return;
+      ctx.save();
+      if (CONFIG.diorama === 'full') {
+        ctx.fillStyle = 'rgba(255,255,255,.10)';
+        ctx.filter = 'blur(2px)';
+        ctx.fillRect(0, 0, CONFIG.W, 70);
+        ctx.fillRect(0, CONFIG.H - 58, CONFIG.W, 58);
+        ctx.filter = 'none';
+      }
+      const top = ctx.createLinearGradient(0, 0, 0, 112);
+      top.addColorStop(0, 'rgba(20,30,25,.24)');
+      top.addColorStop(1, 'rgba(20,30,25,0)');
+      ctx.fillStyle = top;
+      ctx.fillRect(0, 0, CONFIG.W, 112);
+      const bot = ctx.createLinearGradient(0, CONFIG.H, 0, CONFIG.H - 110);
+      bot.addColorStop(0, 'rgba(20,30,25,.18)');
+      bot.addColorStop(1, 'rgba(20,30,25,0)');
+      ctx.fillStyle = bot;
+      ctx.fillRect(0, CONFIG.H - 110, CONFIG.W, 110);
+      ctx.fillStyle = 'rgba(255,225,170,.05)';
+      ctx.fillRect(0, 0, CONFIG.W, CONFIG.H);
+      ctx.restore();
+    }
+
     function render() {
       UI.buttons = [];
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -2195,6 +2391,7 @@
         return;
       }
       drawWorld();
+      drawDioramaOverlay();
       drawHud();
       drawPuzzleFeedback();
       if (gameState === 'SymbolSelect' && UI.symbolMenu.mode === 'target') drawAttachHighlights();
@@ -2204,10 +2401,31 @@
       if (gameState === 'Pause') drawPause();
       drawToast();
       if (SCENES.transition.active) {
-        ctx.fillStyle = `rgba(0,0,0,${SCENES.transition.alpha})`;
-        ctx.fillRect(0, 0, CONFIG.W, CONFIG.H);
+        drawTransitionWipe();
       }
       drawSelfTestBadge();
+    }
+
+    function drawTransitionWipe() {
+      const a = clamp(SCENES.transition.alpha, 0, 1);
+      ctx.save();
+      ctx.fillStyle = `rgba(253,253,245,${0.18 * a})`;
+      ctx.fillRect(0, 0, CONFIG.W, CONFIG.H);
+      const sweep = SCENES.transition.phase === 'out' ? a : 1 - a;
+      const x = lerp(-120, CONFIG.W + 80, sweep);
+      ctx.strokeStyle = `rgba(58,58,56,${0.72 * Math.max(a, 1 - a)})`;
+      ctx.lineWidth = 3;
+      for (let i = 0; i < 5; i += 1) {
+        ctx.beginPath();
+        ctx.moveTo(x - 130, 260 + i * 14);
+        ctx.lineTo(x + 130, 260 + i * 14);
+        ctx.stroke();
+      }
+      ctx.fillStyle = CONFIG.colors.gold;
+      ctx.font = '900 34px serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('𝄞', x, 326);
+      ctx.restore();
     }
 
     function drawBoot() {
@@ -2222,27 +2440,45 @@
     }
 
     function drawTitle() {
-      ctx.fillStyle = '#1a2420';
-      ctx.fillRect(0, 0, CONFIG.W, CONFIG.H);
+      const time = performance.now() * 0.001;
       const grad = ctx.createLinearGradient(0, 0, 0, CONFIG.H);
-      grad.addColorStop(0, '#2E6B5A');
-      grad.addColorStop(0.58, '#FFF3E0');
-      grad.addColorStop(1, '#E8CDA7');
+      grad.addColorStop(0, '#FFD9A0');
+      grad.addColorStop(0.45, CONFIG.LA.cream);
+      grad.addColorStop(1, '#6FC0F2');
       ctx.fillStyle = grad;
       ctx.fillRect(0, 0, CONFIG.W, CONFIG.H);
-      drawStaff(34, 84, 292, 16, 'rgba(255,255,255,.8)');
+      ctx.fillStyle = 'rgba(255,255,255,.72)';
+      [[72, 72, 40], [244, 110, 54]].forEach(([cx, cy, w], i) => {
+        const drift = Math.sin(time * 0.2 + i) * 8;
+        ctx.beginPath();
+        ctx.arc(cx + drift, cy, w * 0.28, 0, Math.PI * 2);
+        ctx.arc(cx + drift + w * 0.24, cy - 8, w * 0.23, 0, Math.PI * 2);
+        ctx.arc(cx + drift + w * 0.5, cy, w * 0.3, 0, Math.PI * 2);
+        ctx.fill();
+      });
+      drawStaff(18, 210, 324, 13, 'rgba(58,58,56,.36)');
+      ctx.fillStyle = 'rgba(61,155,233,.18)';
+      for (let i = 0; i < 7; i += 1) {
+        const x = (i * 68 + time * 18) % 440 - 40;
+        const y = 228 + Math.sin(time * 1.4 + i) * 12;
+        ctx.font = `${22 + (i % 2) * 5}px serif`;
+        ctx.fillText(i % 2 ? '♩' : '♪', x, y);
+      }
       ctx.fillStyle = '#3F332B';
       ctx.textAlign = 'center';
-      ctx.font = '800 30px system-ui';
-      ctx.fillText('멜로디아', CONFIG.W / 2, 134);
+      ctx.font = '900 36px system-ui';
+      ctx.lineWidth = 5;
+      ctx.strokeStyle = 'rgba(58,58,56,.35)';
+      ctx.strokeText('멜로디아', CONFIG.W / 2, 136);
+      ctx.fillText('멜로디아', CONFIG.W / 2, 136);
       ctx.font = '700 18px system-ui';
-      ctx.fillText('끝나지 않는 노래', CONFIG.W / 2, 164);
+      ctx.fillText('끝나지 않는 노래', CONFIG.W / 2, 166);
       ctx.fillStyle = CONFIG.colors.gold;
-      ctx.font = '72px serif';
-      ctx.fillText('𝄞', CONFIG.W / 2, 260);
+      ctx.font = '44px serif';
+      ctx.fillText('𝄞', 82, 137);
       ctx.fillStyle = '#514237';
       ctx.font = '15px system-ui';
-      ctx.fillText('v0.1 프롤로그 + 1막', CONFIG.W / 2, 294);
+      ctx.fillText('v0.1 프롤로그 + 1막', CONFIG.W / 2, 296);
 
       const has = SCENES.titleHasSave;
       UI.button('new', 56, 348, 248, 56, '새로 시작');
@@ -2276,13 +2512,10 @@
       const h = b.h * scale;
       ctx.globalAlpha = b.enabled && b.variant !== 'disabled' ? 1 : 0.45;
       if (pressed) ctx.globalAlpha *= 0.92;
-      ctx.fillStyle = b.variant === 'danger' ? CONFIG.colors.danger : (b.id === 'new' ? '#3F8E64' : '#FFFDF6');
-      ctx.strokeStyle = '#3F332B';
-      ctx.lineWidth = 2;
-      drawRoundRect(x, y, w, h, 8);
-      ctx.fill();
-      ctx.stroke();
+      const fill = b.variant === 'danger' ? CONFIG.colors.danger : (b.id === 'new' ? '#EAF8E6' : CONFIG.LA.ui);
+      drawUiBox(x, y, w, h, 10, fill);
       ctx.fillStyle = (b.id === 'new' || b.variant === 'danger') ? '#FFFDF6' : '#3F332B';
+      if (b.id === 'new' && b.variant !== 'danger') ctx.fillStyle = '#276247';
       ctx.font = '800 18px system-ui';
       ctx.textAlign = 'center';
       ctx.fillText(b.label, b.x + b.w / 2, b.y + 35);
@@ -2292,12 +2525,7 @@
     function drawConfirmPanel(message, confirmId, cancelId, confirmLabel, cancelLabel) {
       ctx.fillStyle = 'rgba(0,0,0,.46)';
       ctx.fillRect(0, 0, CONFIG.W, CONFIG.H);
-      ctx.fillStyle = CONFIG.colors.panel;
-      drawRoundRect(38, 222, 284, 196, 8);
-      ctx.fill();
-      ctx.strokeStyle = '#3F332B';
-      ctx.lineWidth = 2;
-      ctx.stroke();
+      drawUiBox(38, 222, 284, 196, 12);
       ctx.fillStyle = CONFIG.colors.text;
       ctx.font = '900 19px system-ui';
       ctx.textAlign = 'left';
@@ -2364,18 +2592,83 @@
     function drawTile(x, y, tile, pal) {
       const px = t2p(x);
       const py = t2p(y);
-      if (tile === 0) ctx.fillStyle = (x + y) % 2 ? pal.ground : pal.alt;
-      if (tile === 1 || tile === 2) ctx.fillStyle = pal.road;
-      if (tile === 3) ctx.fillStyle = CONFIG.colors.water;
-      if (tile === 4) ctx.fillStyle = '#E8F4FF';
-      if (tile === 5) ctx.fillStyle = '#F5E6C8';
-      ctx.fillRect(px, py, CONFIG.TILE, CONFIG.TILE);
-      if (tile === 3) {
-        ctx.strokeStyle = 'rgba(255,255,255,.28)';
+      const map = currentMap();
+      const h = hash2(x, y);
+      if (tile === 0) {
+        ctx.fillStyle = h % 2 ? CONFIG.LA.grass : CONFIG.LA.grassAlt;
+        ctx.fillRect(px, py, CONFIG.TILE, CONFIG.TILE);
+        for (let i = 0; i < 4; i += 1) {
+          const hx = hash2(x, y, i + 1);
+          const dx = 5 + (hx % 21);
+          const dy = 5 + ((hx >>> 8) % 21);
+          ctx.fillStyle = i === 0 ? CONFIG.LA.grassShade : CONFIG.LA.grassDot;
+          ctx.beginPath();
+          ctx.arc(px + dx, py + dy, 1.4 + (hx % 2), 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.strokeStyle = 'rgba(62,142,65,.58)';
+        ctx.lineWidth = 2;
+        const bladeX = px + 8 + (h % 16);
+        const bladeY = py + 12 + ((h >>> 5) % 12);
         ctx.beginPath();
-        ctx.moveTo(px + 4, py + 20);
-        ctx.quadraticCurveTo(px + 16, py + 12, px + 28, py + 20);
+        ctx.moveTo(bladeX, bladeY + 5);
+        ctx.lineTo(bladeX + ((h % 3) - 1) * 2, bladeY);
         ctx.stroke();
+        return;
+      }
+      if (tile === 1 || tile === 2) {
+        ctx.fillStyle = CONFIG.LA.path;
+        ctx.fillRect(px, py, CONFIG.TILE, CONFIG.TILE);
+        ctx.fillStyle = CONFIG.LA.pathEdge;
+        const isPath = (tx, ty) => {
+          const n = tileAt(map, tx, ty);
+          return n === 1 || n === 2;
+        };
+        if (!isPath(x, y - 1)) ctx.fillRect(px, py, CONFIG.TILE, 3);
+        if (!isPath(x, y + 1)) ctx.fillRect(px, py + CONFIG.TILE - 3, CONFIG.TILE, 3);
+        if (!isPath(x - 1, y)) ctx.fillRect(px, py, 3, CONFIG.TILE);
+        if (!isPath(x + 1, y)) ctx.fillRect(px + CONFIG.TILE - 3, py, 3, CONFIG.TILE);
+        ctx.fillStyle = CONFIG.LA.pathDot;
+        for (let i = 0; i < 2; i += 1) {
+          const hx = hash2(x, y, i + 9);
+          ctx.beginPath();
+          ctx.arc(px + 7 + (hx % 18), py + 7 + ((hx >>> 7) % 18), 1.4, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        return;
+      }
+      if (tile === 3) {
+        const g = ctx.createLinearGradient(px, py, px, py + CONFIG.TILE);
+        g.addColorStop(0, CONFIG.LA.waterShallow);
+        g.addColorStop(1, CONFIG.LA.waterDeep);
+        ctx.fillStyle = g;
+        ctx.fillRect(px, py, CONFIG.TILE, CONFIG.TILE);
+        const t = performance.now() * 0.002;
+        if (tileAt(map, x, y - 1) !== 3) {
+          ctx.fillStyle = 'rgba(255,255,255,.75)';
+          drawRoundRect(px + 3, py + 2 + Math.sin(t + x) * 1, 26, 4, 3);
+          ctx.fill();
+        }
+        const sparkle = (Math.sin(t * 1.7 + h) + 1) * 0.25;
+        ctx.fillStyle = `rgba(255,255,255,${sparkle})`;
+        ctx.beginPath();
+        ctx.arc(px + 8 + (h % 17), py + 10 + ((h >>> 6) % 12), 1.6, 0, Math.PI * 2);
+        ctx.fill();
+        return;
+      }
+      if (tile === 4 || tile === 5) {
+        ctx.fillStyle = tile === 4 ? '#E8F4FF' : CONFIG.LA.cream;
+        ctx.fillRect(px, py, CONFIG.TILE, CONFIG.TILE);
+        ctx.strokeStyle = 'rgba(93,59,36,.16)';
+        ctx.lineWidth = 1;
+        for (let yy = py + 8; yy < py + CONFIG.TILE; yy += 8) {
+          ctx.beginPath();
+          ctx.moveTo(px, yy);
+          ctx.lineTo(px + CONFIG.TILE, yy);
+          ctx.stroke();
+        }
+        ctx.fillStyle = `rgba(255,255,255,${(h % 4) * 0.025})`;
+        ctx.fillRect(px, py, CONFIG.TILE, CONFIG.TILE);
       }
     }
 
@@ -2385,6 +2678,44 @@
       }
       if (map.id === 'forest') {
         drawStaff(t2p(26.5), t2p(10.1), 112, 7, 'rgba(255,255,255,.75)');
+      }
+      const time = performance.now() * 0.001;
+      const count = map.id === 'forest' ? 22 : 12;
+      for (let i = 0; i < count; i += 1) {
+        const hx = hash2(i, map.w, map.h);
+        const tx = 2 + (hx % Math.max(2, map.w - 4));
+        const ty = 3 + ((hx >>> 7) % Math.max(2, map.h - 6));
+        if (tileAt(map, tx, ty) !== 0) continue;
+        const px = t2p(tx) + 8 + ((hx >>> 13) % 14);
+        const py = t2p(ty) + 16 + ((hx >>> 19) % 10);
+        const sway = Math.sin(time * 2.8 + tx * 0.7 + ty) * 2;
+        ctx.strokeStyle = 'rgba(62,142,65,.68)';
+        ctx.lineWidth = 2;
+        for (let blade = -1; blade <= 1; blade += 1) {
+          ctx.beginPath();
+          ctx.moveTo(px + blade * 3, py + 7);
+          ctx.lineTo(px + blade * 2 + sway, py);
+          ctx.stroke();
+        }
+        if (i % 4 === 0) {
+          ctx.fillStyle = i % 8 === 0 ? '#FFFDF6' : CONFIG.LA.yellow;
+          ctx.beginPath();
+          ctx.arc(px + 6, py + 1 + sway * 0.25, 2.2, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = CONFIG.LA.grassShade;
+          ctx.beginPath();
+          ctx.arc(px + 6, py + 1 + sway * 0.25, 0.9, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+      if (map.id === 'forest') {
+        const cx = t2p(20) + Math.sin(time * 0.8) * 42 + Math.sin(time * 2.4) * 8;
+        const cy = t2p(8) + Math.sin(time * 1.6) * 22;
+        ctx.fillStyle = 'rgba(255,241,214,.86)';
+        ctx.beginPath();
+        ctx.ellipse(cx - 3, cy, 4, 2.6, Math.sin(time * 8) * 0.8, 0, Math.PI * 2);
+        ctx.ellipse(cx + 3, cy, 4, 2.6, -Math.sin(time * 8) * 0.8, 0, Math.PI * 2);
+        ctx.fill();
       }
     }
 
@@ -2414,14 +2745,88 @@
       ctx.restore();
     }
 
+    function drawToyNpc(obj, r, cx, cy) {
+      const time = performance.now() * 0.001;
+      const bob = CONFIG.REDUCED_MOTION ? 0 : Math.sin(time * (obj.role === 'child' ? 5.2 : 3.9)) * (obj.role === 'child' ? 1.1 : 0.8);
+      const scale = obj.role === 'child' ? 0.82 : 1;
+      drawBlobShadow(cx, r.y + r.h + 2, 28 * scale);
+      ctx.save();
+      ctx.translate(cx, cy + bob);
+      if (obj.role === 'bard') {
+        ctx.fillStyle = '#6D4C41';
+        ctx.beginPath();
+        ctx.ellipse(9, 3, 5, 9, -0.5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = CONFIG.LA.purple;
+        drawRoundRect(-11, -3, 22, 18, 9);
+        ctx.fill();
+        ctx.fillStyle = '#6A3B8B';
+        ctx.beginPath();
+        ctx.ellipse(0, -10, 18, 6, 0, 0, Math.PI * 2);
+        ctx.fill();
+      } else if (obj.role === 'child') {
+        ctx.fillStyle = CONFIG.LA.yellow;
+        drawRoundRect(-9, -1, 18, 16, 8);
+        ctx.fill();
+        ctx.fillStyle = CONFIG.LA.hair;
+        ctx.beginPath();
+        ctx.arc(-8, -9, 4, 0, Math.PI * 2);
+        ctx.arc(8, -9, 4, 0, Math.PI * 2);
+        ctx.fill();
+      } else {
+        ctx.fillStyle = CONFIG.LA.robe;
+        drawRoundRect(-11, -2, 22, 18, 9);
+        ctx.fill();
+        ctx.strokeStyle = '#6D5342';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(12, 4);
+        ctx.lineTo(18, 16);
+        ctx.stroke();
+        ctx.fillStyle = '#D7D8D2';
+        ctx.beginPath();
+        ctx.ellipse(0, -12, 12, 6, 0, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      drawGloss(-4, 1, 6, 3);
+      ctx.fillStyle = CONFIG.LA.skin;
+      ctx.beginPath();
+      ctx.arc(0, -8, 8 * scale, 0, Math.PI * 2);
+      ctx.fill();
+      drawGloss(-3, -11, 4, 2.2);
+      ctx.fillStyle = CONFIG.colors.text;
+      ctx.beginPath();
+      ctx.arc(-3, -8, 1.2, 0, Math.PI * 2);
+      ctx.arc(3, -8, 1.2, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    function drawToySign(r, cx, cy) {
+      drawBlobShadow(cx, r.y + r.h + 2, 22);
+      ctx.fillStyle = CONFIG.LA.wood;
+      drawRoundRect(r.x + 4, r.y + 10, 24, 15, 5);
+      ctx.fill();
+      drawGloss(r.x + 12, r.y + 14, 6, 2);
+      ctx.fillStyle = CONFIG.LA.cliffLine;
+      ctx.fillRect(r.x + 14, r.y + 24, 4, 12);
+      ctx.fillStyle = '#F7E7B5';
+      ctx.beginPath();
+      ctx.arc(r.x + 10, r.y + 15, 1.4, 0, Math.PI * 2);
+      ctx.arc(r.x + 22, r.y + 15, 1.4, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
     function drawObject(obj) {
       const r = objectRect(obj);
       const cx = r.x + r.w / 2;
       const cy = r.y + r.h / 2;
       if (obj.type === 'decor') {
-        ctx.fillStyle = CONFIG.colors.villageWood;
+        drawBlobShadow(cx, r.y + r.h + 3, r.w * 0.7);
+        ctx.fillStyle = CONFIG.LA.wood;
         drawRoundRect(r.x, r.y, r.w, r.h, 6);
         ctx.fill();
+        drawGloss(r.x + 22, r.y + 16, 16, 7);
         ctx.fillStyle = CONFIG.colors.gold;
         ctx.font = '24px serif';
         ctx.textAlign = 'center';
@@ -2430,9 +2835,11 @@
       }
       if (obj.type === 'towerDoor') {
         const progress = obj.openAnim ? clamp(obj.openAnim / 0.9, 0, 1) : (DATA.flags.tower_door_open ? 1 : 0);
-        ctx.fillStyle = DATA.flags.tower_door_open ? '#B6E3A8' : '#6D4C41';
+        drawBlobShadow(cx, r.y + r.h + 2, r.w * 0.72);
+        ctx.fillStyle = DATA.flags.tower_door_open ? '#B6E3A8' : CONFIG.LA.wood;
         drawRoundRect(r.x, r.y, r.w, r.h, 4);
         ctx.fill();
+        drawGloss(r.x + r.w * 0.35, r.y + 8, 16, 5);
         if (progress > 0) {
           const lines = Math.max(1, Math.ceil(progress * 5));
           ctx.strokeStyle = CONFIG.colors.gold;
@@ -2447,32 +2854,27 @@
         return;
       }
       if (obj.type === 'npc') {
-        ctx.fillStyle = obj.role === 'child' ? '#FDD835' : (obj.role === 'bard' ? '#AB47BC' : CONFIG.colors.green);
-        drawRoundRect(r.x + 4, r.y + 6, 24, 24, 8);
-        ctx.fill();
-        ctx.fillStyle = '#fff';
-        ctx.font = '700 10px system-ui';
-        ctx.textAlign = 'center';
-        ctx.fillText(obj.label.slice(0, 2), cx, cy + 5);
+        drawToyNpc(obj, r, cx, cy);
       } else if (obj.type === 'pickup') {
         const s = SYMBOLS[obj.symbol];
+        const bob = CONFIG.REDUCED_MOTION ? 0 : Math.sin(performance.now() * 0.004) * 2;
+        drawBlobShadow(cx, r.y + r.h - 1, 22);
         ctx.fillStyle = CONFIG.colors.gold;
-        ctx.beginPath();
-        ctx.arc(cx, cy, 12 + (CONFIG.REDUCED_MOTION ? 0 : Math.sin(performance.now() * 0.006) * 2), 0, Math.PI * 2);
-        ctx.fill();
-        ctx.fillStyle = CONFIG.colors.text;
-        ctx.font = '22px serif';
+        ctx.font = '28px serif';
         ctx.textAlign = 'center';
-        ctx.fillText(s.glyph, cx, cy + 8);
-        drawSparkles(cx, cy);
+        ctx.fillText(s.glyph, cx, cy + 7 + bob);
+        drawSparkles(cx, cy + bob);
       } else if (obj.type === 'golden') {
+        const bob = CONFIG.REDUCED_MOTION ? 0 : Math.sin(performance.now() * 0.005) * 2;
+        drawBlobShadow(cx, r.y + r.h - 1, 22);
         ctx.fillStyle = CONFIG.colors.gold;
-        ctx.font = '30px serif';
+        ctx.font = '32px serif';
         ctx.textAlign = 'center';
-        ctx.fillText('♪', cx, cy + 10);
-        drawSparkles(cx, cy);
+        ctx.fillText('♪', cx, cy + 10 + bob);
+        drawSparkles(cx, cy + bob);
       } else if (obj.type === 'forestGate') {
-        ctx.fillStyle = DATA.flags.forest_gate_open ? '#79C879' : '#5D4037';
+        drawBlobShadow(cx, r.y + r.h + 2, 28);
+        ctx.fillStyle = DATA.flags.forest_gate_open ? '#79C879' : CONFIG.LA.wood;
         drawRoundRect(r.x, r.y, r.w, r.h, 4);
         ctx.fill();
         ctx.fillStyle = CONFIG.colors.gold;
@@ -2480,14 +2882,10 @@
         ctx.textAlign = 'center';
         ctx.fillText(DATA.flags.forest_gate_open ? '𝄋' : '×', cx, cy + 8);
       } else if (obj.type === 'sign') {
-        ctx.fillStyle = '#8D6E63';
-        ctx.fillRect(r.x + 8, r.y + 12, 16, 16);
-        ctx.fillStyle = '#5D4037';
-        ctx.fillRect(r.x + 14, r.y + 24, 4, 12);
+        drawToySign(r, cx, cy);
       } else if (obj.type === 'worldScore') {
-        ctx.fillStyle = '#FFFDF6';
-        drawRoundRect(r.x, r.y, r.w, r.h, 6);
-        ctx.fill();
+        drawBlobShadow(cx, r.y + r.h + 2, r.w * 0.72);
+        drawUiBox(r.x, r.y, r.w, r.h, 8);
         drawStaff(r.x + 10, r.y + 14, r.w - 20, 6, '#6D4C41');
         ctx.strokeStyle = CONFIG.colors.danger;
         ctx.lineWidth = 3;
@@ -2499,42 +2897,72 @@
         ctx.fillStyle = 'rgba(77,208,225,.35)';
         ctx.fillRect(r.x, r.y, r.w, r.h);
       } else if (obj.type === 'crow') {
-        ctx.fillStyle = '#5B4037';
-        ctx.fillRect(r.x + 13, r.y + 8, 8, 24);
-        ctx.fillStyle = '#2F7D46';
+        drawBlobShadow(cx, r.y + r.h + 2, 24);
+        ctx.fillStyle = CONFIG.LA.wood;
+        ctx.fillRect(r.x + 14, r.y + 8, 6, 25);
+        ctx.fillStyle = CONFIG.LA.grassShade;
         ctx.beginPath();
         ctx.arc(cx, cy - 6, 18, 0, Math.PI * 2);
         ctx.fill();
         ctx.fillStyle = '#202026';
+        ctx.beginPath();
+        ctx.arc(cx, cy - 10, 9, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#F0B429';
+        ctx.beginPath();
+        ctx.moveTo(cx + 7, cy - 10);
+        ctx.lineTo(cx + 15, cy - 7);
+        ctx.lineTo(cx + 7, cy - 5);
+        ctx.closePath();
+        ctx.fill();
+        ctx.fillStyle = DATA.flags.got_note_e ? CONFIG.colors.cyan : CONFIG.colors.gold;
         ctx.font = '18px serif';
         ctx.textAlign = 'center';
-        ctx.fillText(DATA.flags.got_note_e ? '♪' : '까', cx, cy - 2);
+        ctx.fillText('♪', cx, cy - 19);
       } else if (obj.type === 'bell') {
         const glow = obj.glow || 0;
+        drawBlobShadow(cx, r.y + r.h + 2, 24);
         if (glow > 0) {
           ctx.fillStyle = `rgba(255,213,79,${clamp(glow * 1.8, 0, 0.72)})`;
           ctx.beginPath();
           ctx.arc(cx, cy, 18 + glow * 12, 0, Math.PI * 2);
           ctx.fill();
         }
-        ctx.fillStyle = glow > 0 ? '#FFD96A' : '#F4B942';
+        const bg = ctx.createLinearGradient(r.x, r.y, r.x + r.w, r.y + r.h);
+        bg.addColorStop(0, '#FFE590');
+        bg.addColorStop(1, glow > 0 ? '#FFD96A' : '#D99A2B');
+        ctx.fillStyle = bg;
         ctx.beginPath();
         ctx.moveTo(cx, r.y + 6);
         ctx.lineTo(r.x + 8, r.y + 26);
         ctx.lineTo(r.x + 24, r.y + 26);
         ctx.closePath();
         ctx.fill();
+        drawGloss(cx - 4, r.y + 15, 5, 2.5);
+        ctx.strokeStyle = '#8A5A3B';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(cx, r.y + 8, 5, Math.PI, 0);
+        ctx.stroke();
         ctx.fillStyle = '#4A342A';
-        ctx.font = '700 11px system-ui';
+        ctx.font = '800 10px system-ui';
         ctx.textAlign = 'center';
-        ctx.fillText(obj.solfege || obj.note, cx, r.y + 23);
+        drawUiBox(cx - 13, r.y + 27, 26, 14, 5);
+        ctx.fillStyle = '#4A342A';
+        ctx.fillText(obj.solfege || obj.note, cx, r.y + 38);
       } else if (obj.type === 'rock') {
-        ctx.fillStyle = '#757575';
+        drawBlobShadow(cx, r.y + r.h + 1, 24);
+        ctx.fillStyle = '#8E8E85';
         drawRoundRect(r.x + 2, r.y + 4, 28, 24, 8);
         ctx.fill();
+        drawGloss(r.x + 11, r.y + 12, 7, 3);
       } else if (obj.type === 'chest') {
-        ctx.fillStyle = '#8D6E63';
-        drawRoundRect(r.x + 3, r.y + 9, 26, 18, 4);
+        drawBlobShadow(cx, r.y + r.h + 2, 24);
+        ctx.fillStyle = CONFIG.LA.wood;
+        drawRoundRect(r.x + 3, r.y + 14, 26, 14, 4);
+        ctx.fill();
+        ctx.fillStyle = '#C08A5A';
+        drawRoundRect(r.x + 4, r.y + 8, 24, 10, 4);
         ctx.fill();
         ctx.fillStyle = CONFIG.colors.gold;
         ctx.fillRect(r.x + 14, r.y + 16, 4, 5);
@@ -2553,9 +2981,11 @@
           ctx.fillText(s.glyph, cx, cy + 7);
         }
       } else if (obj.type === 'staffDoor') {
+        drawBlobShadow(cx, r.y + r.h + 2, 26);
         ctx.fillStyle = DATA.flags.staff_door_open ? '#B6E3A8' : '#315B43';
         drawRoundRect(r.x, r.y, r.w, r.h, 5);
         ctx.fill();
+        drawGloss(r.x + 10, r.y + 11, 6, 3);
         ctx.fillStyle = CONFIG.colors.gold;
         ctx.font = '18px serif';
         ctx.textAlign = 'center';
@@ -2630,40 +3060,117 @@
 
     function drawPlayer() {
       const p = ENTITIES.player;
-      const bob = p.moving && !CONFIG.REDUCED_MOTION ? Math.sin(performance.now() * 0.014) * 1.5 : 0;
-      const tilt = p.moving && !CONFIG.REDUCED_MOTION ? (p.faceX || Math.sin(performance.now() * 0.012)) * 0.04 : 0;
+      const time = performance.now() * 0.001;
+      const walk = p.moving && !CONFIG.REDUCED_MOTION;
+      const idleBob = !walk && !CONFIG.REDUCED_MOTION ? Math.sin(time * 3.9) * 0.8 : 0;
+      const bob = walk ? Math.sin(time * 14) * 1.5 : idleBob;
+      const tilt = walk ? (p.faceX || Math.sin(time * 12)) * 0.04 : 0;
+      const footY = p.y + CONFIG.PLAYER_H + 2;
+      const baseX = p.x + CONFIG.PLAYER_W / 2;
+      drawBlobShadow(baseX, footY, 24);
       ctx.save();
-      ctx.translate(p.x + CONFIG.PLAYER_W / 2, p.y + CONFIG.PLAYER_H / 2 + bob);
+      ctx.translate(baseX, p.y + CONFIG.PLAYER_H / 2 + bob);
       ctx.rotate(tilt);
-      ctx.fillStyle = CONFIG.colors.blue;
-      drawRoundRect(-CONFIG.PLAYER_W / 2, -CONFIG.PLAYER_H / 2, CONFIG.PLAYER_W, CONFIG.PLAYER_H, 6);
-      ctx.fill();
-      ctx.fillStyle = '#FFFFFF';
-      const fx = p.faceX * 5;
-      const fy = -CONFIG.PLAYER_H / 2 + 8 + p.faceY * 4;
+      const step = walk ? Math.sin(time * 16) * 2.8 : 0;
+      ctx.fillStyle = '#263343';
       ctx.beginPath();
-      ctx.arc(fx, fy, 2.5, 0, Math.PI * 2);
+      ctx.arc(-4, 11 + step, 2.2, 0, Math.PI * 2);
+      ctx.arc(5, 11 - step, 2.2, 0, Math.PI * 2);
       ctx.fill();
+      ctx.fillStyle = CONFIG.LA.blue;
+      drawRoundRect(-9, -1, 18, 15, 8);
+      ctx.fill();
+      drawGloss(-3, 2, 5, 2.4);
+      ctx.strokeStyle = CONFIG.LA.skin;
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      if (p.pose === 'lift') {
+        ctx.moveTo(-8, 0);
+        ctx.lineTo(-13, -13);
+        ctx.moveTo(8, 0);
+        ctx.lineTo(13, -13);
+      } else {
+        ctx.moveTo(-8, 3);
+        ctx.lineTo(-13, 8);
+        ctx.moveTo(8, 3);
+        ctx.lineTo(13, 8);
+      }
+      ctx.stroke();
+      ctx.fillStyle = CONFIG.LA.skin;
+      ctx.beginPath();
+      ctx.arc(0, -9, 8, 0, Math.PI * 2);
+      ctx.fill();
+      drawGloss(-3, -12, 4, 2.2);
+      ctx.fillStyle = CONFIG.LA.hair;
+      ctx.beginPath();
+      ctx.arc(0, -13, 8, Math.PI, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = CONFIG.colors.text;
+      if (p.faceY >= 0) {
+        ctx.beginPath();
+        ctx.arc(-3, -9, 1.2, 0, Math.PI * 2);
+        ctx.arc(3, -9, 1.2, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillRect(-2, -5, 4, 1);
+      } else if (p.faceX !== 0) {
+        ctx.beginPath();
+        ctx.arc(p.faceX * 3, -9, 1.2, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.fillStyle = CONFIG.colors.gold;
+      ctx.font = '900 10px serif';
+      ctx.textAlign = 'center';
+      const pinSwing = Math.sin(time * 10 + 0.8) * 1.5;
+      ctx.fillText('♪', 7 + pinSwing, -16);
       ctx.restore();
     }
 
     function drawHud() {
-      ctx.fillStyle = 'rgba(255,250,240,.9)';
-      drawRoundRect(10, 10, 164, 48, 8);
-      ctx.fill();
-      ctx.fillStyle = CONFIG.colors.text;
-      ctx.font = '800 13px system-ui';
-      ctx.textAlign = 'left';
-      ctx.fillText(currentMap()?.name || '', 20, 29);
-      ctx.font = '11px system-ui';
       const active = QUEST.activeQuest();
-      ctx.fillText(active ? `${QUEST.defs[active[0]].title}: ${active[1].objective}` : '자유 탐험', 20, 47);
+      if (UI.regionBannerTimer > 0) {
+        const a = Math.min(1, UI.regionBannerTimer, (2.2 - UI.regionBannerTimer) * 3);
+        ctx.globalAlpha = a;
+        drawUiBox(78, 66, 204, 42, 14);
+        ctx.fillStyle = CONFIG.colors.text;
+        ctx.font = '900 15px system-ui';
+        ctx.textAlign = 'center';
+        ctx.fillText(`𝄞 ${currentMap()?.name || ''}`, 180, 92);
+        ctx.globalAlpha = 1;
+      }
+
+      UI.button('objectiveHud', 10, 10, 48, 48, '목표');
+      const flash = UI.objectiveFlashTimer > 0 && !CONFIG.REDUCED_MOTION ? 0.75 + Math.sin(performance.now() * 0.012) * 0.18 : 1;
+      ctx.globalAlpha = flash;
+      drawUiBox(10, 10, 48, 48, 14);
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = CONFIG.colors.text;
+      ctx.font = '900 22px serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('▱', 34, 40);
+      if (UI.objectiveBubbleTimer > 0) {
+        drawUiBox(18, 66, 276, 64, 12);
+        ctx.fillStyle = CONFIG.colors.text;
+        ctx.font = '800 12px system-ui';
+        ctx.textAlign = 'left';
+        fillTextWrapped(active ? `${QUEST.defs[active[0]].title}: ${active[1].objective}` : '자유 탐험', 34, 91, 242, 18, 2);
+      }
+
+      const pop = UI.notePopTimer > 0 ? 1 + Math.sin((1 - UI.notePopTimer / 0.45) * Math.PI) * 0.25 : 1;
+      drawUiBox(210, 10, 42, 34, 10);
+      ctx.save();
+      ctx.translate(231, 32);
+      ctx.scale(pop, pop);
+      ctx.fillStyle = CONFIG.colors.gold;
+      ctx.font = '900 20px serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('♪', -6, 2);
+      ctx.fillStyle = CONFIG.colors.text;
+      ctx.font = '900 13px system-ui';
+      ctx.fillText(`×${DATA.goldenNotes.length}`, 9, 1);
+      ctx.restore();
 
       UI.button('soundHud', 254, 6, 44, 44, '♪');
-      ctx.fillStyle = 'rgba(255,250,240,.86)';
-      ctx.beginPath();
-      ctx.arc(276, 28, 16, 0, Math.PI * 2);
-      ctx.fill();
+      drawUiBox(254, 6, 44, 44, 12);
       ctx.fillStyle = DATA.soundOn ? CONFIG.colors.text : 'rgba(43,39,36,.45)';
       ctx.font = '900 18px serif';
       ctx.textAlign = 'center';
@@ -2678,40 +3185,48 @@
       }
 
       UI.button('pause', 308, 6, 48, 48, 'Ⅱ');
-      ctx.fillStyle = 'rgba(255,250,240,.92)';
-      drawRoundRect(308, 6, 48, 48, 8);
-      ctx.fill();
+      drawUiBox(308, 6, 48, 48, 12);
       ctx.fillStyle = CONFIG.colors.text;
       ctx.font = '800 22px system-ui';
       ctx.textAlign = 'center';
       ctx.fillText('Ⅱ', 332, 38);
 
       const enabled = Boolean(UI.interactTarget);
-      UI.button('interact', 282, 500, 62, 62, 'E', enabled);
+      UI.button('interact', 278, 494, 66, 66, 'E', enabled);
       const pulse = UI.interactPulse > 0 ? 1 + Math.sin((1 - UI.interactPulse / 0.1) * Math.PI) * 0.12 : 1;
-      ctx.globalAlpha = enabled ? 1 : 0.38;
-      ctx.fillStyle = CONFIG.colors.cyan;
-      ctx.beginPath();
-      ctx.arc(313, 531, 31 * pulse, 0, Math.PI * 2);
-      ctx.fill();
+      ctx.save();
+      ctx.translate(311, 527);
+      ctx.scale(pulse, pulse);
+      ctx.globalAlpha = enabled ? 1 : 0.45;
+      drawUiBox(-33, -33, 66, 66, 14, CONFIG.LA.ui, enabled ? CONFIG.colors.cyan : CONFIG.LA.uiStroke);
       ctx.globalAlpha = 1;
       ctx.fillStyle = '#15313A';
+      ctx.font = '800 9px system-ui';
+      ctx.textAlign = 'left';
+      ctx.fillText('E', -26, -18);
       ctx.font = enabled ? '900 13px system-ui' : '900 20px system-ui';
-      ctx.fillText(enabled ? UI.verbFor(UI.interactTarget) : '!', 313, enabled ? 535 : 538);
+      ctx.textAlign = 'center';
+      ctx.fillText(enabled ? UI.verbFor(UI.interactTarget) : '!', 0, enabled ? 6 : 8);
+      ctx.restore();
       if (enabled && UI.interactTarget.label) {
         ctx.fillStyle = 'rgba(32,32,38,.58)';
         ctx.font = '800 10px system-ui';
-        ctx.fillText(UI.interactTarget.label, 313, 570);
+        ctx.textAlign = 'center';
+        ctx.fillText(UI.interactTarget.label, 311, 568);
       }
 
-      UI.button('palette', 280, 570, 64, 54, '♪', DATA.symbols.length > 0);
-      ctx.globalAlpha = DATA.symbols.length ? 1 : 0.38;
-      ctx.fillStyle = CONFIG.colors.gold;
-      drawRoundRect(280, 570, 64, 54, 8);
-      ctx.fill();
+      UI.button('palette', 278, 570, 66, 56, '♪', DATA.symbols.length > 0);
+      ctx.globalAlpha = DATA.symbols.length ? 1 : 0.45;
+      drawUiBox(278, 570, 66, 56, 14);
       ctx.fillStyle = '#3F332B';
+      ctx.font = '800 9px system-ui';
+      ctx.textAlign = 'left';
+      ctx.fillText('Q', 288, 589);
+      ctx.fillStyle = CONFIG.colors.gold;
       ctx.font = '900 27px serif';
-      ctx.fillText('♪', 312, 606);
+      const recent = DATA.symbols[DATA.symbols.length - 1];
+      ctx.textAlign = 'center';
+      ctx.fillText(recent ? SYMBOLS[recent].glyph : '♪', 311, 611);
       ctx.globalAlpha = 1;
 
       if (INPUT.joy.active) drawJoystick();
@@ -2747,9 +3262,7 @@
       };
       if (PUZZLES.bird.active && !DATA.flags.got_note_e) {
         const dx = !CONFIG.REDUCED_MOTION && PUZZLES.bird.shake > 0 ? Math.sin(performance.now() * 0.09) * 4 : 0;
-        ctx.fillStyle = PUZZLES.bird.success > 0 ? 'rgba(255,250,240,.97)' : 'rgba(255,250,240,.9)';
-        drawRoundRect(12 + dx, y, 156, 44, 8);
-        ctx.fill();
+        drawUiBox(12 + dx, y, 156, 44, 10);
         ctx.fillStyle = CONFIG.colors.text;
         ctx.font = '900 12px system-ui';
         ctx.textAlign = 'left';
@@ -2764,9 +3277,7 @@
           const slot = currentMap().objects.find((obj) => obj.id === id);
           return SYMBOLS[slot?.expected]?.solfege || '';
         });
-        ctx.fillStyle = PUZZLES.bridge.success > 0 ? 'rgba(255,250,240,.97)' : 'rgba(255,250,240,.9)';
-        drawRoundRect(12 + dx, y, 156, 50, 8);
-        ctx.fill();
+        drawUiBox(12 + dx, y, 156, 50, 10);
         ctx.fillStyle = CONFIG.colors.text;
         ctx.font = '900 12px system-ui';
         ctx.textAlign = 'left';
@@ -2791,15 +3302,16 @@
 
     function drawJoystick() {
       const j = INPUT.joy;
-      ctx.strokeStyle = 'rgba(255,255,255,.48)';
-      ctx.lineWidth = 2;
+      ctx.strokeStyle = 'rgba(253,253,245,.62)';
+      ctx.lineWidth = 3;
       ctx.beginPath();
       ctx.arc(j.baseX, j.baseY, 48, 0, Math.PI * 2);
       ctx.stroke();
-      ctx.fillStyle = 'rgba(255,255,255,.42)';
+      ctx.fillStyle = 'rgba(253,253,245,.42)';
       ctx.beginPath();
       ctx.arc(j.x, j.y, 20, 0, Math.PI * 2);
       ctx.fill();
+      drawGloss(j.x - 4, j.y - 4, 8, 4);
     }
 
     function drawDialogue() {
@@ -2811,17 +3323,20 @@
       const lastLine = DIALOGUE.index >= d.lines.length - 1;
       ctx.fillStyle = 'rgba(0,0,0,.24)';
       ctx.fillRect(0, 0, CONFIG.W, CONFIG.H);
-      ctx.fillStyle = CONFIG.colors.panel;
-      drawRoundRect(14, 454, 332, 150, 8);
-      ctx.fill();
-      ctx.strokeStyle = '#3F332B';
-      ctx.lineWidth = 2;
-      ctx.stroke();
+      const appear = Math.min(1, DIALOGUE.chars / 4 + 0.25);
+      ctx.save();
+      ctx.translate(180, 530);
+      ctx.scale(0.92 + appear * 0.08, 0.92 + appear * 0.08);
+      ctx.translate(-180, -530);
+      drawUiBox(14, 454, 332, 150, 12);
       ctx.font = '800 14px system-ui';
       const badgeW = clamp(ctx.measureText(d.speaker).width + 48, 92, 154);
       ctx.fillStyle = style.color;
-      drawRoundRect(26, 438, badgeW, 30, 8);
+      drawRoundRect(26, 438, badgeW, 30, 10);
       ctx.fill();
+      ctx.strokeStyle = CONFIG.LA.uiStroke;
+      ctx.lineWidth = 3;
+      ctx.stroke();
       ctx.fillStyle = '#FFFDF6';
       ctx.textAlign = 'left';
       ctx.font = '900 16px serif';
@@ -2833,28 +3348,25 @@
       ctx.font = '700 17px system-ui';
       fillTextWrapped(Array.from(line).slice(0, Math.floor(DIALOGUE.chars)).join(''), 30, 492, 300, 25, 4);
       if (doneTyping) {
-        ctx.fillStyle = 'rgba(43,39,36,.72)';
+        ctx.fillStyle = CONFIG.LA.red;
         ctx.textAlign = 'right';
         if (lastLine) {
-          ctx.font = '800 12px system-ui';
-          ctx.fillText('닫기', 330, 586);
+          ctx.beginPath();
+          ctx.arc(329, 581, 4, 0, Math.PI * 2);
+          ctx.fill();
         } else {
           const bob = CONFIG.REDUCED_MOTION ? 0 : Math.sin(performance.now() * 0.010) * 3;
           ctx.font = '900 14px system-ui';
           ctx.fillText('▼', 330, 586 + bob);
         }
       }
+      ctx.restore();
     }
 
     function drawSymbolSelect() {
       if (UI.symbolMenu.mode === 'target') {
         const s = SYMBOLS[UI.symbolMenu.selected];
-        ctx.fillStyle = 'rgba(255,250,240,.95)';
-        drawRoundRect(14, 66, 332, 68, 8);
-        ctx.fill();
-        ctx.strokeStyle = CONFIG.colors.cyan;
-        ctx.lineWidth = 2;
-        ctx.stroke();
+        drawUiBox(14, 66, 332, 68, 12, CONFIG.LA.ui, CONFIG.colors.cyan);
         ctx.fillStyle = CONFIG.colors.gold;
         ctx.font = '34px serif';
         ctx.textAlign = 'center';
@@ -2872,12 +3384,7 @@
       }
       ctx.fillStyle = 'rgba(0,0,0,.28)';
       ctx.fillRect(0, 0, CONFIG.W, CONFIG.H);
-      ctx.fillStyle = CONFIG.colors.panel;
-      drawRoundRect(42, 78, 276, 400, 8);
-      ctx.fill();
-      ctx.strokeStyle = CONFIG.colors.text;
-      ctx.lineWidth = 2;
-      ctx.stroke();
+      drawUiBox(42, 78, 276, 400, 12);
       ctx.fillStyle = CONFIG.colors.text;
       ctx.font = '800 18px system-ui';
       ctx.textAlign = 'center';
@@ -2891,11 +3398,7 @@
           const s = SYMBOLS[id];
           const x = 56;
           const y = 128 + i * 64;
-          ctx.fillStyle = '#FFFDF6';
-          drawRoundRect(x, y, 248, 56, 8);
-          ctx.fill();
-          ctx.strokeStyle = '#BCA77E';
-          ctx.stroke();
+          drawUiBox(x, y, 248, 56, 10);
           ctx.fillStyle = CONFIG.colors.gold;
           ctx.font = '30px serif';
           ctx.textAlign = 'center';
@@ -2916,17 +3419,73 @@
     function drawCutscene() {
       ctx.fillStyle = 'rgba(0,0,0,.62)';
       ctx.fillRect(0, 0, CONFIG.W, CONFIG.H);
+      if (UI.itemGet) {
+        const item = UI.itemGet;
+        const s = SYMBOLS[item.id];
+        const t = item.timer;
+        if (!item.card) {
+          const scale = 1 + Math.sin(Math.min(1, t / 0.25) * Math.PI) * 0.08;
+          ctx.save();
+          ctx.translate(180, 310);
+          ctx.scale(scale, scale);
+          drawBlobShadow(0, 42, 42);
+          ctx.fillStyle = CONFIG.LA.blue;
+          drawRoundRect(-14, 6, 28, 24, 12);
+          ctx.fill();
+          ctx.fillStyle = CONFIG.LA.skin;
+          ctx.beginPath();
+          ctx.arc(0, -8, 12, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.strokeStyle = CONFIG.LA.skin;
+          ctx.lineWidth = 4;
+          ctx.beginPath();
+          ctx.moveTo(-10, 4);
+          ctx.lineTo(-24, -28);
+          ctx.moveTo(10, 4);
+          ctx.lineTo(24, -28);
+          ctx.stroke();
+          ctx.fillStyle = CONFIG.colors.gold;
+          ctx.font = '900 42px serif';
+          ctx.textAlign = 'center';
+          const wobble = Math.sin(t * 10) * 4;
+          ctx.rotate(wobble * Math.PI / 180);
+          ctx.fillText(s.glyph, 0, -42);
+          ctx.restore();
+          ctx.strokeStyle = `rgba(255,213,79,${Math.max(0, 1 - t)})`;
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          ctx.arc(180, 250, 24 + t * 40, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.fillStyle = CONFIG.LA.ui;
+          ctx.font = '900 16px system-ui';
+          ctx.textAlign = 'center';
+          ctx.fillText(`${s.name} 획득!`, 180, 398);
+          return;
+        }
+        drawUiBox(34, 114, 292, 392, 12);
+        drawSymbolArt(s, 130, 146, 100, 100, 88);
+        ctx.fillStyle = CONFIG.colors.text;
+        ctx.font = '900 22px system-ui';
+        ctx.textAlign = 'center';
+        ctx.fillText(s.name, 180, 282);
+        ctx.font = '700 16px system-ui';
+        ctx.textAlign = 'left';
+        fillTextWrapped(s.theory, 58, 324, 244, 24, 3);
+        ctx.fillStyle = '#3F8E64';
+        ctx.font = '700 15px system-ui';
+        fillTextWrapped(s.effect, 58, 408, 244, 22, 3);
+        ctx.fillStyle = 'rgba(43,39,36,.62)';
+        ctx.font = '12px system-ui';
+        ctx.textAlign = 'center';
+        ctx.fillText('탭해서 닫기', 180, 482);
+        return;
+      }
       if (UI.codexList) {
         const total = UI.codexList.items.length;
         const index = clamp(UI.codexList.index, 0, Math.max(0, total - 1));
         UI.codexList.index = index;
         const s = SYMBOLS[UI.codexList.items[index]];
-        ctx.fillStyle = CONFIG.colors.panel;
-        drawRoundRect(34, 76, 292, 512, 8);
-        ctx.fill();
-        ctx.strokeStyle = CONFIG.colors.gold;
-        ctx.lineWidth = 3;
-        ctx.stroke();
+        drawUiBox(34, 76, 292, 512, 12);
         drawSymbolArt(s, 130, 108, 100, 100, 88);
         ctx.fillStyle = CONFIG.colors.text;
         ctx.font = '900 22px system-ui';
@@ -2949,12 +3508,7 @@
       }
       if (UI.codex) {
         const s = SYMBOLS[UI.codex.id];
-        ctx.fillStyle = CONFIG.colors.panel;
-        drawRoundRect(34, 114, 292, 392, 8);
-        ctx.fill();
-        ctx.strokeStyle = CONFIG.colors.gold;
-        ctx.lineWidth = 3;
-        ctx.stroke();
+        drawUiBox(34, 114, 292, 392, 12);
         drawSymbolArt(s, 130, 146, 100, 100, 88);
         ctx.fillStyle = CONFIG.colors.text;
         ctx.font = '900 22px system-ui';
@@ -2972,12 +3526,7 @@
         return;
       }
       if (UI.cutscene) {
-        ctx.fillStyle = CONFIG.colors.panel;
-        drawRoundRect(28, 174, 304, 250, 8);
-        ctx.fill();
-        ctx.strokeStyle = CONFIG.colors.gold;
-        ctx.lineWidth = 2;
-        ctx.stroke();
+        drawUiBox(28, 174, 304, 250, 12);
         ctx.fillStyle = CONFIG.colors.gold;
         ctx.font = '42px serif';
         ctx.textAlign = 'center';
@@ -2990,12 +3539,7 @@
         ctx.textAlign = 'center';
         ctx.fillText('탭해서 계속 · 오른쪽 위 SKIP', 180, 394);
         UI.button('skip', 268, 16, 76, 44, 'SKIP');
-        ctx.fillStyle = 'rgba(255,255,255,.88)';
-        drawRoundRect(268, 16, 76, 44, 8);
-        ctx.fill();
-        ctx.fillStyle = CONFIG.colors.text;
-        ctx.font = '800 14px system-ui';
-        ctx.fillText('SKIP', 306, 44);
+        drawButton(UI.buttons.find((b) => b.id === 'skip'));
       }
     }
 
@@ -3014,13 +3558,49 @@
       }
       ctx.fillStyle = 'rgba(0,0,0,.48)';
       ctx.fillRect(0, 0, CONFIG.W, CONFIG.H);
-      ctx.fillStyle = CONFIG.colors.panel;
-      drawRoundRect(42, 72, 276, 514, 8);
-      ctx.fill();
+      drawUiBox(18, 46, 324, 548, 14);
       ctx.fillStyle = CONFIG.colors.text;
-      ctx.font = '900 22px system-ui';
-      ctx.textAlign = 'center';
-      ctx.fillText('일시정지', 180, 116);
+      ctx.font = '900 20px system-ui';
+      ctx.textAlign = 'left';
+      ctx.fillText('가방과 악전', 38, 84);
+      ctx.fillStyle = CONFIG.colors.gold;
+      ctx.font = '900 18px serif';
+      ctx.textAlign = 'right';
+      ctx.fillText(`♪×${DATA.goldenNotes.length}`, 318, 84);
+      const slots = ['clef_g', 'note_c', 'note_e', 'note_g', '', '', '', ''];
+      slots.forEach((id, i) => {
+        const col = i % 4;
+        const row = Math.floor(i / 4);
+        const x = 38 + col * 72;
+        const y = 112 + row * 76;
+        const found = id && DATA.codex.includes(id);
+        if (id) UI.button(`codexCard_${id}`, x, y, 56, 56, id, found, found ? 'default' : 'disabled');
+        ctx.globalAlpha = id ? 1 : 0.6;
+        drawUiBox(x, y, 56, 56, 12, found ? CONFIG.LA.ui : 'rgba(58,58,56,.18)');
+        if (found) {
+          drawSymbolArt(SYMBOLS[id], x + 11, y + 8, 34, 34, 32);
+        } else if (id) {
+          ctx.fillStyle = 'rgba(58,58,56,.28)';
+          ctx.font = '900 24px system-ui';
+          ctx.textAlign = 'center';
+          ctx.fillText('?', x + 28, y + 36);
+        }
+        if (id && UI.inventorySelected === id && found) {
+          const breathe = CONFIG.REDUCED_MOTION ? 0 : Math.sin(performance.now() * 0.012) * 2;
+          ctx.strokeStyle = CONFIG.colors.gold;
+          ctx.lineWidth = 3;
+          ctx.strokeRect(x - 3 - breathe * 0.2, y - 3 - breathe * 0.2, 62 + breathe * 0.4, 62 + breathe * 0.4);
+        }
+        ctx.globalAlpha = 1;
+      });
+      const selected = DATA.codex.includes(UI.inventorySelected) ? SYMBOLS[UI.inventorySelected] : null;
+      drawUiBox(38, 276, 284, 66, 12);
+      ctx.fillStyle = CONFIG.colors.text;
+      ctx.font = '900 14px system-ui';
+      ctx.textAlign = 'left';
+      ctx.fillText(selected ? selected.name : '빈 슬롯', 54, 302);
+      ctx.font = '700 12px system-ui';
+      fillTextWrapped(selected ? selected.theory : '새 기호를 찾으면 이곳에 악전 카드가 채워져요.', 54, 324, 244, 17, 1);
       const rows = [
         ['resume', '계속', true, 'default'],
         ['codexList', '악전 도감', true, DATA.codex.length ? 'default' : 'disabled'],
@@ -3030,19 +3610,14 @@
         ['saveManage', '저장 관리', true, 'default'],
         ['title', '타이틀로', true, 'default']
       ];
-      rows.forEach((row, i) => UI.button(row[0], 72, 144 + i * 56, 216, 48, row[1], row[2], row[3]));
+      rows.forEach((row, i) => UI.button(row[0], 38 + (i % 2) * 146, 366 + Math.floor(i / 2) * 52, 134, 44, row[1], row[2], row[3]));
       UI.buttons.filter((b) => rows.some((row) => row[0] === b.id)).forEach(drawButton);
     }
 
     function drawPauseShell(title) {
       ctx.fillStyle = 'rgba(0,0,0,.48)';
       ctx.fillRect(0, 0, CONFIG.W, CONFIG.H);
-      ctx.fillStyle = CONFIG.colors.panel;
-      drawRoundRect(28, 58, 304, 540, 8);
-      ctx.fill();
-      ctx.strokeStyle = '#3F332B';
-      ctx.lineWidth = 2;
-      ctx.stroke();
+      drawUiBox(28, 58, 304, 540, 14);
       ctx.fillStyle = CONFIG.colors.text;
       ctx.font = '900 20px system-ui';
       ctx.textAlign = 'center';
@@ -3112,10 +3687,9 @@
           ctx.textAlign = 'center';
           ctx.fillText(SYMBOLS[id].name, x + 64, y + 112);
         } else {
-          ctx.fillStyle = '#FFFDF6';
-          ctx.font = '900 42px system-ui';
-          ctx.textAlign = 'center';
-          ctx.fillText('?', x + 64, y + 86);
+          ctx.fillStyle = 'rgba(255,255,255,.14)';
+          drawRoundRect(x + 18, y + 28, 92, 54, 10);
+          ctx.fill();
         }
         ctx.globalAlpha = 1;
       });
@@ -3198,10 +3772,8 @@
       const y = 72;
       const fade = UI.toastDuration > 0 ? Math.min(1, UI.toastTimer * 2.5, (UI.toastDuration - UI.toastTimer) * 6 + 0.45) : Math.min(1, UI.toastTimer * 2);
       ctx.globalAlpha = fade;
-      ctx.fillStyle = 'rgba(32,32,38,.88)';
-      drawRoundRect(x, y, boxW, boxH, 8);
-      ctx.fill();
-      ctx.fillStyle = '#FFFDF6';
+      drawUiBox(x, y, boxW, boxH, 10);
+      ctx.fillStyle = CONFIG.colors.text;
       ctx.textAlign = 'center';
       lines.forEach((item, i) => ctx.fillText(item, CONFIG.W / 2, y + 23 + i * 18));
       ctx.globalAlpha = 1;
@@ -3255,6 +3827,14 @@
         fps = frameCount / fpsClock;
         fpsClock = 0;
         frameCount = 0;
+        if (!CONFIG.TEST && performance.now() > 4000) {
+          if (CONFIG.diorama === 'full' && fps < 50) CONFIG.diorama = 'lite';
+          else if (CONFIG.diorama === 'lite' && fps < 42) CONFIG.diorama = 'off';
+          if (CONFIG.diorama !== 'full' && !CONFIG.dioramaWarned) {
+            CONFIG.dioramaWarned = true;
+            UI.toast('디오라마 효과를 줄였어요');
+          }
+        }
       }
       const fixed = 1 / 60;
       while (accumulator >= fixed) {
@@ -3341,10 +3921,21 @@
         }
         if (id === 'codexDetailClose') {
           UI.codexDetail = null;
+          UI.pauseView = 'main';
           return;
         }
         if (id.startsWith('codexCard_')) {
-          UI.codexDetail = id.replace('codexCard_', '');
+          const symbolId = id.replace('codexCard_', '');
+          if (UI.pauseView === 'main') {
+            if (UI.inventorySelected === symbolId) {
+              UI.pauseView = 'codex';
+              UI.codexDetail = symbolId;
+            } else {
+              UI.inventorySelected = symbolId;
+            }
+            return;
+          }
+          UI.codexDetail = symbolId;
           return;
         }
         if (id === 'resume') setState('Explore');
@@ -3501,6 +4092,12 @@
           AUDIO.setMuted(DATA.soundOn);
           if (DATA.soundOn) AUDIO.sfxTick();
           haptic(10);
+          return;
+        }
+        if (b?.id === 'objectiveHud') {
+          UI.objectiveBubbleTimer = 3;
+          UI.objectiveFlashTimer = 0;
+          AUDIO.sfxTick(true);
           return;
         }
         if (b?.id === 'interact') {

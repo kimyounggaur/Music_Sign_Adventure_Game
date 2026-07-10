@@ -14,7 +14,7 @@ async function reachPause(page) {
 
 test('CX-01 empty codex keeps Pause and shows toast', async ({ page }) => {
   await reachPause(page);
-  await tapCanvas(page, 180, 224);
+  await tapCanvas(page, 251, 388);
   await expect.poll(() => lastToast(page)).toBe('아직 모은 기호가 없어요');
   await expect(page.locator('body')).toHaveAttribute('data-game-state', 'Pause');
 });
@@ -25,7 +25,7 @@ test('CX-02 codex grid opens detail and closes to Pause hub', async ({ page }) =
     d.DATA.symbols = ['clef_g', 'note_c', 'note_e', 'note_g'];
     d.DATA.codex = ['clef_g', 'note_c', 'note_e', 'note_g'];
   });
-  await tapCanvas(page, 180, 224);
+  await tapCanvas(page, 251, 388);
   await waitState(page, 'Pause');
   await expect.poll(() => dbg(page, (d) => d.UI.pauseView)).toBe('codex');
   await page.waitForTimeout(100);
@@ -44,7 +44,7 @@ test('CX-03 codex card uses symbol theory text', async ({ page }) => {
     d.DATA.symbols = ['clef_g'];
     d.DATA.codex = ['clef_g'];
   });
-  await tapCanvas(page, 180, 224);
+  await tapCanvas(page, 251, 388);
   await waitState(page, 'Pause');
   await expect.poll(() => dbg(page, (d) => d.UI.pauseView)).toBe('codex');
   await page.waitForTimeout(100);
