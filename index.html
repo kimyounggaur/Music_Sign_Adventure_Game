@@ -85,6 +85,7 @@
       PLAYER_W: 20,
       PLAYER_H: 24,
       SAVE_KEY: 'melodia_v01_save',
+      SETTINGS_KEY: 'melodia_ui_settings_v1',
       STEP: 'v0.1 Phase 1: Step 1-10',
       DEBUG: PARAMS.has('debug'),
       TEST: PARAMS.get('test') === '1',
@@ -318,7 +319,7 @@
         this.muted = muted;
         DATA.soundOn = !muted;
         if (this.master) this.master.gain.value = CONFIG.TEST ? 0 : (DATA.soundOn ? 0.18 : 0);
-        SAVE.write('settings');
+        SETTINGS.write();
       },
       noteToMidi(name) {
         const m = /^([A-G])([#b]?)(-?\d)$/.exec(name);
@@ -1442,6 +1443,7 @@
           DATA.symbols = Array.isArray(parsed.symbols) ? parsed.symbols : [];
           DATA.codex = Array.isArray(parsed.codex) ? parsed.codex : [];
           DATA.goldenNotes = Array.isArray(parsed.goldenNotes) ? parsed.goldenNotes : [];
+          SETTINGS.apply();
           AUDIO.muted = !DATA.soundOn;
           return true;
         } catch (err) {
@@ -1474,6 +1476,53 @@
         }
         this.memory = null;
         markTitleHasSave(false);
+      }
+    };
+
+    const SETTINGS = {
+      memory: null,
+      fallback: false,
+      readRaw() {
+        try {
+          return window.localStorage.getItem(CONFIG.SETTINGS_KEY);
+        } catch (err) {
+          this.fallback = true;
+          return this.memory;
+        }
+      },
+      load() {
+        const raw = this.readRaw();
+        if (!raw) return null;
+        try {
+          const parsed = JSON.parse(raw);
+          if (!parsed || parsed.version !== 1) return null;
+          return parsed;
+        } catch (err) {
+          return null;
+        }
+      },
+      apply() {
+        const settings = this.load();
+        if (!settings) return;
+        if (typeof settings.soundOn === 'boolean') DATA.soundOn = settings.soundOn;
+        if (typeof settings.hapticsOn === 'boolean') DATA.hapticsOn = settings.hapticsOn;
+      },
+      snapshot() {
+        return JSON.stringify({
+          version: 1,
+          soundOn: DATA.soundOn,
+          hapticsOn: DATA.hapticsOn
+        });
+      },
+      write() {
+        const payload = this.snapshot();
+        try {
+          window.localStorage.setItem(CONFIG.SETTINGS_KEY, payload);
+          this.memory = payload;
+        } catch (err) {
+          this.fallback = true;
+          this.memory = payload;
+        }
       }
     };
 
@@ -1846,6 +1895,7 @@
       startNewGame() {
         UI.resetConfirm = null;
         DATA = defaultDataSafe();
+        SETTINGS.apply();
         DATA.soundOn = !AUDIO.muted;
         buildMaps();
         loadMap('village', 'start');
@@ -3903,6 +3953,7 @@
           if (id === 'confirmClear') {
             SAVE.clear();
             DATA = defaultDataSafe();
+            SETTINGS.apply();
             DATA.soundOn = !AUDIO.muted;
             buildMaps();
             loadMap('village', 'start', false);
@@ -3942,7 +3993,7 @@
         if (id === 'toggleSound') AUDIO.setMuted(DATA.soundOn);
         if (id === 'toggleHaptics') {
           DATA.hapticsOn = !DATA.hapticsOn;
-          SAVE.write('settings');
+          SETTINGS.write();
           UI.toast(DATA.hapticsOn ? '진동 켜짐' : '진동 꺼짐');
         }
         if (id === 'title') {
@@ -4019,6 +4070,7 @@
           if (b?.id === 'confirmClear') {
             SAVE.clear();
             DATA = defaultDataSafe();
+            SETTINGS.apply();
             DATA.soundOn = !AUDIO.muted;
             buildMaps();
             loadMap('village', 'start', false);
@@ -4055,7 +4107,7 @@
         }
         if (b?.id === 'toggleHaptics') {
           DATA.hapticsOn = !DATA.hapticsOn;
-          SAVE.write('settings');
+          SETTINGS.write();
           UI.toast(DATA.hapticsOn ? '진동 켜짐' : '진동 꺼짐');
           haptic(10);
         }
@@ -4208,6 +4260,8 @@
       resize();
       loadAssets();
       buildMaps();
+      SETTINGS.apply();
+      AUDIO.muted = !DATA.soundOn;
       SCENES.titleHasSave = SAVE.hasSave();
       if (PARAMS.get('selftest') === '1') SELFTEST.run();
       registerServiceWorker();

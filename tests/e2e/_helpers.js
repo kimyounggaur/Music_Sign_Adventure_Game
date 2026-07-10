@@ -1,6 +1,7 @@
 const { expect } = require('@playwright/test');
 
 const SAVE_KEY = 'melodia_v01_save';
+const SETTINGS_KEY = 'melodia_ui_settings_v1';
 
 function withParams(params = '') {
   const clean = params.replace(/^\?/, '').replace(/^&/, '');
@@ -26,7 +27,10 @@ async function boot(page, params = '', options = {}) {
   const { clearSave = true } = options;
   await page.goto(withParams(params));
   if (clearSave) {
-    await page.evaluate((key) => localStorage.removeItem(key), SAVE_KEY);
+    await page.evaluate(({ saveKey, settingsKey }) => {
+      localStorage.removeItem(saveKey);
+      localStorage.removeItem(settingsKey);
+    }, { saveKey: SAVE_KEY, settingsKey: SETTINGS_KEY });
     await page.reload();
   }
   await waitState(page, 'Title');
@@ -109,9 +113,11 @@ async function flags(page) { return dbg(page, (d) => ({ ...d.DATA.flags })); }
 async function symbols(page) { return dbg(page, (d) => d.DATA.symbols.slice()); }
 async function quests(page) { return dbg(page, (d) => JSON.parse(JSON.stringify(d.DATA.quests))); }
 async function saveRaw(page) { return page.evaluate((key) => localStorage.getItem(key), SAVE_KEY); }
+async function settingsRaw(page) { return page.evaluate((key) => localStorage.getItem(key), SETTINGS_KEY); }
 
 module.exports = {
   SAVE_KEY,
+  SETTINGS_KEY,
   expect,
   dbg,
   gameState,
@@ -133,5 +139,6 @@ module.exports = {
   flags,
   symbols,
   quests,
-  saveRaw
+  saveRaw,
+  settingsRaw
 };
