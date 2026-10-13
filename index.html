@@ -58,12 +58,15 @@
 <body>
   <canvas id="game" aria-label="멜로디아 게임 화면"></canvas>
   <div id="rotateOverlay">𝄞<br>세로 화면으로 돌려주세요.<br>멜로디아는 모바일 세로 모드에 맞춰져 있어요.</div>
+  <script src="scene-remaster.js"></script>
   <script>
   'use strict';
 
   const Game = (() => {
     const PARAMS = new URLSearchParams(window.location.search);
     const seedRaw = PARAMS.get('seed');
+    const PREVIEW = PARAMS.get('preview') === 'harmonia';
+    const ART_PREVIEW = PREVIEW && PARAMS.get('art') === 'remaster';
 
     function mulberry32(seed) {
       let a = seed >>> 0;
@@ -84,8 +87,8 @@
       PLAYER_SPEED: 116,
       PLAYER_W: 20,
       PLAYER_H: 24,
-      SAVE_KEY: 'melodia_v01_save',
-      SETTINGS_KEY: 'melodia_ui_settings_v1',
+      SAVE_KEY: PREVIEW ? `melodia_harmonia_${ART_PREVIEW ? 'remaster' : 'original'}_save` : 'melodia_v01_save',
+      SETTINGS_KEY: PREVIEW ? `melodia_harmonia_${ART_PREVIEW ? 'remaster' : 'original'}_settings` : 'melodia_ui_settings_v1',
       STEP: 'v0.1 Phase 1: Step 1-10',
       DEBUG: PARAMS.has('debug'),
       TEST: PARAMS.get('test') === '1',
@@ -223,21 +226,32 @@
     }
 
     function resize() {
-      const ratio = CONFIG.W / CONFIG.H;
       let cssW = window.visualViewport?.width || window.innerWidth;
       let cssH = window.visualViewport?.height || window.innerHeight;
       const bodyStyle = window.getComputedStyle(document.body);
       const safeY = (parseFloat(bodyStyle.paddingTop) || 0) + (parseFloat(bodyStyle.paddingBottom) || 0);
       cssH = Math.max(1, cssH - safeY);
+      if (ART_PREVIEW) {
+        // Keep square world pixels on tall phones; the extra height extends the
+        // scene and moves the dock down instead of stretching the artwork.
+        CONFIG.H = DATA.currentMap === 'village' ? Math.max(640, Math.min(800, Math.round(cssH / cssW * CONFIG.W))) : 640;
+      }
+      const ratio = CONFIG.W / CONFIG.H;
       if (cssW / cssH > ratio) cssW = Math.floor(cssH * ratio);
       else cssH = Math.floor(cssW / ratio);
-      dpr = Math.max(1, Math.min(3, window.devicePixelRatio || 1));
+      dpr = Math.max(1, Math.min(3, (window.devicePixelRatio || 1) * (ART_PREVIEW ? cssW / CONFIG.W : 1)));
       canvas.style.width = `${cssW}px`;
       canvas.style.height = `${cssH}px`;
       canvas.width = Math.floor(CONFIG.W * dpr);
       canvas.height = Math.floor(CONFIG.H * dpr);
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       ctx.imageSmoothingEnabled = false;
+      if (ART_PREVIEW) {
+        canvas.style.imageRendering = 'auto';
+        canvas.style.border = '0';
+        document.body.style.background = '#f4edd8';
+        ctx.imageSmoothingEnabled = true;
+      }
     }
 
     function screenToGame(e) {
@@ -251,7 +265,7 @@
     function screenToWorld(p) {
       return {
         x: p.x + SCENES.camera.x,
-        y: p.y + SCENES.camera.y
+        y: p.y + SCENES.camera.y - (remasterActive() ? remaster.offset : 0)
       };
     }
 
@@ -728,6 +742,7 @@
       else if (id === 'tower') AUDIO.setBgm('tower');
       else AUDIO.setBgm(DATA.scoreParts.melody ? 'villageMelody' : 'villageQuiet');
       if (shouldSave) SAVE.write('map');
+      if (ART_PREVIEW) resize();
     }
 
     function transitionToMap(id, spawn = 'start') {
@@ -2425,6 +2440,17 @@
       ctx.restore();
     }
 
+    // This opt-in renderer is limited to the representative village scene.
+    // It receives the same objects, camera, quest and input state as the original.
+    const remaster = ART_PREVIEW ? window.createHarmoniaArt({
+      ctx, UI, INPUT, ENTITIES, SCENES, CONFIG, SYMBOLS,
+      data: () => DATA, map: currentMap, state: () => gameState,
+      quest: () => QUEST.activeQuest(), questTitle: (id) => QUEST.defs[id].title,
+      objectRect, visible: isObjectVisible, originalObject: drawObject, fps: () => fps,
+      dialogue: DIALOGUE, wrap: fillTextWrapped
+    }) : null;
+    function remasterActive() { return Boolean(remaster && DATA.currentMap === 'village'); }
+
     function render() {
       UI.buttons = [];
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -2440,13 +2466,18 @@
         drawSelfTestBadge();
         return;
       }
-      drawWorld();
-      drawDioramaOverlay();
-      drawHud();
+      if (remasterActive()) {
+        remaster.world();
+        remaster.hud();
+      } else {
+        drawWorld();
+        drawDioramaOverlay();
+        drawHud();
+      }
       drawPuzzleFeedback();
       if (gameState === 'SymbolSelect' && UI.symbolMenu.mode === 'target') drawAttachHighlights();
-      if (gameState === 'Dialogue') drawDialogue();
-      if (gameState === 'SymbolSelect') drawSymbolSelect();
+      if (gameState === 'Dialogue') remasterActive() ? remaster.dialogue() : drawDialogue();
+      if (gameState === 'SymbolSelect') remasterActive() ? remaster.palette() : drawSymbolSelect();
       if (gameState === 'Cutscene') drawCutscene();
       if (gameState === 'Pause') drawPause();
       drawToast();
@@ -3068,7 +3099,7 @@
       const targets = map.objects.filter((obj) => isObjectVisible(obj) && obj.attachTargets && obj.attachTargets.includes(selected));
       const pulse = CONFIG.REDUCED_MOTION ? 0.8 : 0.65 + Math.sin(performance.now() * 0.008) * 0.25;
       ctx.save();
-      ctx.translate(-Math.round(SCENES.camera.x), -Math.round(SCENES.camera.y));
+      ctx.translate(-Math.round(SCENES.camera.x), -Math.round(SCENES.camera.y) + (remasterActive() ? remaster.offset : 0));
       targets.forEach((obj) => {
         const r = objectRect(obj);
         ctx.strokeStyle = CONFIG.colors.cyan;
@@ -3088,7 +3119,7 @@
       targets.forEach((obj) => {
         const r = objectRect(obj);
         const sx = r.x + r.w / 2 - SCENES.camera.x;
-        const sy = r.y + r.h / 2 - SCENES.camera.y;
+        const sy = r.y + r.h / 2 - SCENES.camera.y + (remasterActive() ? remaster.offset : 0);
         if (sx >= 18 && sx <= CONFIG.W - 18 && sy >= 68 && sy <= CONFIG.H - 18) return;
         const px = clamp(sx, 22, CONFIG.W - 22);
         const py = clamp(sy, 76, CONFIG.H - 26);
@@ -4248,7 +4279,7 @@
     }
 
     function registerServiceWorker() {
-      if (CONFIG.TEST || !('serviceWorker' in navigator)) return;
+      if (PREVIEW || CONFIG.TEST || !('serviceWorker' in navigator)) return;
       try {
         navigator.serviceWorker.register('sw.js');
       } catch (err) {
@@ -4276,7 +4307,29 @@
       window.addEventListener('blur', clearHeldInput);
       window.addEventListener('pagehide', handlePageHide);
       document.addEventListener('visibilitychange', handleVisibilityChange);
-      setTimeout(() => setState('Title'), 160);
+      setTimeout(() => {
+        if (!PREVIEW) { setState('Title'); return; }
+        // A deterministic, playable point after the existing clef pickup quest.
+        // Separate keys prevent this comparison from touching a player's save.
+        DATA = defaultDataSafe();
+        DATA.symbols = ['clef_g'];
+        DATA.codex = ['clef_g'];
+        DATA.flags = { tower_examined: true, pitch_hint: true, got_clef_g: true };
+        DATA.quests.MQ01 = { state: 'active', objective: '높은음자리표를 탑 문에 붙여보자' };
+        DATA.soundOn = false;
+        AUDIO.muted = true;
+        loadMap('village', 'fromTower', false);
+        ENTITIES.player.x = 502;
+        ENTITIES.player.y = 226;
+        ENTITIES.player.faceX = 0;
+        ENTITIES.player.faceY = 1;
+        SCENES.camera.x = 332;
+        SCENES.camera.y = 0;
+        UI.regionBannerTimer = 0;
+        UI.toastTimer = 0;
+        setState('Explore');
+        document.body.dataset.previewArt = ART_PREVIEW ? 'remaster' : 'original';
+      }, 160);
       requestAnimationFrame(loop);
     }
 

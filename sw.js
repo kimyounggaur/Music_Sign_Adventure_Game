@@ -1,8 +1,9 @@
-const CACHE_NAME = 'melodia-v0.1-20260709';
+const CACHE_NAME = 'melodia-v0.1-20261013-scene-study';
 
 // Update CACHE_NAME whenever index.html or the asset list changes for a fresh offline bundle.
 const PRECACHE = [
   './index.html',
+  './scene-remaster.js',
   './manifest.webmanifest',
   './icons/icon-192.png',
   './icons/icon-512.png',

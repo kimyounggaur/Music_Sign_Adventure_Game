@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#183d35">
+  <title>멜로디아 · 하모니아 장면 비교</title>
+  <link rel="stylesheet" href="comparison.css">
+</head>
+<body>
+  <header>
+    <a class="brand" href="comparison.html" aria-label="비교 화면 초기화"><span class="brand-symbol">𝄞</span><span>MELODIA<small>끝나지 않는 노래</small></span></a>
+    <p class="edition">SCENE STUDY <span>01 / HARMONIA</span></p>
+    <button id="reset" type="button">장면 다시 시작 <span aria-hidden="true">↻</span></button>
+  </header>
+  <main>
+    <section class="intro"><div><p class="eyebrow">음악이 길을 여는 세계</p><h1>다시, 노래가 시작되는 곳.</h1></div><p>높은음자리표를 골라, 잠든 탑의 문을 열어 보세요.<br>같은 이야기와 조작, 새롭게 빚은 하모니아 마을.</p></section>
+    <div class="mobile-switch" role="group" aria-label="비교할 화면"><button data-view="before" aria-pressed="false">기존 화면</button><button data-view="after" aria-pressed="true">개선 화면</button></div>
+    <section class="comparison" aria-label="동일 장면의 전후 비교">
+      <article class="scene before"><div class="scene-caption"><span><i></i> BEFORE <b>기존 화면</b></span><small>동일한 퀘스트 · 동일한 위치</small></div><iframe title="기존 하모니아 마을 게임" src="index.html?preview=harmonia&amp;art=original&amp;seed=42&amp;test=1" allow="autoplay"></iframe></article>
+      <article class="scene after"><div class="scene-caption"><span><i></i> AFTER <b>개선 화면</b></span><small>오리지널 아트 · 플레이 가능</small></div><iframe title="개선된 하모니아 마을 게임" src="index.html?preview=harmonia&amp;art=remaster&amp;seed=42&amp;test=1" allow="autoplay"></iframe></article>
+      <aside><p class="eyebrow">작은 세계의 새로운 표정</p><h2>음악사의 마을,<br>하모니아.</h2><p>청록빛 기와, 햇살을 머금은 돌담.<br>솔의 첫 모험에 어울리는<br>따뜻한 악기 공방의 풍경입니다.</p><ol><li><b>발견하는 즐거움</b><span>오선 창, 황동 등불과 음표 장식.<br>세계관을 담은 건물과 캐릭터.</span></li><li><b>길이 보이는 화면</b><span>현재 목표와 가까운 대상을 명확히.<br>기호 가방에서 배운 내용을 사용해요.</span></li><li><b>손끝에 닿는 모험</b><span>왼쪽은 이동, 오른쪽은 행동.<br>충분한 터치 영역과 선명한 글자.</span></li></ol><div class="controls"><span>W A S D</span> 이동 &nbsp; <span>Q</span> 기호 &nbsp; <span>E</span> 행동</div><p class="note">각 화면을 눌러 조작하세요.<br>모바일은 왼쪽을 드래그해 이동합니다.</p></aside>
+    </section>
+  </main>
+  <footer><span>01 — 높은음자리표와 오르골 탑</span><span>대표 장면 비교본 · 원래 진행도와 별도 저장</span></footer>
+  <script src="comparison.js"></script>
+</body>
+</html>
