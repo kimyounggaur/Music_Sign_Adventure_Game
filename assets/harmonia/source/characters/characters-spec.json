@@ -1,0 +1,813 @@
+{
+  "version": 1,
+  "authoring": "Original editable layered SVG, no fonts or external artwork",
+  "light": "upper-left",
+  "pivot": [
+    32,
+    56
+  ],
+  "groundShadow": "runtime separate layer",
+  "horizontalMirroring": false,
+  "noteHairpin": "fixed filled-head right-stem single-flag eighth note; same orientation across directions",
+  "entries": [
+    {
+      "id": "sol.idle.down.0",
+      "file": "assets/harmonia/source/characters/sol.idle.down.0.svg",
+      "logicalSize": [
+        64,
+        64
+      ],
+      "pivot": [
+        32,
+        56
+      ],
+      "category": "characters",
+      "animation": "idle",
+      "direction": "down",
+      "frame": 0,
+      "fps": 2
+    },
+    {
+      "id": "sol.idle.down.1",
+      "file": "assets/harmonia/source/characters/sol.idle.down.1.svg",
+      "logicalSize": [
+        64,
+        64
+      ],
+      "pivot": [
+        32,
+        56
+      ],
+      "category": "characters",
+      "animation": "idle",
+      "direction": "down",
+      "frame": 1,
+      "fps": 2
+    },
+    {
+      "id": "sol.walk.down.0",
+      "file": "assets/harmonia/source/characters/sol.walk.down.0.svg",
+      "logicalSize": [
+        64,
+        64
+      ],
+      "pivot": [
+        32,
+        56
+      ],
+      "category": "characters",
+      "animation": "walk",
+      "direction": "down",
+      "frame": 0,
+      "fps": 8
+    },
+    {
+      "id": "sol.walk.down.1",
+      "file": "assets/harmonia/source/characters/sol.walk.down.1.svg",
+      "logicalSize": [
+        64,
+        64
+      ],
+      "pivot": [
+        32,
+        56
+      ],
+      "category": "characters",
+      "animation": "walk",
+      "direction": "down",
+      "frame": 1,
+      "fps": 8
+    },
+    {
+      "id": "sol.walk.down.2",
+      "file": "assets/harmonia/source/characters/sol.walk.down.2.svg",
+      "logicalSize": [
+        64,
+        64
+      ],
+      "pivot": [
+        32,
+        56
+      ],
+      "category": "characters",
+      "animation": "walk",
+      "direction": "down",
+      "frame": 2,
+      "fps": 8
+    },
+    {
+      "id": "sol.walk.down.3",
+      "file": "assets/harmonia/source/characters/sol.walk.down.3.svg",
+      "logicalSize": [
+        64,
+        64
+      ],
+      "pivot": [
+        32,
+        56
+      ],
+      "category": "characters",
+      "animation": "walk",
+      "direction": "down",
+      "frame": 3,
+      "fps": 8
+    },
+    {
+      "id": "sol.walk.down.4",
+      "file": "assets/harmonia/source/characters/sol.walk.down.4.svg",
+      "logicalSize": [
+        64,
+        64
+      ],
+      "pivot": [
+        32,
+        56
+      ],
+      "category": "characters",
+      "animation": "walk",
+      "direction": "down",
+      "frame": 4,
+      "fps": 8
+    },
+    {
+      "id": "sol.walk.down.5",
+      "file": "assets/harmonia/source/characters/sol.walk.down.5.svg",
+      "logicalSize": [
+        64,
+        64
+      ],
+      "pivot": [
+        32,
+        56
+      ],
+      "category": "characters",
+      "animation": "walk",
+      "direction": "down",
+      "frame": 5,
+      "fps": 8
+    },
+    {
+      "id": "sol.idle.up.0",
+      "file": "assets/harmonia/source/characters/sol.idle.up.0.svg",
+      "logicalSize": [
+        64,
+        64
+      ],
+      "pivot": [
+        32,
+        56
+      ],
+      "category": "characters",
+      "animation": "idle",
+      "direction": "up",
+      "frame": 0,
+      "fps": 2
+    },
+    {
+      "id": "sol.idle.up.1",
+      "file": "assets/harmonia/source/characters/sol.idle.up.1.svg",
+      "logicalSize": [
+        64,
+        64
+      ],
+      "pivot": [
+        32,
+        56
+      ],
+      "category": "characters",
+      "animation": "idle",
+      "direction": "up",
+      "frame": 1,
+      "fps": 2
+    },
+    {
+      "id": "sol.walk.up.0",
+      "file": "assets/harmonia/source/characters/sol.walk.up.0.svg",
+      "logicalSize": [
+        64,
+        64
+      ],
+      "pivot": [
+        32,
+        56
+      ],
+      "category": "characters",
+      "animation": "walk",
+      "direction": "up",
+      "frame": 0,
+      "fps": 8
+    },
+    {
+      "id": "sol.walk.up.1",
+      "file": "assets/harmonia/source/characters/sol.walk.up.1.svg",
+      "logicalSize": [
+        64,
+        64
+      ],
+      "pivot": [
+        32,
+        56
+      ],
+      "category": "characters",
+      "animation": "walk",
+      "direction": "up",
+      "frame": 1,
+      "fps": 8
+    },
+    {
+      "id": "sol.walk.up.2",
+      "file": "assets/harmonia/source/characters/sol.walk.up.2.svg",
+      "logicalSize": [
+        64,
+        64
+      ],
+      "pivot": [
+        32,
+        56
+      ],
+      "category": "characters",
+      "animation": "walk",
+      "direction": "up",
+      "frame": 2,
+      "fps": 8
+    },
+    {
+      "id": "sol.walk.up.3",
+      "file": "assets/harmonia/source/characters/sol.walk.up.3.svg",
+      "logicalSize": [
+        64,
+        64
+      ],
+      "pivot": [
+        32,
+        56
+      ],
+      "category": "characters",
+      "animation": "walk",
+      "direction": "up",
+      "frame": 3,
+      "fps": 8
+    },
+    {
+      "id": "sol.walk.up.4",
+      "file": "assets/harmonia/source/characters/sol.walk.up.4.svg",
+      "logicalSize": [
+        64,
+        64
+      ],
+      "pivot": [
+        32,
+        56
+      ],
+      "category": "characters",
+      "animation": "walk",
+      "direction": "up",
+      "frame": 4,
+      "fps": 8
+    },
+    {
+      "id": "sol.walk.up.5",
+      "file": "assets/harmonia/source/characters/sol.walk.up.5.svg",
+      "logicalSize": [
+        64,
+        64
+      ],
+      "pivot": [
+        32,
+        56
+      ],
+      "category": "characters",
+      "animation": "walk",
+      "direction": "up",
+      "frame": 5,
+      "fps": 8
+    },
+    {
+      "id": "sol.idle.left.0",
+      "file": "assets/harmonia/source/characters/sol.idle.left.0.svg",
+      "logicalSize": [
+        64,
+        64
+      ],
+      "pivot": [
+        32,
+        56
+      ],
+      "category": "characters",
+      "animation": "idle",
+      "direction": "left",
+      "frame": 0,
+      "fps": 2
+    },
+    {
+      "id": "sol.idle.left.1",
+      "file": "assets/harmonia/source/characters/sol.idle.left.1.svg",
+      "logicalSize": [
+        64,
+        64
+      ],
+      "pivot": [
+        32,
+        56
+      ],
+      "category": "characters",
+      "animation": "idle",
+      "direction": "left",
+      "frame": 1,
+      "fps": 2
+    },
+    {
+      "id": "sol.walk.left.0",
+      "file": "assets/harmonia/source/characters/sol.walk.left.0.svg",
+      "logicalSize": [
+        64,
+        64
+      ],
+      "pivot": [
+        32,
+        56
+      ],
+      "category": "characters",
+      "animation": "walk",
+      "direction": "left",
+      "frame": 0,
+      "fps": 8
+    },
+    {
+      "id": "sol.walk.left.1",
+      "file": "assets/harmonia/source/characters/sol.walk.left.1.svg",
+      "logicalSize": [
+        64,
+        64
+      ],
+      "pivot": [
+        32,
+        56
+      ],
+      "category": "characters",
+      "animation": "walk",
+      "direction": "left",
+      "frame": 1,
+      "fps": 8
+    },
+    {
+      "id": "sol.walk.left.2",
+      "file": "assets/harmonia/source/characters/sol.walk.left.2.svg",
+      "logicalSize": [
+        64,
+        64
+      ],
+      "pivot": [
+        32,
+        56
+      ],
+      "category": "characters",
+      "animation": "walk",
+      "direction": "left",
+      "frame": 2,
+      "fps": 8
+    },
+    {
+      "id": "sol.walk.left.3",
+      "file": "assets/harmonia/source/characters/sol.walk.left.3.svg",
+      "logicalSize": [
+        64,
+        64
+      ],
+      "pivot": [
+        32,
+        56
+      ],
+      "category": "characters",
+      "animation": "walk",
+      "direction": "left",
+      "frame": 3,
+      "fps": 8
+    },
+    {
+      "id": "sol.walk.left.4",
+      "file": "assets/harmonia/source/characters/sol.walk.left.4.svg",
+      "logicalSize": [
+        64,
+        64
+      ],
+      "pivot": [
+        32,
+        56
+      ],
+      "category": "characters",
+      "animation": "walk",
+      "direction": "left",
+      "frame": 4,
+      "fps": 8
+    },
+    {
+      "id": "sol.walk.left.5",
+      "file": "assets/harmonia/source/characters/sol.walk.left.5.svg",
+      "logicalSize": [
+        64,
+        64
+      ],
+      "pivot": [
+        32,
+        56
+      ],
+      "category": "characters",
+      "animation": "walk",
+      "direction": "left",
+      "frame": 5,
+      "fps": 8
+    },
+    {
+      "id": "sol.idle.right.0",
+      "file": "assets/harmonia/source/characters/sol.idle.right.0.svg",
+      "logicalSize": [
+        64,
+        64
+      ],
+      "pivot": [
+        32,
+        56
+      ],
+      "category": "characters",
+      "animation": "idle",
+      "direction": "right",
+      "frame": 0,
+      "fps": 2
+    },
+    {
+      "id": "sol.idle.right.1",
+      "file": "assets/harmonia/source/characters/sol.idle.right.1.svg",
+      "logicalSize": [
+        64,
+        64
+      ],
+      "pivot": [
+        32,
+        56
+      ],
+      "category": "characters",
+      "animation": "idle",
+      "direction": "right",
+      "frame": 1,
+      "fps": 2
+    },
+    {
+      "id": "sol.walk.right.0",
+      "file": "assets/harmonia/source/characters/sol.walk.right.0.svg",
+      "logicalSize": [
+        64,
+        64
+      ],
+      "pivot": [
+        32,
+        56
+      ],
+      "category": "characters",
+      "animation": "walk",
+      "direction": "right",
+      "frame": 0,
+      "fps": 8
+    },
+    {
+      "id": "sol.walk.right.1",
+      "file": "assets/harmonia/source/characters/sol.walk.right.1.svg",
+      "logicalSize": [
+        64,
+        64
+      ],
+      "pivot": [
+        32,
+        56
+      ],
+      "category": "characters",
+      "animation": "walk",
+      "direction": "right",
+      "frame": 1,
+      "fps": 8
+    },
+    {
+      "id": "sol.walk.right.2",
+      "file": "assets/harmonia/source/characters/sol.walk.right.2.svg",
+      "logicalSize": [
+        64,
+        64
+      ],
+      "pivot": [
+        32,
+        56
+      ],
+      "category": "characters",
+      "animation": "walk",
+      "direction": "right",
+      "frame": 2,
+      "fps": 8
+    },
+    {
+      "id": "sol.walk.right.3",
+      "file": "assets/harmonia/source/characters/sol.walk.right.3.svg",
+      "logicalSize": [
+        64,
+        64
+      ],
+      "pivot": [
+        32,
+        56
+      ],
+      "category": "characters",
+      "animation": "walk",
+      "direction": "right",
+      "frame": 3,
+      "fps": 8
+    },
+    {
+      "id": "sol.walk.right.4",
+      "file": "assets/harmonia/source/characters/sol.walk.right.4.svg",
+      "logicalSize": [
+        64,
+        64
+      ],
+      "pivot": [
+        32,
+        56
+      ],
+      "category": "characters",
+      "animation": "walk",
+      "direction": "right",
+      "frame": 4,
+      "fps": 8
+    },
+    {
+      "id": "sol.walk.right.5",
+      "file": "assets/harmonia/source/characters/sol.walk.right.5.svg",
+      "logicalSize": [
+        64,
+        64
+      ],
+      "pivot": [
+        32,
+        56
+      ],
+      "category": "characters",
+      "animation": "walk",
+      "direction": "right",
+      "frame": 5,
+      "fps": 8
+    },
+    {
+      "id": "sol.interact.down.0",
+      "file": "assets/harmonia/source/characters/sol.interact.down.0.svg",
+      "logicalSize": [
+        64,
+        64
+      ],
+      "pivot": [
+        32,
+        56
+      ],
+      "category": "characters",
+      "animation": "interact",
+      "direction": "down",
+      "frame": 0,
+      "fps": 6
+    },
+    {
+      "id": "sol.interact.down.1",
+      "file": "assets/harmonia/source/characters/sol.interact.down.1.svg",
+      "logicalSize": [
+        64,
+        64
+      ],
+      "pivot": [
+        32,
+        56
+      ],
+      "category": "characters",
+      "animation": "interact",
+      "direction": "down",
+      "frame": 1,
+      "fps": 6
+    },
+    {
+      "id": "sol.interact.down.2",
+      "file": "assets/harmonia/source/characters/sol.interact.down.2.svg",
+      "logicalSize": [
+        64,
+        64
+      ],
+      "pivot": [
+        32,
+        56
+      ],
+      "category": "characters",
+      "animation": "interact",
+      "direction": "down",
+      "frame": 2,
+      "fps": 6
+    },
+    {
+      "id": "sol.acquire.down.0",
+      "file": "assets/harmonia/source/characters/sol.acquire.down.0.svg",
+      "logicalSize": [
+        64,
+        64
+      ],
+      "pivot": [
+        32,
+        56
+      ],
+      "category": "characters",
+      "animation": "acquire",
+      "direction": "down",
+      "frame": 0,
+      "fps": 6
+    },
+    {
+      "id": "sol.acquire.down.1",
+      "file": "assets/harmonia/source/characters/sol.acquire.down.1.svg",
+      "logicalSize": [
+        64,
+        64
+      ],
+      "pivot": [
+        32,
+        56
+      ],
+      "category": "characters",
+      "animation": "acquire",
+      "direction": "down",
+      "frame": 1,
+      "fps": 6
+    },
+    {
+      "id": "sol.acquire.down.2",
+      "file": "assets/harmonia/source/characters/sol.acquire.down.2.svg",
+      "logicalSize": [
+        64,
+        64
+      ],
+      "pivot": [
+        32,
+        56
+      ],
+      "category": "characters",
+      "animation": "acquire",
+      "direction": "down",
+      "frame": 2,
+      "fps": 6
+    },
+    {
+      "id": "sol.acquire.down.3",
+      "file": "assets/harmonia/source/characters/sol.acquire.down.3.svg",
+      "logicalSize": [
+        64,
+        64
+      ],
+      "pivot": [
+        32,
+        56
+      ],
+      "category": "characters",
+      "animation": "acquire",
+      "direction": "down",
+      "frame": 3,
+      "fps": 6
+    },
+    {
+      "id": "clef.idle.down.0",
+      "file": "assets/harmonia/source/characters/clef.idle.down.0.svg",
+      "logicalSize": [
+        64,
+        64
+      ],
+      "pivot": [
+        32,
+        56
+      ],
+      "category": "characters",
+      "animation": "idle",
+      "direction": "down",
+      "frame": 0,
+      "fps": 2
+    },
+    {
+      "id": "clef.idle.down.1",
+      "file": "assets/harmonia/source/characters/clef.idle.down.1.svg",
+      "logicalSize": [
+        64,
+        64
+      ],
+      "pivot": [
+        32,
+        56
+      ],
+      "category": "characters",
+      "animation": "idle",
+      "direction": "down",
+      "frame": 1,
+      "fps": 2
+    },
+    {
+      "id": "clef.talk.down.0",
+      "file": "assets/harmonia/source/characters/clef.talk.down.0.svg",
+      "logicalSize": [
+        64,
+        64
+      ],
+      "pivot": [
+        32,
+        56
+      ],
+      "category": "characters",
+      "animation": "talk",
+      "direction": "down",
+      "frame": 0,
+      "fps": 6
+    },
+    {
+      "id": "clef.talk.down.1",
+      "file": "assets/harmonia/source/characters/clef.talk.down.1.svg",
+      "logicalSize": [
+        64,
+        64
+      ],
+      "pivot": [
+        32,
+        56
+      ],
+      "category": "characters",
+      "animation": "talk",
+      "direction": "down",
+      "frame": 1,
+      "fps": 6
+    },
+    {
+      "id": "clef.talk.down.2",
+      "file": "assets/harmonia/source/characters/clef.talk.down.2.svg",
+      "logicalSize": [
+        64,
+        64
+      ],
+      "pivot": [
+        32,
+        56
+      ],
+      "category": "characters",
+      "animation": "talk",
+      "direction": "down",
+      "frame": 2,
+      "fps": 6
+    },
+    {
+      "id": "clef.react.down.0",
+      "file": "assets/harmonia/source/characters/clef.react.down.0.svg",
+      "logicalSize": [
+        64,
+        64
+      ],
+      "pivot": [
+        32,
+        56
+      ],
+      "category": "characters",
+      "animation": "react",
+      "direction": "down",
+      "frame": 0,
+      "fps": 6
+    },
+    {
+      "id": "clef.react.down.1",
+      "file": "assets/harmonia/source/characters/clef.react.down.1.svg",
+      "logicalSize": [
+        64,
+        64
+      ],
+      "pivot": [
+        32,
+        56
+      ],
+      "category": "characters",
+      "animation": "react",
+      "direction": "down",
+      "frame": 1,
+      "fps": 6
+    },
+    {
+      "id": "clef.react.down.2",
+      "file": "assets/harmonia/source/characters/clef.react.down.2.svg",
+      "logicalSize": [
+        64,
+        64
+      ],
+      "pivot": [
+        32,
+        56
+      ],
+      "category": "characters",
+      "animation": "react",
+      "direction": "down",
+      "frame": 2,
+      "fps": 6
+    }
+  ]
+}

@@ -1,0 +1,725 @@
+{
+  "version": 1,
+  "license": "Original project artwork",
+  "units": "logical pixels",
+  "masterScale": 4,
+  "lightDirection": "upper-left",
+  "notationPolicy": "No invented musical glyphs. Original validated game glyphs composed at runtime.",
+  "assets": [
+    {
+      "id": "tower_body",
+      "file": "assets/harmonia/source/environment/tower_body.svg",
+      "logicalSize": [
+        192,
+        224
+      ],
+      "pivot": [
+        96,
+        208
+      ],
+      "category": "environment",
+      "collision": {
+        "x": 32,
+        "y": 80,
+        "w": 128,
+        "h": 128
+      },
+      "origin": [
+        32,
+        80
+      ],
+      "worldTopLeft": [
+        416,
+        -16
+      ],
+      "layer": "body"
+    },
+    {
+      "id": "tower_roof",
+      "file": "assets/harmonia/source/environment/tower_roof.svg",
+      "logicalSize": [
+        192,
+        224
+      ],
+      "pivot": [
+        96,
+        208
+      ],
+      "category": "environment",
+      "collision": {
+        "x": 32,
+        "y": 80,
+        "w": 128,
+        "h": 128
+      },
+      "origin": [
+        32,
+        80
+      ],
+      "worldTopLeft": [
+        416,
+        -16
+      ],
+      "layer": "roof",
+      "staff": {
+        "lineCount": 5,
+        "linesY": [
+          104,
+          107.5,
+          111,
+          114.5,
+          118
+        ],
+        "xRange": [
+          87,
+          105
+        ],
+        "notationComposite": {
+          "center": [
+            96,
+            111
+          ],
+          "source": "existing-game-symbols"
+        }
+      }
+    },
+    {
+      "id": "tower_foreground_trim",
+      "file": "assets/harmonia/source/environment/tower_foreground_trim.svg",
+      "logicalSize": [
+        192,
+        224
+      ],
+      "pivot": [
+        96,
+        208
+      ],
+      "category": "environment",
+      "collision": {
+        "x": 32,
+        "y": 80,
+        "w": 128,
+        "h": 128
+      },
+      "origin": [
+        32,
+        80
+      ],
+      "worldTopLeft": [
+        416,
+        -16
+      ],
+      "layer": "foreground"
+    },
+    {
+      "id": "tower_ground_shadow",
+      "file": "assets/harmonia/source/environment/tower_ground_shadow.svg",
+      "logicalSize": [
+        192,
+        224
+      ],
+      "pivot": [
+        96,
+        208
+      ],
+      "category": "environment",
+      "collision": {
+        "x": 32,
+        "y": 80,
+        "w": 128,
+        "h": 128
+      },
+      "origin": [
+        32,
+        80
+      ],
+      "worldTopLeft": [
+        416,
+        -16
+      ],
+      "layer": "shadow"
+    },
+    {
+      "id": "tower_door_closed",
+      "file": "assets/harmonia/source/environment/tower_door_closed.svg",
+      "logicalSize": [
+        80,
+        64
+      ],
+      "pivot": [
+        40,
+        56
+      ],
+      "category": "environment",
+      "state": "closed",
+      "collision": {
+        "x": 8,
+        "y": 24,
+        "w": 64,
+        "h": 32
+      },
+      "notationComposite": {
+        "center": [
+          40,
+          36
+        ],
+        "badge": [
+          32,
+          23,
+          16,
+          26
+        ],
+        "source": "existing-game-symbols"
+      }
+    },
+    {
+      "id": "tower_door_half_open",
+      "file": "assets/harmonia/source/environment/tower_door_half_open.svg",
+      "logicalSize": [
+        80,
+        64
+      ],
+      "pivot": [
+        40,
+        56
+      ],
+      "category": "environment",
+      "state": "half_open",
+      "collision": {
+        "x": 8,
+        "y": 24,
+        "w": 64,
+        "h": 32
+      },
+      "notationComposite": {
+        "center": [
+          40,
+          36
+        ],
+        "badge": [
+          32,
+          23,
+          16,
+          26
+        ],
+        "source": "existing-game-symbols"
+      }
+    },
+    {
+      "id": "tower_door_open",
+      "file": "assets/harmonia/source/environment/tower_door_open.svg",
+      "logicalSize": [
+        80,
+        64
+      ],
+      "pivot": [
+        40,
+        56
+      ],
+      "category": "environment",
+      "state": "open",
+      "collision": {
+        "x": 8,
+        "y": 24,
+        "w": 64,
+        "h": 32
+      },
+      "notationComposite": {
+        "center": [
+          40,
+          36
+        ],
+        "badge": [
+          32,
+          23,
+          16,
+          26
+        ],
+        "source": "existing-game-symbols"
+      }
+    },
+    {
+      "id": "grass_1",
+      "file": "assets/harmonia/source/environment/grass_1.svg",
+      "logicalSize": [
+        32,
+        32
+      ],
+      "pivot": [
+        0,
+        0
+      ],
+      "category": "environment",
+      "tile": "grass"
+    },
+    {
+      "id": "grass_2",
+      "file": "assets/harmonia/source/environment/grass_2.svg",
+      "logicalSize": [
+        32,
+        32
+      ],
+      "pivot": [
+        0,
+        0
+      ],
+      "category": "environment",
+      "tile": "grass"
+    },
+    {
+      "id": "grass_3",
+      "file": "assets/harmonia/source/environment/grass_3.svg",
+      "logicalSize": [
+        32,
+        32
+      ],
+      "pivot": [
+        0,
+        0
+      ],
+      "category": "environment",
+      "tile": "grass"
+    },
+    {
+      "id": "path_center_1",
+      "file": "assets/harmonia/source/environment/path_center_1.svg",
+      "logicalSize": [
+        32,
+        32
+      ],
+      "pivot": [
+        0,
+        0
+      ],
+      "category": "environment",
+      "tile": "path-center"
+    },
+    {
+      "id": "path_center_2",
+      "file": "assets/harmonia/source/environment/path_center_2.svg",
+      "logicalSize": [
+        32,
+        32
+      ],
+      "pivot": [
+        0,
+        0
+      ],
+      "category": "environment",
+      "tile": "path-center"
+    },
+    {
+      "id": "path_edge_n",
+      "file": "assets/harmonia/source/environment/path_edge_n.svg",
+      "logicalSize": [
+        32,
+        32
+      ],
+      "pivot": [
+        0,
+        0
+      ],
+      "category": "environment",
+      "tile": "path-edge",
+      "orientation": "n",
+      "overlay": true
+    },
+    {
+      "id": "path_edge_e",
+      "file": "assets/harmonia/source/environment/path_edge_e.svg",
+      "logicalSize": [
+        32,
+        32
+      ],
+      "pivot": [
+        0,
+        0
+      ],
+      "category": "environment",
+      "tile": "path-edge",
+      "orientation": "e",
+      "overlay": true
+    },
+    {
+      "id": "path_edge_s",
+      "file": "assets/harmonia/source/environment/path_edge_s.svg",
+      "logicalSize": [
+        32,
+        32
+      ],
+      "pivot": [
+        0,
+        0
+      ],
+      "category": "environment",
+      "tile": "path-edge",
+      "orientation": "s",
+      "overlay": true
+    },
+    {
+      "id": "path_edge_w",
+      "file": "assets/harmonia/source/environment/path_edge_w.svg",
+      "logicalSize": [
+        32,
+        32
+      ],
+      "pivot": [
+        0,
+        0
+      ],
+      "category": "environment",
+      "tile": "path-edge",
+      "orientation": "w",
+      "overlay": true
+    },
+    {
+      "id": "path_outer_ne",
+      "file": "assets/harmonia/source/environment/path_outer_ne.svg",
+      "logicalSize": [
+        32,
+        32
+      ],
+      "pivot": [
+        0,
+        0
+      ],
+      "category": "environment",
+      "tile": "path-outer-corner",
+      "orientation": "ne",
+      "overlay": true
+    },
+    {
+      "id": "path_outer_se",
+      "file": "assets/harmonia/source/environment/path_outer_se.svg",
+      "logicalSize": [
+        32,
+        32
+      ],
+      "pivot": [
+        0,
+        0
+      ],
+      "category": "environment",
+      "tile": "path-outer-corner",
+      "orientation": "se",
+      "overlay": true
+    },
+    {
+      "id": "path_outer_sw",
+      "file": "assets/harmonia/source/environment/path_outer_sw.svg",
+      "logicalSize": [
+        32,
+        32
+      ],
+      "pivot": [
+        0,
+        0
+      ],
+      "category": "environment",
+      "tile": "path-outer-corner",
+      "orientation": "sw",
+      "overlay": true
+    },
+    {
+      "id": "path_outer_nw",
+      "file": "assets/harmonia/source/environment/path_outer_nw.svg",
+      "logicalSize": [
+        32,
+        32
+      ],
+      "pivot": [
+        0,
+        0
+      ],
+      "category": "environment",
+      "tile": "path-outer-corner",
+      "orientation": "nw",
+      "overlay": true
+    },
+    {
+      "id": "path_inner_ne",
+      "file": "assets/harmonia/source/environment/path_inner_ne.svg",
+      "logicalSize": [
+        32,
+        32
+      ],
+      "pivot": [
+        0,
+        0
+      ],
+      "category": "environment",
+      "tile": "path-inner-corner",
+      "orientation": "ne",
+      "overlay": true
+    },
+    {
+      "id": "path_inner_se",
+      "file": "assets/harmonia/source/environment/path_inner_se.svg",
+      "logicalSize": [
+        32,
+        32
+      ],
+      "pivot": [
+        0,
+        0
+      ],
+      "category": "environment",
+      "tile": "path-inner-corner",
+      "orientation": "se",
+      "overlay": true
+    },
+    {
+      "id": "path_inner_sw",
+      "file": "assets/harmonia/source/environment/path_inner_sw.svg",
+      "logicalSize": [
+        32,
+        32
+      ],
+      "pivot": [
+        0,
+        0
+      ],
+      "category": "environment",
+      "tile": "path-inner-corner",
+      "orientation": "sw",
+      "overlay": true
+    },
+    {
+      "id": "path_inner_nw",
+      "file": "assets/harmonia/source/environment/path_inner_nw.svg",
+      "logicalSize": [
+        32,
+        32
+      ],
+      "pivot": [
+        0,
+        0
+      ],
+      "category": "environment",
+      "tile": "path-inner-corner",
+      "orientation": "nw",
+      "overlay": true
+    },
+    {
+      "id": "stone_1",
+      "file": "assets/harmonia/source/environment/stone_1.svg",
+      "logicalSize": [
+        32,
+        32
+      ],
+      "pivot": [
+        0,
+        0
+      ],
+      "category": "environment",
+      "tile": "stone"
+    },
+    {
+      "id": "stone_2",
+      "file": "assets/harmonia/source/environment/stone_2.svg",
+      "logicalSize": [
+        32,
+        32
+      ],
+      "pivot": [
+        0,
+        0
+      ],
+      "category": "environment",
+      "tile": "stone"
+    },
+    {
+      "id": "tree_1",
+      "file": "assets/harmonia/source/environment/tree_1.svg",
+      "logicalSize": [
+        96,
+        112
+      ],
+      "pivot": [
+        48,
+        100
+      ],
+      "category": "environment",
+      "zSort": "foot",
+      "collision": "reuse-existing-boundary"
+    },
+    {
+      "id": "tree_2",
+      "file": "assets/harmonia/source/environment/tree_2.svg",
+      "logicalSize": [
+        96,
+        112
+      ],
+      "pivot": [
+        48,
+        100
+      ],
+      "category": "environment",
+      "zSort": "foot",
+      "collision": "reuse-existing-boundary"
+    },
+    {
+      "id": "tree_3",
+      "file": "assets/harmonia/source/environment/tree_3.svg",
+      "logicalSize": [
+        96,
+        112
+      ],
+      "pivot": [
+        48,
+        100
+      ],
+      "category": "environment",
+      "zSort": "foot",
+      "collision": "reuse-existing-boundary"
+    },
+    {
+      "id": "bush_1",
+      "file": "assets/harmonia/source/environment/bush_1.svg",
+      "logicalSize": [
+        64,
+        48
+      ],
+      "pivot": [
+        32,
+        40
+      ],
+      "category": "environment",
+      "zSort": "foot",
+      "collision": false
+    },
+    {
+      "id": "bush_2",
+      "file": "assets/harmonia/source/environment/bush_2.svg",
+      "logicalSize": [
+        64,
+        48
+      ],
+      "pivot": [
+        32,
+        40
+      ],
+      "category": "environment",
+      "zSort": "foot",
+      "collision": false
+    },
+    {
+      "id": "bush_3",
+      "file": "assets/harmonia/source/environment/bush_3.svg",
+      "logicalSize": [
+        64,
+        48
+      ],
+      "pivot": [
+        32,
+        40
+      ],
+      "category": "environment",
+      "zSort": "foot",
+      "collision": false
+    },
+    {
+      "id": "cluster_1",
+      "file": "assets/harmonia/source/environment/cluster_1.svg",
+      "logicalSize": [
+        32,
+        32
+      ],
+      "pivot": [
+        16,
+        28
+      ],
+      "category": "environment",
+      "zSort": "ground",
+      "collision": false
+    },
+    {
+      "id": "cluster_2",
+      "file": "assets/harmonia/source/environment/cluster_2.svg",
+      "logicalSize": [
+        32,
+        32
+      ],
+      "pivot": [
+        16,
+        28
+      ],
+      "category": "environment",
+      "zSort": "ground",
+      "collision": false
+    },
+    {
+      "id": "cluster_3",
+      "file": "assets/harmonia/source/environment/cluster_3.svg",
+      "logicalSize": [
+        32,
+        32
+      ],
+      "pivot": [
+        16,
+        28
+      ],
+      "category": "environment",
+      "zSort": "ground",
+      "collision": false
+    },
+    {
+      "id": "cluster_4",
+      "file": "assets/harmonia/source/environment/cluster_4.svg",
+      "logicalSize": [
+        32,
+        32
+      ],
+      "pivot": [
+        16,
+        28
+      ],
+      "category": "environment",
+      "zSort": "ground",
+      "collision": false
+    },
+    {
+      "id": "props_lantern",
+      "file": "assets/harmonia/source/environment/props_lantern.svg",
+      "logicalSize": [
+        48,
+        64
+      ],
+      "pivot": [
+        24,
+        56
+      ],
+      "category": "environment",
+      "zSort": "foot"
+    },
+    {
+      "id": "props_sign",
+      "file": "assets/harmonia/source/environment/props_sign.svg",
+      "logicalSize": [
+        48,
+        48
+      ],
+      "pivot": [
+        24,
+        42
+      ],
+      "category": "environment",
+      "zSort": "foot",
+      "symbol": "direction-arrow"
+    },
+    {
+      "id": "props_well",
+      "file": "assets/harmonia/source/environment/props_well.svg",
+      "logicalSize": [
+        96,
+        96
+      ],
+      "pivot": [
+        48,
+        84
+      ],
+      "category": "environment",
+      "zSort": "foot"
+    }
+  ]
+}

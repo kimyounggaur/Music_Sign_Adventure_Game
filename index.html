@@ -59,6 +59,7 @@
   <canvas id="game" aria-label="멜로디아 게임 화면"></canvas>
   <div id="rotateOverlay">𝄞<br>세로 화면으로 돌려주세요.<br>멜로디아는 모바일 세로 모드에 맞춰져 있어요.</div>
   <script src="scene-remaster.js"></script>
+  <script src="harmonia-assets.js"></script>
   <script>
   'use strict';
 
@@ -66,7 +67,12 @@
     const PARAMS = new URLSearchParams(window.location.search);
     const seedRaw = PARAMS.get('seed');
     const PREVIEW = PARAMS.get('preview') === 'harmonia';
-    const ART_PREVIEW = PREVIEW && PARAMS.get('art') === 'remaster';
+    const PREVIEW_ART = ['remaster', 'assets'].includes(PARAMS.get('art')) ? PARAMS.get('art') : 'original';
+    const ART_PREVIEW = PREVIEW && PREVIEW_ART !== 'original';
+    const ASSET_PREVIEW = PREVIEW && PREVIEW_ART === 'assets';
+    let resolvePreviewReady, rejectPreviewReady;
+    const previewReady = new Promise((resolve, reject) => { resolvePreviewReady = resolve; rejectPreviewReady = reject; });
+    previewReady.catch(() => {});
 
     function mulberry32(seed) {
       let a = seed >>> 0;
@@ -87,8 +93,8 @@
       PLAYER_SPEED: 116,
       PLAYER_W: 20,
       PLAYER_H: 24,
-      SAVE_KEY: PREVIEW ? `melodia_harmonia_${ART_PREVIEW ? 'remaster' : 'original'}_save` : 'melodia_v01_save',
-      SETTINGS_KEY: PREVIEW ? `melodia_harmonia_${ART_PREVIEW ? 'remaster' : 'original'}_settings` : 'melodia_ui_settings_v1',
+      SAVE_KEY: PREVIEW ? `melodia_harmonia_${PREVIEW_ART}_save` : 'melodia_v01_save',
+      SETTINGS_KEY: PREVIEW ? `melodia_harmonia_${PREVIEW_ART}_settings` : 'melodia_ui_settings_v1',
       STEP: 'v0.1 Phase 1: Step 1-10',
       DEBUG: PARAMS.has('debug'),
       TEST: PARAMS.get('test') === '1',
@@ -965,6 +971,40 @@
         img.src = src;
         ASSETS[key] = img;
       });
+    }
+
+    function waitForSymbolAsset(id) {
+      const img = ASSETS[id];
+      if (!img) return Promise.reject(new Error(`Music source missing: ${id}`));
+      if (img.complete) return img.naturalWidth ? Promise.resolve() : Promise.reject(new Error(`Music source failed: ${id}`));
+      return new Promise((resolve, reject) => {
+        img.addEventListener('load', resolve, { once: true });
+        img.addEventListener('error', () => reject(new Error(`Music source failed: ${id}`)), { once: true });
+      });
+    }
+
+    // Preserve the supplied musical outline, recoloring only its existing alpha.
+    // This strict study path never substitutes a platform-dependent music font.
+    const symbolTintCache = new Map();
+    function drawStudySymbol(id, x, y, w, h, color = '#e9bd63') {
+      const img = ASSETS[SYMBOLS[id]?.asset];
+      if (!img?.complete || !img.naturalWidth) return false;
+      const key = `${id}:${color}`;
+      let cached = symbolTintCache.get(key);
+      if (!cached) {
+        const source = document.createElement('canvas');
+        source.width = img.naturalWidth; source.height = img.naturalHeight;
+        const paint = source.getContext('2d');paint.drawImage(img, 0, 0);
+        const pixels = paint.getImageData(0, 0, source.width, source.height).data;
+        let left=source.width,top=source.height,right=-1,bottom=-1;
+        for(let py=0;py<source.height;py++)for(let px=0;px<source.width;px++)if(pixels[(py*source.width+px)*4+3]>0){left=Math.min(left,px);top=Math.min(top,py);right=Math.max(right,px);bottom=Math.max(bottom,py);}
+        if(right<left)return false;
+        paint.globalCompositeOperation = 'source-in';paint.fillStyle=color;paint.fillRect(0,0,source.width,source.height);
+        cached={source,x:left,y:top,w:right-left+1,h:bottom-top+1};symbolTintCache.set(key,cached);
+      }
+      const scale=Math.min(w/cached.w,h/cached.h),dw=cached.w*scale,dh=cached.h*scale;
+      ctx.save();ctx.imageSmoothingEnabled=true;ctx.drawImage(cached.source,cached.x,cached.y,cached.w,cached.h,x+(w-dw)/2,y+(h-dh)/2,dw,dh);ctx.restore();
+      return true;
     }
 
     function hasSymbol(id) {
@@ -2442,12 +2482,14 @@
 
     // This opt-in renderer is limited to the representative village scene.
     // It receives the same objects, camera, quest and input state as the original.
+    const assetRenderer = ASSET_PREVIEW ? window.createHarmoniaAssetRenderer(ctx) : null;
     const remaster = ART_PREVIEW ? window.createHarmoniaArt({
       ctx, UI, INPUT, ENTITIES, SCENES, CONFIG, SYMBOLS,
       data: () => DATA, map: currentMap, state: () => gameState,
       quest: () => QUEST.activeQuest(), questTitle: (id) => QUEST.defs[id].title,
       objectRect, visible: isObjectVisible, originalObject: drawObject, fps: () => fps,
-      dialogue: DIALOGUE, wrap: fillTextWrapped
+      dialogue: DIALOGUE, wrap: fillTextWrapped,
+      assetRenderer, symbolArt: drawStudySymbol
     }) : null;
     function remasterActive() { return Boolean(remaster && DATA.currentMap === 'village'); }
 
@@ -2455,6 +2497,13 @@
       UI.buttons = [];
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       ctx.clearRect(0, 0, CONFIG.W, CONFIG.H);
+      if (assetRenderer?.state.status === 'error') {
+        ctx.fillStyle = '#1b372f';ctx.fillRect(0,0,CONFIG.W,CONFIG.H);
+        ctx.textAlign = 'center';ctx.fillStyle = '#fff8e8';ctx.font = '700 17px system-ui';
+        ctx.fillText('에셋을 불러오지 못했습니다',CONFIG.W/2,CONFIG.H/2-12);
+        ctx.font='12px system-ui';ctx.fillText('새로고침 후 다시 확인해 주세요',CONFIG.W/2,CONFIG.H/2+18);
+        return;
+      }
       if (gameState === 'Boot') {
         drawBoot();
         drawSelfTestBadge();
@@ -4307,8 +4356,17 @@
       window.addEventListener('blur', clearHeldInput);
       window.addEventListener('pagehide', handlePageHide);
       document.addEventListener('visibilitychange', handleVisibilityChange);
-      setTimeout(() => {
-        if (!PREVIEW) { setState('Title'); return; }
+      setTimeout(async () => {
+        if (!PREVIEW) { setState('Title'); resolvePreviewReady({ art:'original', preview:false }); return; }
+        if (assetRenderer) {
+          try {
+            await Promise.all([assetRenderer.ready, waitForSymbolAsset('clef_g')]);
+            assetRenderer.requireFrames(['tower_body','tower_roof','tower_foreground_trim','tower_ground_shadow','tower_door_closed','tower_door_half_open','tower_door_open','grass_1','grass_2','grass_3','path_center_1','path_center_2','tree_1','tree_2','tree_3','bush_1','bush_2','bush_3','props_well','props_sign','props_lantern','ui_move','ui_symbol_bag','ui_interact','ui_sound','ui_sound_off','ui_pause','ui_close','ui_note']);
+          } catch (error) {
+            assetRenderer.state.status='error';assetRenderer.state.error=String(error.message||error);
+            document.body.dataset.assetStatus='error';rejectPreviewReady(error);return;
+          }
+        }
         // A deterministic, playable point after the existing clef pickup quest.
         // Separate keys prevent this comparison from touching a player's save.
         DATA = defaultDataSafe();
@@ -4328,7 +4386,8 @@
         UI.regionBannerTimer = 0;
         UI.toastTimer = 0;
         setState('Explore');
-        document.body.dataset.previewArt = ART_PREVIEW ? 'remaster' : 'original';
+        document.body.dataset.previewArt = PREVIEW_ART;
+        resolvePreviewReady({ art:PREVIEW_ART, preview:true, assets:assetRenderer?.state || null });
       }, 160);
       requestAnimationFrame(loop);
     }
@@ -4352,6 +4411,7 @@
         SAVE,
         UI,
         SCENES,
+        preview: { art: PREVIEW ? PREVIEW_ART : null, ready: previewReady, assets: assetRenderer },
         get state() { return gameState; },
         get DATA() { return DATA; },
         noteToFreq: (name) => AUDIO.noteToFreq(name)

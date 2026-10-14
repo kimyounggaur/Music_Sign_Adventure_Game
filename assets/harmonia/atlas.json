@@ -1,0 +1,3663 @@
+{
+  "meta": {
+    "name": "Harmonia representative scene asset pack",
+    "version": "1.0.0-review",
+    "scale": 4,
+    "colorSpace": "sRGB",
+    "format": "RGBA PNG",
+    "padding": 2,
+    "extrude": 2,
+    "rotation": false,
+    "pages": [
+      "atlas-0.png",
+      "atlas-1.png",
+      "atlas-2.png",
+      "atlas-3.png"
+    ],
+    "pageSize": [
+      2048,
+      2048
+    ],
+    "collision": "Existing gameplay geometry is authoritative",
+    "defaultEntryUnchanged": true
+  },
+  "frames": {
+    "sol.idle.down.0": {
+      "id": "sol.idle.down.0",
+      "file": "assets/harmonia/source/characters/sol.idle.down.0.svg",
+      "logicalSize": [
+        64,
+        64
+      ],
+      "pivot": [
+        32,
+        56
+      ],
+      "category": "characters",
+      "animation": "idle",
+      "direction": "down",
+      "frame": {
+        "x": 4,
+        "y": 4,
+        "w": 256,
+        "h": 256
+      },
+      "fps": 2,
+      "frameIndex": 0,
+      "page": 0,
+      "rotated": false,
+      "trimmed": false,
+      "pivotOutput": [
+        128,
+        224
+      ],
+      "sourceSha256": "2e014c7a3704cc6f08318ee9cb5468bc8611f121ee2b14586fe562efd75f9a6b",
+      "pngSha256": "1af93123fdea63f37addb0d60ded9ca53a08fc2c7d53f7a260487ca87bb48e9c"
+    },
+    "sol.idle.down.1": {
+      "id": "sol.idle.down.1",
+      "file": "assets/harmonia/source/characters/sol.idle.down.1.svg",
+      "logicalSize": [
+        64,
+        64
+      ],
+      "pivot": [
+        32,
+        56
+      ],
+      "category": "characters",
+      "animation": "idle",
+      "direction": "down",
+      "frame": {
+        "x": 268,
+        "y": 4,
+        "w": 256,
+        "h": 256
+      },
+      "fps": 2,
+      "frameIndex": 1,
+      "page": 0,
+      "rotated": false,
+      "trimmed": false,
+      "pivotOutput": [
+        128,
+        224
+      ],
+      "sourceSha256": "6e3089c8c84e8d96b933115c4dd2b10fff5675af1c62c0957b1bb498ca19d454",
+      "pngSha256": "65145c6967ed8864164b3fee8b8293b104c32a1868ba791f23dd23b9000fc953"
+    },
+    "sol.walk.down.0": {
+      "id": "sol.walk.down.0",
+      "file": "assets/harmonia/source/characters/sol.walk.down.0.svg",
+      "logicalSize": [
+        64,
+        64
+      ],
+      "pivot": [
+        32,
+        56
+      ],
+      "category": "characters",
+      "animation": "walk",
+      "direction": "down",
+      "frame": {
+        "x": 532,
+        "y": 4,
+        "w": 256,
+        "h": 256
+      },
+      "fps": 8,
+      "frameIndex": 0,
+      "page": 0,
+      "rotated": false,
+      "trimmed": false,
+      "pivotOutput": [
+        128,
+        224
+      ],
+      "sourceSha256": "175b13e6a8ddc8e4117e20ecdd043963bd1f8bb741bc934bd286cf714122a399",
+      "pngSha256": "6db724e632b909e622e197934ebcd8f1034b9532907f59308c02dcff9a498c79"
+    },
+    "sol.walk.down.1": {
+      "id": "sol.walk.down.1",
+      "file": "assets/harmonia/source/characters/sol.walk.down.1.svg",
+      "logicalSize": [
+        64,
+        64
+      ],
+      "pivot": [
+        32,
+        56
+      ],
+      "category": "characters",
+      "animation": "walk",
+      "direction": "down",
+      "frame": {
+        "x": 796,
+        "y": 4,
+        "w": 256,
+        "h": 256
+      },
+      "fps": 8,
+      "frameIndex": 1,
+      "page": 0,
+      "rotated": false,
+      "trimmed": false,
+      "pivotOutput": [
+        128,
+        224
+      ],
+      "sourceSha256": "46f73c39245b0c3fd9c126754ec98c8697e77fd9398be303684f356eaf0fea35",
+      "pngSha256": "42ecd9916bedd6ad2d3a60d269864c4aa4f558edfb321db0e19882ad56d3c739"
+    },
+    "sol.walk.down.2": {
+      "id": "sol.walk.down.2",
+      "file": "assets/harmonia/source/characters/sol.walk.down.2.svg",
+      "logicalSize": [
+        64,
+        64
+      ],
+      "pivot": [
+        32,
+        56
+      ],
+      "category": "characters",
+      "animation": "walk",
+      "direction": "down",
+      "frame": {
+        "x": 1060,
+        "y": 4,
+        "w": 256,
+        "h": 256
+      },
+      "fps": 8,
+      "frameIndex": 2,
+      "page": 0,
+      "rotated": false,
+      "trimmed": false,
+      "pivotOutput": [
+        128,
+        224
+      ],
+      "sourceSha256": "2031b7843cafe5791af34d4056bb58855fb2768b6ffec713289bf3f792cbb166",
+      "pngSha256": "9f41a7aaa9df0bf35fffd61d012e38bbd7b1b5ee66d401149a10676dbbd4a33f"
+    },
+    "sol.walk.down.3": {
+      "id": "sol.walk.down.3",
+      "file": "assets/harmonia/source/characters/sol.walk.down.3.svg",
+      "logicalSize": [
+        64,
+        64
+      ],
+      "pivot": [
+        32,
+        56
+      ],
+      "category": "characters",
+      "animation": "walk",
+      "direction": "down",
+      "frame": {
+        "x": 1324,
+        "y": 4,
+        "w": 256,
+        "h": 256
+      },
+      "fps": 8,
+      "frameIndex": 3,
+      "page": 0,
+      "rotated": false,
+      "trimmed": false,
+      "pivotOutput": [
+        128,
+        224
+      ],
+      "sourceSha256": "b026bd80c9ec89e1da123e946fbd1b364f700c2502c6ce7dec10ab11f2776c71",
+      "pngSha256": "e86229e350a863a0491aa881c8428a96c3c139d0229e9fe15866066b23e1d5fa"
+    },
+    "sol.walk.down.4": {
+      "id": "sol.walk.down.4",
+      "file": "assets/harmonia/source/characters/sol.walk.down.4.svg",
+      "logicalSize": [
+        64,
+        64
+      ],
+      "pivot": [
+        32,
+        56
+      ],
+      "category": "characters",
+      "animation": "walk",
+      "direction": "down",
+      "frame": {
+        "x": 1588,
+        "y": 4,
+        "w": 256,
+        "h": 256
+      },
+      "fps": 8,
+      "frameIndex": 4,
+      "page": 0,
+      "rotated": false,
+      "trimmed": false,
+      "pivotOutput": [
+        128,
+        224
+      ],
+      "sourceSha256": "8cce4fec85601743c29086e5baa40b53933a58dc8f38adadeb8d6c335b597df3",
+      "pngSha256": "c72474df5c80b4868dc79a98df95823605547e48eef81d4df1dad8568c211cff"
+    },
+    "sol.walk.down.5": {
+      "id": "sol.walk.down.5",
+      "file": "assets/harmonia/source/characters/sol.walk.down.5.svg",
+      "logicalSize": [
+        64,
+        64
+      ],
+      "pivot": [
+        32,
+        56
+      ],
+      "category": "characters",
+      "animation": "walk",
+      "direction": "down",
+      "frame": {
+        "x": 4,
+        "y": 268,
+        "w": 256,
+        "h": 256
+      },
+      "fps": 8,
+      "frameIndex": 5,
+      "page": 0,
+      "rotated": false,
+      "trimmed": false,
+      "pivotOutput": [
+        128,
+        224
+      ],
+      "sourceSha256": "d35783cfa248ca2c75b637a3bd6631659e42d3cad3e052f95b09f48362f572e1",
+      "pngSha256": "5313c460fde22868add4d14a3156dbc136bbf2f597c2a51259ef5d80bfaca51d"
+    },
+    "sol.idle.up.0": {
+      "id": "sol.idle.up.0",
+      "file": "assets/harmonia/source/characters/sol.idle.up.0.svg",
+      "logicalSize": [
+        64,
+        64
+      ],
+      "pivot": [
+        32,
+        56
+      ],
+      "category": "characters",
+      "animation": "idle",
+      "direction": "up",
+      "frame": {
+        "x": 268,
+        "y": 268,
+        "w": 256,
+        "h": 256
+      },
+      "fps": 2,
+      "frameIndex": 0,
+      "page": 0,
+      "rotated": false,
+      "trimmed": false,
+      "pivotOutput": [
+        128,
+        224
+      ],
+      "sourceSha256": "65b2f48bc08560c6a9d14f71cd8084b255e23e2ba64e4a0dc54a385901221096",
+      "pngSha256": "b6198b63845f128770589aa5f401cb5e27e796ee025d38e8e0bb7b50a6eb5770"
+    },
+    "sol.idle.up.1": {
+      "id": "sol.idle.up.1",
+      "file": "assets/harmonia/source/characters/sol.idle.up.1.svg",
+      "logicalSize": [
+        64,
+        64
+      ],
+      "pivot": [
+        32,
+        56
+      ],
+      "category": "characters",
+      "animation": "idle",
+      "direction": "up",
+      "frame": {
+        "x": 532,
+        "y": 268,
+        "w": 256,
+        "h": 256
+      },
+      "fps": 2,
+      "frameIndex": 1,
+      "page": 0,
+      "rotated": false,
+      "trimmed": false,
+      "pivotOutput": [
+        128,
+        224
+      ],
+      "sourceSha256": "56ec7f7b46c496b55e9a8d0cc2f71c5f395bff407de31ab37c74e298dd2f9cb8",
+      "pngSha256": "b2285b399d42db7853f68fb19f4e831ab6e8919fe8424834cf448f313e03d252"
+    },
+    "sol.walk.up.0": {
+      "id": "sol.walk.up.0",
+      "file": "assets/harmonia/source/characters/sol.walk.up.0.svg",
+      "logicalSize": [
+        64,
+        64
+      ],
+      "pivot": [
+        32,
+        56
+      ],
+      "category": "characters",
+      "animation": "walk",
+      "direction": "up",
+      "frame": {
+        "x": 796,
+        "y": 268,
+        "w": 256,
+        "h": 256
+      },
+      "fps": 8,
+      "frameIndex": 0,
+      "page": 0,
+      "rotated": false,
+      "trimmed": false,
+      "pivotOutput": [
+        128,
+        224
+      ],
+      "sourceSha256": "51a2358d4f149ff23975361d48befed07d6a44b0c3b2d131851d67fe4001bd0a",
+      "pngSha256": "26d7e6c3f6462de43cdfab3775a3ad2e692dc064d502de84369bf46accfe1a07"
+    },
+    "sol.walk.up.1": {
+      "id": "sol.walk.up.1",
+      "file": "assets/harmonia/source/characters/sol.walk.up.1.svg",
+      "logicalSize": [
+        64,
+        64
+      ],
+      "pivot": [
+        32,
+        56
+      ],
+      "category": "characters",
+      "animation": "walk",
+      "direction": "up",
+      "frame": {
+        "x": 1060,
+        "y": 268,
+        "w": 256,
+        "h": 256
+      },
+      "fps": 8,
+      "frameIndex": 1,
+      "page": 0,
+      "rotated": false,
+      "trimmed": false,
+      "pivotOutput": [
+        128,
+        224
+      ],
+      "sourceSha256": "f4655938423ecc426313eb0821ce009ec276f26ef05b7acca276f369dca75f39",
+      "pngSha256": "829a9bafa7b944bc7d754ac9add3cea31d36d57f83fbc5dfeb1c8b5cce9c20d3"
+    },
+    "sol.walk.up.2": {
+      "id": "sol.walk.up.2",
+      "file": "assets/harmonia/source/characters/sol.walk.up.2.svg",
+      "logicalSize": [
+        64,
+        64
+      ],
+      "pivot": [
+        32,
+        56
+      ],
+      "category": "characters",
+      "animation": "walk",
+      "direction": "up",
+      "frame": {
+        "x": 1324,
+        "y": 268,
+        "w": 256,
+        "h": 256
+      },
+      "fps": 8,
+      "frameIndex": 2,
+      "page": 0,
+      "rotated": false,
+      "trimmed": false,
+      "pivotOutput": [
+        128,
+        224
+      ],
+      "sourceSha256": "795be63c0b3f6bfe617694ae1774d3f4be0e27ede14d331da14e02ef58e7f44a",
+      "pngSha256": "dd5e1def454148c5e6651bc63a7c50cbf12e2aa0686a5bd66b7bf5bac446a4b4"
+    },
+    "sol.walk.up.3": {
+      "id": "sol.walk.up.3",
+      "file": "assets/harmonia/source/characters/sol.walk.up.3.svg",
+      "logicalSize": [
+        64,
+        64
+      ],
+      "pivot": [
+        32,
+        56
+      ],
+      "category": "characters",
+      "animation": "walk",
+      "direction": "up",
+      "frame": {
+        "x": 1588,
+        "y": 268,
+        "w": 256,
+        "h": 256
+      },
+      "fps": 8,
+      "frameIndex": 3,
+      "page": 0,
+      "rotated": false,
+      "trimmed": false,
+      "pivotOutput": [
+        128,
+        224
+      ],
+      "sourceSha256": "75cf87c166b324cded6bc1ac7468e2cfa3b62989e9c779d3acbd0f76e9cef3a1",
+      "pngSha256": "e15482abeeffd792eba8b1e18e3dd106bcc83f804cf38225157460e4304d7a0d"
+    },
+    "sol.walk.up.4": {
+      "id": "sol.walk.up.4",
+      "file": "assets/harmonia/source/characters/sol.walk.up.4.svg",
+      "logicalSize": [
+        64,
+        64
+      ],
+      "pivot": [
+        32,
+        56
+      ],
+      "category": "characters",
+      "animation": "walk",
+      "direction": "up",
+      "frame": {
+        "x": 4,
+        "y": 532,
+        "w": 256,
+        "h": 256
+      },
+      "fps": 8,
+      "frameIndex": 4,
+      "page": 0,
+      "rotated": false,
+      "trimmed": false,
+      "pivotOutput": [
+        128,
+        224
+      ],
+      "sourceSha256": "36e75eebf1a0ad6d43a2ff7f5edfcc55dc08dbc9b3edd10f109b0aaa203ab2cc",
+      "pngSha256": "a153112995aa7c249fcf03dfae1ed49e2ad50d02b600a672644d663e22303624"
+    },
+    "sol.walk.up.5": {
+      "id": "sol.walk.up.5",
+      "file": "assets/harmonia/source/characters/sol.walk.up.5.svg",
+      "logicalSize": [
+        64,
+        64
+      ],
+      "pivot": [
+        32,
+        56
+      ],
+      "category": "characters",
+      "animation": "walk",
+      "direction": "up",
+      "frame": {
+        "x": 268,
+        "y": 532,
+        "w": 256,
+        "h": 256
+      },
+      "fps": 8,
+      "frameIndex": 5,
+      "page": 0,
+      "rotated": false,
+      "trimmed": false,
+      "pivotOutput": [
+        128,
+        224
+      ],
+      "sourceSha256": "b912370c7cb4680c625fa6c9eaa1da475714782d93de57783abad266cf5242a5",
+      "pngSha256": "9f81b847fb54616d03b4e99cdf303ab18ca32d31371f3d8b4193dc3632356a43"
+    },
+    "sol.idle.left.0": {
+      "id": "sol.idle.left.0",
+      "file": "assets/harmonia/source/characters/sol.idle.left.0.svg",
+      "logicalSize": [
+        64,
+        64
+      ],
+      "pivot": [
+        32,
+        56
+      ],
+      "category": "characters",
+      "animation": "idle",
+      "direction": "left",
+      "frame": {
+        "x": 532,
+        "y": 532,
+        "w": 256,
+        "h": 256
+      },
+      "fps": 2,
+      "frameIndex": 0,
+      "page": 0,
+      "rotated": false,
+      "trimmed": false,
+      "pivotOutput": [
+        128,
+        224
+      ],
+      "sourceSha256": "5333d70d5afc9cd6f737c74184ea9f5c13564d106f944c6daf877959a616da21",
+      "pngSha256": "76786fad13c0817a932bca0c468565b5578e12278d45ac39d44a5a389bcd0ba3"
+    },
+    "sol.idle.left.1": {
+      "id": "sol.idle.left.1",
+      "file": "assets/harmonia/source/characters/sol.idle.left.1.svg",
+      "logicalSize": [
+        64,
+        64
+      ],
+      "pivot": [
+        32,
+        56
+      ],
+      "category": "characters",
+      "animation": "idle",
+      "direction": "left",
+      "frame": {
+        "x": 796,
+        "y": 532,
+        "w": 256,
+        "h": 256
+      },
+      "fps": 2,
+      "frameIndex": 1,
+      "page": 0,
+      "rotated": false,
+      "trimmed": false,
+      "pivotOutput": [
+        128,
+        224
+      ],
+      "sourceSha256": "8cf0f07c8a4a14484622df8db9dc5264fa6bfeff3e8dcee805310c797fde91eb",
+      "pngSha256": "47bb9ad4c80e088288d4ac7fe2514732e76998d9e2a56bec6ac8f54aa37a7850"
+    },
+    "sol.walk.left.0": {
+      "id": "sol.walk.left.0",
+      "file": "assets/harmonia/source/characters/sol.walk.left.0.svg",
+      "logicalSize": [
+        64,
+        64
+      ],
+      "pivot": [
+        32,
+        56
+      ],
+      "category": "characters",
+      "animation": "walk",
+      "direction": "left",
+      "frame": {
+        "x": 1060,
+        "y": 532,
+        "w": 256,
+        "h": 256
+      },
+      "fps": 8,
+      "frameIndex": 0,
+      "page": 0,
+      "rotated": false,
+      "trimmed": false,
+      "pivotOutput": [
+        128,
+        224
+      ],
+      "sourceSha256": "9e90647171148bd4ee30f262e8ff789cc7503de47e86180d824446f21f1c05d6",
+      "pngSha256": "e5f368a5699ee858d04f67a484509dc514fc4080984ed156b346358787a10635"
+    },
+    "sol.walk.left.1": {
+      "id": "sol.walk.left.1",
+      "file": "assets/harmonia/source/characters/sol.walk.left.1.svg",
+      "logicalSize": [
+        64,
+        64
+      ],
+      "pivot": [
+        32,
+        56
+      ],
+      "category": "characters",
+      "animation": "walk",
+      "direction": "left",
+      "frame": {
+        "x": 1324,
+        "y": 532,
+        "w": 256,
+        "h": 256
+      },
+      "fps": 8,
+      "frameIndex": 1,
+      "page": 0,
+      "rotated": false,
+      "trimmed": false,
+      "pivotOutput": [
+        128,
+        224
+      ],
+      "sourceSha256": "7743c958561ed11646605af89404f2c26b0cfd0b99996af5b4ee623ee86bfaf9",
+      "pngSha256": "e126f28d58b8acfbb1e09ba0d4c27764fa5270166ab46b467988c85b40804bf2"
+    },
+    "sol.walk.left.2": {
+      "id": "sol.walk.left.2",
+      "file": "assets/harmonia/source/characters/sol.walk.left.2.svg",
+      "logicalSize": [
+        64,
+        64
+      ],
+      "pivot": [
+        32,
+        56
+      ],
+      "category": "characters",
+      "animation": "walk",
+      "direction": "left",
+      "frame": {
+        "x": 1588,
+        "y": 532,
+        "w": 256,
+        "h": 256
+      },
+      "fps": 8,
+      "frameIndex": 2,
+      "page": 0,
+      "rotated": false,
+      "trimmed": false,
+      "pivotOutput": [
+        128,
+        224
+      ],
+      "sourceSha256": "3aad026e4e794908e8dc282721c2ca9bd8a453e14bd64aa6dc5facfc3218b6ea",
+      "pngSha256": "f419c0d2c3fe1c46da8930d8d97175eeb4b061b5fad107df44a3edfdffaae3ee"
+    },
+    "sol.walk.left.3": {
+      "id": "sol.walk.left.3",
+      "file": "assets/harmonia/source/characters/sol.walk.left.3.svg",
+      "logicalSize": [
+        64,
+        64
+      ],
+      "pivot": [
+        32,
+        56
+      ],
+      "category": "characters",
+      "animation": "walk",
+      "direction": "left",
+      "frame": {
+        "x": 4,
+        "y": 796,
+        "w": 256,
+        "h": 256
+      },
+      "fps": 8,
+      "frameIndex": 3,
+      "page": 0,
+      "rotated": false,
+      "trimmed": false,
+      "pivotOutput": [
+        128,
+        224
+      ],
+      "sourceSha256": "e1d335ecd92cd063e4fb4dc32fa25da2789be745d5389f7de686e45515fc6dc2",
+      "pngSha256": "dc598207917633ccfc1ae022a3b5d999ba809b5d440a50c0f3c4173c22ba7810"
+    },
+    "sol.walk.left.4": {
+      "id": "sol.walk.left.4",
+      "file": "assets/harmonia/source/characters/sol.walk.left.4.svg",
+      "logicalSize": [
+        64,
+        64
+      ],
+      "pivot": [
+        32,
+        56
+      ],
+      "category": "characters",
+      "animation": "walk",
+      "direction": "left",
+      "frame": {
+        "x": 268,
+        "y": 796,
+        "w": 256,
+        "h": 256
+      },
+      "fps": 8,
+      "frameIndex": 4,
+      "page": 0,
+      "rotated": false,
+      "trimmed": false,
+      "pivotOutput": [
+        128,
+        224
+      ],
+      "sourceSha256": "8cc02cbfe7c40857c7abb7d70fcd1f986ba2a092429bcabf8829660a75ceee03",
+      "pngSha256": "c23753a989af5ca72c824e960237ea1c050ac474dd959bc49a86473aec2da663"
+    },
+    "sol.walk.left.5": {
+      "id": "sol.walk.left.5",
+      "file": "assets/harmonia/source/characters/sol.walk.left.5.svg",
+      "logicalSize": [
+        64,
+        64
+      ],
+      "pivot": [
+        32,
+        56
+      ],
+      "category": "characters",
+      "animation": "walk",
+      "direction": "left",
+      "frame": {
+        "x": 532,
+        "y": 796,
+        "w": 256,
+        "h": 256
+      },
+      "fps": 8,
+      "frameIndex": 5,
+      "page": 0,
+      "rotated": false,
+      "trimmed": false,
+      "pivotOutput": [
+        128,
+        224
+      ],
+      "sourceSha256": "2e72127f22c6d1fca1db180d6c27af5cf1c86bc48f023f290f042f9c581bc4a6",
+      "pngSha256": "599648eb141107d0f7600941a85143abf7e2a1d1d75cccc65bf8f4a886c2c1ca"
+    },
+    "sol.idle.right.0": {
+      "id": "sol.idle.right.0",
+      "file": "assets/harmonia/source/characters/sol.idle.right.0.svg",
+      "logicalSize": [
+        64,
+        64
+      ],
+      "pivot": [
+        32,
+        56
+      ],
+      "category": "characters",
+      "animation": "idle",
+      "direction": "right",
+      "frame": {
+        "x": 796,
+        "y": 796,
+        "w": 256,
+        "h": 256
+      },
+      "fps": 2,
+      "frameIndex": 0,
+      "page": 0,
+      "rotated": false,
+      "trimmed": false,
+      "pivotOutput": [
+        128,
+        224
+      ],
+      "sourceSha256": "f7f270a9cc9406d07755f636a29bb9050e310666078b6ca80db313a3672046bf",
+      "pngSha256": "1088d9a5b61ddce59f830d696fa99f1b325986e349edbdde7f5e55dee0154883"
+    },
+    "sol.idle.right.1": {
+      "id": "sol.idle.right.1",
+      "file": "assets/harmonia/source/characters/sol.idle.right.1.svg",
+      "logicalSize": [
+        64,
+        64
+      ],
+      "pivot": [
+        32,
+        56
+      ],
+      "category": "characters",
+      "animation": "idle",
+      "direction": "right",
+      "frame": {
+        "x": 1060,
+        "y": 796,
+        "w": 256,
+        "h": 256
+      },
+      "fps": 2,
+      "frameIndex": 1,
+      "page": 0,
+      "rotated": false,
+      "trimmed": false,
+      "pivotOutput": [
+        128,
+        224
+      ],
+      "sourceSha256": "055ac85a1a9ffa4624c8b31b20957e51f6f2f26644f7af7661e8902300c4a9f2",
+      "pngSha256": "5b5b96322331f20cb9ab5bb6a5fd6cdf213cae5bc4f0b87dd8985c6fde0c2adf"
+    },
+    "sol.walk.right.0": {
+      "id": "sol.walk.right.0",
+      "file": "assets/harmonia/source/characters/sol.walk.right.0.svg",
+      "logicalSize": [
+        64,
+        64
+      ],
+      "pivot": [
+        32,
+        56
+      ],
+      "category": "characters",
+      "animation": "walk",
+      "direction": "right",
+      "frame": {
+        "x": 1324,
+        "y": 796,
+        "w": 256,
+        "h": 256
+      },
+      "fps": 8,
+      "frameIndex": 0,
+      "page": 0,
+      "rotated": false,
+      "trimmed": false,
+      "pivotOutput": [
+        128,
+        224
+      ],
+      "sourceSha256": "805d10d4df9895dfdc026ec2c857770cb9a772df36554105dc4df20674cd6d59",
+      "pngSha256": "9f8f39e065e893771c3be270c752126e4f95892840e73d7ce7bff4fa0440f896"
+    },
+    "sol.walk.right.1": {
+      "id": "sol.walk.right.1",
+      "file": "assets/harmonia/source/characters/sol.walk.right.1.svg",
+      "logicalSize": [
+        64,
+        64
+      ],
+      "pivot": [
+        32,
+        56
+      ],
+      "category": "characters",
+      "animation": "walk",
+      "direction": "right",
+      "frame": {
+        "x": 1588,
+        "y": 796,
+        "w": 256,
+        "h": 256
+      },
+      "fps": 8,
+      "frameIndex": 1,
+      "page": 0,
+      "rotated": false,
+      "trimmed": false,
+      "pivotOutput": [
+        128,
+        224
+      ],
+      "sourceSha256": "f688538f185dfb45c255ddc174401b2aca5d9e5cf3272662a22219f954703e82",
+      "pngSha256": "f797e29c53986d9900bb6ee2614161d5d1d049af4b88785bd9d55e1df7484fc4"
+    },
+    "sol.walk.right.2": {
+      "id": "sol.walk.right.2",
+      "file": "assets/harmonia/source/characters/sol.walk.right.2.svg",
+      "logicalSize": [
+        64,
+        64
+      ],
+      "pivot": [
+        32,
+        56
+      ],
+      "category": "characters",
+      "animation": "walk",
+      "direction": "right",
+      "frame": {
+        "x": 4,
+        "y": 1060,
+        "w": 256,
+        "h": 256
+      },
+      "fps": 8,
+      "frameIndex": 2,
+      "page": 0,
+      "rotated": false,
+      "trimmed": false,
+      "pivotOutput": [
+        128,
+        224
+      ],
+      "sourceSha256": "eac1fdcd5bcb6f140f2594b989e68693524ce28592660db36aa85895f1f5b591",
+      "pngSha256": "0cef4235267f291cea10d98ca677180c6606e6b63445389aa8e2f2251f7cfabc"
+    },
+    "sol.walk.right.3": {
+      "id": "sol.walk.right.3",
+      "file": "assets/harmonia/source/characters/sol.walk.right.3.svg",
+      "logicalSize": [
+        64,
+        64
+      ],
+      "pivot": [
+        32,
+        56
+      ],
+      "category": "characters",
+      "animation": "walk",
+      "direction": "right",
+      "frame": {
+        "x": 268,
+        "y": 1060,
+        "w": 256,
+        "h": 256
+      },
+      "fps": 8,
+      "frameIndex": 3,
+      "page": 0,
+      "rotated": false,
+      "trimmed": false,
+      "pivotOutput": [
+        128,
+        224
+      ],
+      "sourceSha256": "3dee31c5f40849b07048ade70e762d7ea9f9ddc32cceeb96c5b0a29d2eefc179",
+      "pngSha256": "508a3ea6a645e6fbf08ff1809438d9965b8b85737dbc5f2c18abb7e216e1a6dd"
+    },
+    "sol.walk.right.4": {
+      "id": "sol.walk.right.4",
+      "file": "assets/harmonia/source/characters/sol.walk.right.4.svg",
+      "logicalSize": [
+        64,
+        64
+      ],
+      "pivot": [
+        32,
+        56
+      ],
+      "category": "characters",
+      "animation": "walk",
+      "direction": "right",
+      "frame": {
+        "x": 532,
+        "y": 1060,
+        "w": 256,
+        "h": 256
+      },
+      "fps": 8,
+      "frameIndex": 4,
+      "page": 0,
+      "rotated": false,
+      "trimmed": false,
+      "pivotOutput": [
+        128,
+        224
+      ],
+      "sourceSha256": "dd9e2966c8634cc6e624e8a48702605f578bc7a605dc36e74230cfc03ae2c45a",
+      "pngSha256": "dd9c26944d9966c174f3d9a36d7d7007262e269a4da2e61967cc4a11d31010d2"
+    },
+    "sol.walk.right.5": {
+      "id": "sol.walk.right.5",
+      "file": "assets/harmonia/source/characters/sol.walk.right.5.svg",
+      "logicalSize": [
+        64,
+        64
+      ],
+      "pivot": [
+        32,
+        56
+      ],
+      "category": "characters",
+      "animation": "walk",
+      "direction": "right",
+      "frame": {
+        "x": 796,
+        "y": 1060,
+        "w": 256,
+        "h": 256
+      },
+      "fps": 8,
+      "frameIndex": 5,
+      "page": 0,
+      "rotated": false,
+      "trimmed": false,
+      "pivotOutput": [
+        128,
+        224
+      ],
+      "sourceSha256": "79796d1301c68f274af3237b61487e0537c932cbbab38f5fdfb60af0ca05fb87",
+      "pngSha256": "20f72c715dc53df4503be12af5ae945e91572d359f0f461da342e9a69d0dccff"
+    },
+    "sol.interact.down.0": {
+      "id": "sol.interact.down.0",
+      "file": "assets/harmonia/source/characters/sol.interact.down.0.svg",
+      "logicalSize": [
+        64,
+        64
+      ],
+      "pivot": [
+        32,
+        56
+      ],
+      "category": "characters",
+      "animation": "interact",
+      "direction": "down",
+      "frame": {
+        "x": 1060,
+        "y": 1060,
+        "w": 256,
+        "h": 256
+      },
+      "fps": 6,
+      "frameIndex": 0,
+      "page": 0,
+      "rotated": false,
+      "trimmed": false,
+      "pivotOutput": [
+        128,
+        224
+      ],
+      "sourceSha256": "02fd7529c484fdf3ecf4b6e75e21565cfb7e43eedc61601592556c051d4db880",
+      "pngSha256": "1af93123fdea63f37addb0d60ded9ca53a08fc2c7d53f7a260487ca87bb48e9c"
+    },
+    "sol.interact.down.1": {
+      "id": "sol.interact.down.1",
+      "file": "assets/harmonia/source/characters/sol.interact.down.1.svg",
+      "logicalSize": [
+        64,
+        64
+      ],
+      "pivot": [
+        32,
+        56
+      ],
+      "category": "characters",
+      "animation": "interact",
+      "direction": "down",
+      "frame": {
+        "x": 1324,
+        "y": 1060,
+        "w": 256,
+        "h": 256
+      },
+      "fps": 6,
+      "frameIndex": 1,
+      "page": 0,
+      "rotated": false,
+      "trimmed": false,
+      "pivotOutput": [
+        128,
+        224
+      ],
+      "sourceSha256": "688f442345e4baff6c3bbd161fe434f8d9c10e6e442d7933fb412ae4ebe1feb4",
+      "pngSha256": "0924a2fc26d2ae3da62221d923a817a6e09877fd0407635d0ea30db435537c98"
+    },
+    "sol.interact.down.2": {
+      "id": "sol.interact.down.2",
+      "file": "assets/harmonia/source/characters/sol.interact.down.2.svg",
+      "logicalSize": [
+        64,
+        64
+      ],
+      "pivot": [
+        32,
+        56
+      ],
+      "category": "characters",
+      "animation": "interact",
+      "direction": "down",
+      "frame": {
+        "x": 1588,
+        "y": 1060,
+        "w": 256,
+        "h": 256
+      },
+      "fps": 6,
+      "frameIndex": 2,
+      "page": 0,
+      "rotated": false,
+      "trimmed": false,
+      "pivotOutput": [
+        128,
+        224
+      ],
+      "sourceSha256": "0cdc8b0ee67340b28eaff1b9c37922cc30bd7d0dc2d15e7701e3f7f35aba6d5c",
+      "pngSha256": "f7d5b32d76ee8a7037bcbb90df3509d763a324a743ce5459644d28ecffeaf937"
+    },
+    "sol.acquire.down.0": {
+      "id": "sol.acquire.down.0",
+      "file": "assets/harmonia/source/characters/sol.acquire.down.0.svg",
+      "logicalSize": [
+        64,
+        64
+      ],
+      "pivot": [
+        32,
+        56
+      ],
+      "category": "characters",
+      "animation": "acquire",
+      "direction": "down",
+      "frame": {
+        "x": 4,
+        "y": 1324,
+        "w": 256,
+        "h": 256
+      },
+      "fps": 6,
+      "frameIndex": 0,
+      "page": 0,
+      "rotated": false,
+      "trimmed": false,
+      "pivotOutput": [
+        128,
+        224
+      ],
+      "sourceSha256": "1bdbf3d194d1ce80c1c2a24f77f6ceca2662729df68b0f02eb8e571d758b0615",
+      "pngSha256": "0924a2fc26d2ae3da62221d923a817a6e09877fd0407635d0ea30db435537c98"
+    },
+    "sol.acquire.down.1": {
+      "id": "sol.acquire.down.1",
+      "file": "assets/harmonia/source/characters/sol.acquire.down.1.svg",
+      "logicalSize": [
+        64,
+        64
+      ],
+      "pivot": [
+        32,
+        56
+      ],
+      "category": "characters",
+      "animation": "acquire",
+      "direction": "down",
+      "frame": {
+        "x": 268,
+        "y": 1324,
+        "w": 256,
+        "h": 256
+      },
+      "fps": 6,
+      "frameIndex": 1,
+      "page": 0,
+      "rotated": false,
+      "trimmed": false,
+      "pivotOutput": [
+        128,
+        224
+      ],
+      "sourceSha256": "a4a81bfef2394241c71b3dbc64ae35f7e4b5ed07b7c6c97463548a7ff5e08afe",
+      "pngSha256": "bce879dbdbe0df891826f4b73d69c8a3d857aa2692bd618d25acfb876aafac2c"
+    },
+    "sol.acquire.down.2": {
+      "id": "sol.acquire.down.2",
+      "file": "assets/harmonia/source/characters/sol.acquire.down.2.svg",
+      "logicalSize": [
+        64,
+        64
+      ],
+      "pivot": [
+        32,
+        56
+      ],
+      "category": "characters",
+      "animation": "acquire",
+      "direction": "down",
+      "frame": {
+        "x": 532,
+        "y": 1324,
+        "w": 256,
+        "h": 256
+      },
+      "fps": 6,
+      "frameIndex": 2,
+      "page": 0,
+      "rotated": false,
+      "trimmed": false,
+      "pivotOutput": [
+        128,
+        224
+      ],
+      "sourceSha256": "98ffd965d0acfa05698a89766790c0ac2febe7e1c8ca740848ef3fb5bd74ba4c",
+      "pngSha256": "30235ed9f65857e6e99054fa6960b6bf3aba7826752767776b937f7911c4799f"
+    },
+    "sol.acquire.down.3": {
+      "id": "sol.acquire.down.3",
+      "file": "assets/harmonia/source/characters/sol.acquire.down.3.svg",
+      "logicalSize": [
+        64,
+        64
+      ],
+      "pivot": [
+        32,
+        56
+      ],
+      "category": "characters",
+      "animation": "acquire",
+      "direction": "down",
+      "frame": {
+        "x": 796,
+        "y": 1324,
+        "w": 256,
+        "h": 256
+      },
+      "fps": 6,
+      "frameIndex": 3,
+      "page": 0,
+      "rotated": false,
+      "trimmed": false,
+      "pivotOutput": [
+        128,
+        224
+      ],
+      "sourceSha256": "b529c38c52371be6bea3c8a6e4b6feb4b48ee5ca7c8415ada07a25cf33ef7e20",
+      "pngSha256": "61f594a4b5537f46291b2e020831daa70a0e9b5cd05201ac6def5160a9a78e33"
+    },
+    "clef.idle.down.0": {
+      "id": "clef.idle.down.0",
+      "file": "assets/harmonia/source/characters/clef.idle.down.0.svg",
+      "logicalSize": [
+        64,
+        64
+      ],
+      "pivot": [
+        32,
+        56
+      ],
+      "category": "characters",
+      "animation": "idle",
+      "direction": "down",
+      "frame": {
+        "x": 1060,
+        "y": 1324,
+        "w": 256,
+        "h": 256
+      },
+      "fps": 2,
+      "frameIndex": 0,
+      "page": 0,
+      "rotated": false,
+      "trimmed": false,
+      "pivotOutput": [
+        128,
+        224
+      ],
+      "sourceSha256": "cb633d57e78c44a604d41fda24495692020fa56ba26a3c5f513d0faed1f2b160",
+      "pngSha256": "8c466c4dffe8f76a62217ed9c0cf59a16a65f3f1072eaafaedb2cd77220dbab3"
+    },
+    "clef.idle.down.1": {
+      "id": "clef.idle.down.1",
+      "file": "assets/harmonia/source/characters/clef.idle.down.1.svg",
+      "logicalSize": [
+        64,
+        64
+      ],
+      "pivot": [
+        32,
+        56
+      ],
+      "category": "characters",
+      "animation": "idle",
+      "direction": "down",
+      "frame": {
+        "x": 1324,
+        "y": 1324,
+        "w": 256,
+        "h": 256
+      },
+      "fps": 2,
+      "frameIndex": 1,
+      "page": 0,
+      "rotated": false,
+      "trimmed": false,
+      "pivotOutput": [
+        128,
+        224
+      ],
+      "sourceSha256": "f0b82d0e51fbc064fec1a45c12bbb72d10aa5655080326051d1423185a39b127",
+      "pngSha256": "014af718b73c728a0341d8afeaccca5024abfff2d270671b753b7a8fdaead282"
+    },
+    "clef.talk.down.0": {
+      "id": "clef.talk.down.0",
+      "file": "assets/harmonia/source/characters/clef.talk.down.0.svg",
+      "logicalSize": [
+        64,
+        64
+      ],
+      "pivot": [
+        32,
+        56
+      ],
+      "category": "characters",
+      "animation": "talk",
+      "direction": "down",
+      "frame": {
+        "x": 1588,
+        "y": 1324,
+        "w": 256,
+        "h": 256
+      },
+      "fps": 6,
+      "frameIndex": 0,
+      "page": 0,
+      "rotated": false,
+      "trimmed": false,
+      "pivotOutput": [
+        128,
+        224
+      ],
+      "sourceSha256": "a6e038f8dee07d1cf51fffb184ab0b2cd4b2433341527df2c2a12ca36cdb6a8c",
+      "pngSha256": "8c466c4dffe8f76a62217ed9c0cf59a16a65f3f1072eaafaedb2cd77220dbab3"
+    },
+    "clef.talk.down.1": {
+      "id": "clef.talk.down.1",
+      "file": "assets/harmonia/source/characters/clef.talk.down.1.svg",
+      "logicalSize": [
+        64,
+        64
+      ],
+      "pivot": [
+        32,
+        56
+      ],
+      "category": "characters",
+      "animation": "talk",
+      "direction": "down",
+      "frame": {
+        "x": 4,
+        "y": 1588,
+        "w": 256,
+        "h": 256
+      },
+      "fps": 6,
+      "frameIndex": 1,
+      "page": 0,
+      "rotated": false,
+      "trimmed": false,
+      "pivotOutput": [
+        128,
+        224
+      ],
+      "sourceSha256": "36f2b7e86aa25a454a8a4406bf83a35c292ea6045298ffa7ff4bea30a64ba8ee",
+      "pngSha256": "5ce9a637cbcc147b2b9e2cf025e72352dd9324a12ba7b47acd8af82f675549a9"
+    },
+    "clef.talk.down.2": {
+      "id": "clef.talk.down.2",
+      "file": "assets/harmonia/source/characters/clef.talk.down.2.svg",
+      "logicalSize": [
+        64,
+        64
+      ],
+      "pivot": [
+        32,
+        56
+      ],
+      "category": "characters",
+      "animation": "talk",
+      "direction": "down",
+      "frame": {
+        "x": 268,
+        "y": 1588,
+        "w": 256,
+        "h": 256
+      },
+      "fps": 6,
+      "frameIndex": 2,
+      "page": 0,
+      "rotated": false,
+      "trimmed": false,
+      "pivotOutput": [
+        128,
+        224
+      ],
+      "sourceSha256": "8dbf1886f1fc865b62f7a46a9fd33710d3eff2c13572953a74a72ad43b090001",
+      "pngSha256": "353047c198637c8ca4ab129322fc5599fdf66cd0d8121df6e7d7c03d6d957046"
+    },
+    "clef.react.down.0": {
+      "id": "clef.react.down.0",
+      "file": "assets/harmonia/source/characters/clef.react.down.0.svg",
+      "logicalSize": [
+        64,
+        64
+      ],
+      "pivot": [
+        32,
+        56
+      ],
+      "category": "characters",
+      "animation": "react",
+      "direction": "down",
+      "frame": {
+        "x": 532,
+        "y": 1588,
+        "w": 256,
+        "h": 256
+      },
+      "fps": 6,
+      "frameIndex": 0,
+      "page": 0,
+      "rotated": false,
+      "trimmed": false,
+      "pivotOutput": [
+        128,
+        224
+      ],
+      "sourceSha256": "33e6be353c3db7818645dce4f6fa102ec04241eff2feaf1c614664a985f0bc36",
+      "pngSha256": "8c466c4dffe8f76a62217ed9c0cf59a16a65f3f1072eaafaedb2cd77220dbab3"
+    },
+    "clef.react.down.1": {
+      "id": "clef.react.down.1",
+      "file": "assets/harmonia/source/characters/clef.react.down.1.svg",
+      "logicalSize": [
+        64,
+        64
+      ],
+      "pivot": [
+        32,
+        56
+      ],
+      "category": "characters",
+      "animation": "react",
+      "direction": "down",
+      "frame": {
+        "x": 796,
+        "y": 1588,
+        "w": 256,
+        "h": 256
+      },
+      "fps": 6,
+      "frameIndex": 1,
+      "page": 0,
+      "rotated": false,
+      "trimmed": false,
+      "pivotOutput": [
+        128,
+        224
+      ],
+      "sourceSha256": "2e6586d66163f6f51b96fff49f4aab4707758b4160229efc25c30f75409529d9",
+      "pngSha256": "1b5ad220dac0a06eca3a02e08a431f5f3398ef039e2da5dcad4cebd012f95394"
+    },
+    "clef.react.down.2": {
+      "id": "clef.react.down.2",
+      "file": "assets/harmonia/source/characters/clef.react.down.2.svg",
+      "logicalSize": [
+        64,
+        64
+      ],
+      "pivot": [
+        32,
+        56
+      ],
+      "category": "characters",
+      "animation": "react",
+      "direction": "down",
+      "frame": {
+        "x": 1060,
+        "y": 1588,
+        "w": 256,
+        "h": 256
+      },
+      "fps": 6,
+      "frameIndex": 2,
+      "page": 0,
+      "rotated": false,
+      "trimmed": false,
+      "pivotOutput": [
+        128,
+        224
+      ],
+      "sourceSha256": "f0afca3434a07a92b4ed82290f48133f842f143de626860219ef780ff2b5e215",
+      "pngSha256": "6f22833b0a7df8088c55909306366920aa3a77c8fd569d46a9dd09b7c2cbd7ac"
+    },
+    "tower_body": {
+      "id": "tower_body",
+      "file": "assets/harmonia/source/environment/tower_body.svg",
+      "logicalSize": [
+        192,
+        224
+      ],
+      "pivot": [
+        96,
+        208
+      ],
+      "category": "environment",
+      "collision": {
+        "x": 32,
+        "y": 80,
+        "w": 128,
+        "h": 128
+      },
+      "origin": [
+        32,
+        80
+      ],
+      "worldTopLeft": [
+        416,
+        -16
+      ],
+      "layer": "body",
+      "page": 1,
+      "frame": {
+        "x": 4,
+        "y": 4,
+        "w": 768,
+        "h": 896
+      },
+      "rotated": false,
+      "trimmed": false,
+      "pivotOutput": [
+        384,
+        832
+      ],
+      "sourceSha256": "f0176772f559429875dbba9f70394f6831317d805fa475cd8eef5421fb23238c",
+      "pngSha256": "521ca01e92092881699440e77eaf181b978b0b6c53121d0025ab70f259f6459d"
+    },
+    "tower_roof": {
+      "id": "tower_roof",
+      "file": "assets/harmonia/source/environment/tower_roof.svg",
+      "logicalSize": [
+        192,
+        224
+      ],
+      "pivot": [
+        96,
+        208
+      ],
+      "category": "environment",
+      "collision": {
+        "x": 32,
+        "y": 80,
+        "w": 128,
+        "h": 128
+      },
+      "origin": [
+        32,
+        80
+      ],
+      "worldTopLeft": [
+        416,
+        -16
+      ],
+      "layer": "roof",
+      "staff": {
+        "lineCount": 5,
+        "linesY": [
+          104,
+          107.5,
+          111,
+          114.5,
+          118
+        ],
+        "xRange": [
+          87,
+          105
+        ],
+        "notationComposite": {
+          "center": [
+            96,
+            111
+          ],
+          "source": "existing-game-symbols"
+        }
+      },
+      "page": 1,
+      "frame": {
+        "x": 780,
+        "y": 4,
+        "w": 768,
+        "h": 896
+      },
+      "rotated": false,
+      "trimmed": false,
+      "pivotOutput": [
+        384,
+        832
+      ],
+      "sourceSha256": "13df87b1711f8f9ff8aa9df8c720d0bd92b21e1029b0526727b39514e30a6b0e",
+      "pngSha256": "f0b3260af816498bb71a2f649f993363a91513d5ea39b1eb59f45a522801181b"
+    },
+    "tower_foreground_trim": {
+      "id": "tower_foreground_trim",
+      "file": "assets/harmonia/source/environment/tower_foreground_trim.svg",
+      "logicalSize": [
+        192,
+        224
+      ],
+      "pivot": [
+        96,
+        208
+      ],
+      "category": "environment",
+      "collision": {
+        "x": 32,
+        "y": 80,
+        "w": 128,
+        "h": 128
+      },
+      "origin": [
+        32,
+        80
+      ],
+      "worldTopLeft": [
+        416,
+        -16
+      ],
+      "layer": "foreground",
+      "page": 1,
+      "frame": {
+        "x": 4,
+        "y": 908,
+        "w": 768,
+        "h": 896
+      },
+      "rotated": false,
+      "trimmed": false,
+      "pivotOutput": [
+        384,
+        832
+      ],
+      "sourceSha256": "36483fa45d629ba7e49cb2aded81f24b816817217ad9948018d6dcbc15477936",
+      "pngSha256": "661f111d6d341fd7fcc2fb74493135854f06387aaa014a019f47037e57dbb42a"
+    },
+    "tower_ground_shadow": {
+      "id": "tower_ground_shadow",
+      "file": "assets/harmonia/source/environment/tower_ground_shadow.svg",
+      "logicalSize": [
+        192,
+        224
+      ],
+      "pivot": [
+        96,
+        208
+      ],
+      "category": "environment",
+      "collision": {
+        "x": 32,
+        "y": 80,
+        "w": 128,
+        "h": 128
+      },
+      "origin": [
+        32,
+        80
+      ],
+      "worldTopLeft": [
+        416,
+        -16
+      ],
+      "layer": "shadow",
+      "page": 1,
+      "frame": {
+        "x": 780,
+        "y": 908,
+        "w": 768,
+        "h": 896
+      },
+      "rotated": false,
+      "trimmed": false,
+      "pivotOutput": [
+        384,
+        832
+      ],
+      "sourceSha256": "9ba17b3206b2dcaaae0d8bd13303a27f142e89603a7603870a1d448c9e36fbf3",
+      "pngSha256": "80fbd58ca0276a7e44626f42438253b676e1479ec2584a3e61c9c8b9f38ad8d7"
+    },
+    "tower_door_closed": {
+      "id": "tower_door_closed",
+      "file": "assets/harmonia/source/environment/tower_door_closed.svg",
+      "logicalSize": [
+        80,
+        64
+      ],
+      "pivot": [
+        40,
+        56
+      ],
+      "category": "environment",
+      "state": "closed",
+      "collision": {
+        "x": 8,
+        "y": 24,
+        "w": 64,
+        "h": 32
+      },
+      "notationComposite": {
+        "center": [
+          40,
+          36
+        ],
+        "badge": [
+          32,
+          23,
+          16,
+          26
+        ],
+        "source": "existing-game-symbols"
+      },
+      "page": 1,
+      "frame": {
+        "x": 1556,
+        "y": 908,
+        "w": 320,
+        "h": 256
+      },
+      "rotated": false,
+      "trimmed": false,
+      "pivotOutput": [
+        160,
+        224
+      ],
+      "sourceSha256": "1b6f98e26aec013a3fef2381322e6cb87e0450fe04e0e89ec29d326fcf505947",
+      "pngSha256": "2d96e89a1c502a0fb646052e476e2bc6acc232de43e6c098261f0f561436d25b"
+    },
+    "tower_door_half_open": {
+      "id": "tower_door_half_open",
+      "file": "assets/harmonia/source/environment/tower_door_half_open.svg",
+      "logicalSize": [
+        80,
+        64
+      ],
+      "pivot": [
+        40,
+        56
+      ],
+      "category": "environment",
+      "state": "half_open",
+      "collision": {
+        "x": 8,
+        "y": 24,
+        "w": 64,
+        "h": 32
+      },
+      "notationComposite": {
+        "center": [
+          40,
+          36
+        ],
+        "badge": [
+          32,
+          23,
+          16,
+          26
+        ],
+        "source": "existing-game-symbols"
+      },
+      "page": 2,
+      "frame": {
+        "x": 4,
+        "y": 4,
+        "w": 320,
+        "h": 256
+      },
+      "rotated": false,
+      "trimmed": false,
+      "pivotOutput": [
+        160,
+        224
+      ],
+      "sourceSha256": "313ef0a71492775b7e0cee3277b2145f5663afdd4ac65611d2021ada245e8e36",
+      "pngSha256": "27da7f59e11256345d77128f2d51611a5faccc4eb803a6aad3ba1bc87f9209ff"
+    },
+    "tower_door_open": {
+      "id": "tower_door_open",
+      "file": "assets/harmonia/source/environment/tower_door_open.svg",
+      "logicalSize": [
+        80,
+        64
+      ],
+      "pivot": [
+        40,
+        56
+      ],
+      "category": "environment",
+      "state": "open",
+      "collision": {
+        "x": 8,
+        "y": 24,
+        "w": 64,
+        "h": 32
+      },
+      "notationComposite": {
+        "center": [
+          40,
+          36
+        ],
+        "badge": [
+          32,
+          23,
+          16,
+          26
+        ],
+        "source": "existing-game-symbols"
+      },
+      "page": 2,
+      "frame": {
+        "x": 332,
+        "y": 4,
+        "w": 320,
+        "h": 256
+      },
+      "rotated": false,
+      "trimmed": false,
+      "pivotOutput": [
+        160,
+        224
+      ],
+      "sourceSha256": "aea39abebb5ab8267927d1acc4385d1ff190bbe6f2dc21a47ac90185df18fee2",
+      "pngSha256": "fdb343bef6f3d9caa5d54bc0215fa51f18c5bda62426ce2ff5ab191380e1d65e"
+    },
+    "grass_1": {
+      "id": "grass_1",
+      "file": "assets/harmonia/source/environment/grass_1.svg",
+      "logicalSize": [
+        32,
+        32
+      ],
+      "pivot": [
+        0,
+        0
+      ],
+      "category": "environment",
+      "tile": "grass",
+      "page": 2,
+      "frame": {
+        "x": 660,
+        "y": 4,
+        "w": 128,
+        "h": 128
+      },
+      "rotated": false,
+      "trimmed": false,
+      "pivotOutput": [
+        0,
+        0
+      ],
+      "sourceSha256": "6ca96de0af71d917385fe664d5bd2eacf3324543881e1dd8e463ec0b8f7d819a",
+      "pngSha256": "bbfa8598a154ed61e8a0e014d76b72f92b7eeb32c3201a4acb3f1f99f5b260b2"
+    },
+    "grass_2": {
+      "id": "grass_2",
+      "file": "assets/harmonia/source/environment/grass_2.svg",
+      "logicalSize": [
+        32,
+        32
+      ],
+      "pivot": [
+        0,
+        0
+      ],
+      "category": "environment",
+      "tile": "grass",
+      "page": 2,
+      "frame": {
+        "x": 796,
+        "y": 4,
+        "w": 128,
+        "h": 128
+      },
+      "rotated": false,
+      "trimmed": false,
+      "pivotOutput": [
+        0,
+        0
+      ],
+      "sourceSha256": "b043e36fb5b6b5c8b052097437ecd0abf019437334dde1b8f4a5284e71d203f9",
+      "pngSha256": "48fa57e4084e66b13068e74a6d114bf5138cbfee9687b4bd980deda68f8fcfa9"
+    },
+    "grass_3": {
+      "id": "grass_3",
+      "file": "assets/harmonia/source/environment/grass_3.svg",
+      "logicalSize": [
+        32,
+        32
+      ],
+      "pivot": [
+        0,
+        0
+      ],
+      "category": "environment",
+      "tile": "grass",
+      "page": 2,
+      "frame": {
+        "x": 932,
+        "y": 4,
+        "w": 128,
+        "h": 128
+      },
+      "rotated": false,
+      "trimmed": false,
+      "pivotOutput": [
+        0,
+        0
+      ],
+      "sourceSha256": "6ad0b5c16db01ee00ecb8d784bdea972239351e2f4e9e389d97aea04855918d5",
+      "pngSha256": "79f8bde053be84ef55379b9104273cf2e845bbd9479b195836eb0ed65018b0c2"
+    },
+    "path_center_1": {
+      "id": "path_center_1",
+      "file": "assets/harmonia/source/environment/path_center_1.svg",
+      "logicalSize": [
+        32,
+        32
+      ],
+      "pivot": [
+        0,
+        0
+      ],
+      "category": "environment",
+      "tile": "path-center",
+      "page": 2,
+      "frame": {
+        "x": 1068,
+        "y": 4,
+        "w": 128,
+        "h": 128
+      },
+      "rotated": false,
+      "trimmed": false,
+      "pivotOutput": [
+        0,
+        0
+      ],
+      "sourceSha256": "b862d6ab3bde630166ba884f8b17cbe32b72842bac54ac9e9f1dffed436cb666",
+      "pngSha256": "942e324fd5130ae82ca5b357165214e5ad4bc184753911b9b8a3c8755cd51f88"
+    },
+    "path_center_2": {
+      "id": "path_center_2",
+      "file": "assets/harmonia/source/environment/path_center_2.svg",
+      "logicalSize": [
+        32,
+        32
+      ],
+      "pivot": [
+        0,
+        0
+      ],
+      "category": "environment",
+      "tile": "path-center",
+      "page": 2,
+      "frame": {
+        "x": 1204,
+        "y": 4,
+        "w": 128,
+        "h": 128
+      },
+      "rotated": false,
+      "trimmed": false,
+      "pivotOutput": [
+        0,
+        0
+      ],
+      "sourceSha256": "2b200c07ebb483a041229641e97beb8bf8d1438a31db81294d8be467ebb0a0c8",
+      "pngSha256": "fe6ddf2a51249302f034286e46970b2bcac9d692288dc4947e4f3e828d307d25"
+    },
+    "path_edge_n": {
+      "id": "path_edge_n",
+      "file": "assets/harmonia/source/environment/path_edge_n.svg",
+      "logicalSize": [
+        32,
+        32
+      ],
+      "pivot": [
+        0,
+        0
+      ],
+      "category": "environment",
+      "tile": "path-edge",
+      "orientation": "n",
+      "overlay": true,
+      "page": 2,
+      "frame": {
+        "x": 1340,
+        "y": 4,
+        "w": 128,
+        "h": 128
+      },
+      "rotated": false,
+      "trimmed": false,
+      "pivotOutput": [
+        0,
+        0
+      ],
+      "sourceSha256": "7012b029a9b3f915927578481560fc1998e1c3f1559016720d1b4e77112f3592",
+      "pngSha256": "61dc4014ff137b87896ccfd35619be74b31eda26da0f8cb89d6399e2eb5d5dbb"
+    },
+    "path_edge_e": {
+      "id": "path_edge_e",
+      "file": "assets/harmonia/source/environment/path_edge_e.svg",
+      "logicalSize": [
+        32,
+        32
+      ],
+      "pivot": [
+        0,
+        0
+      ],
+      "category": "environment",
+      "tile": "path-edge",
+      "orientation": "e",
+      "overlay": true,
+      "page": 2,
+      "frame": {
+        "x": 1476,
+        "y": 4,
+        "w": 128,
+        "h": 128
+      },
+      "rotated": false,
+      "trimmed": false,
+      "pivotOutput": [
+        0,
+        0
+      ],
+      "sourceSha256": "c50d8a66872dea5155c5ae0bec3389d07ba34f660c68d8af7a7f8cdd2aafa6d0",
+      "pngSha256": "05edfd2b9912da7674518b553b0c5bc4a8331340391d160dda272c125e8fffdb"
+    },
+    "path_edge_s": {
+      "id": "path_edge_s",
+      "file": "assets/harmonia/source/environment/path_edge_s.svg",
+      "logicalSize": [
+        32,
+        32
+      ],
+      "pivot": [
+        0,
+        0
+      ],
+      "category": "environment",
+      "tile": "path-edge",
+      "orientation": "s",
+      "overlay": true,
+      "page": 2,
+      "frame": {
+        "x": 1612,
+        "y": 4,
+        "w": 128,
+        "h": 128
+      },
+      "rotated": false,
+      "trimmed": false,
+      "pivotOutput": [
+        0,
+        0
+      ],
+      "sourceSha256": "7851b5ff508a140fda4228af37b4935357600bfb41e8790f521a2d4cbbaa86d1",
+      "pngSha256": "98a7b924658b385f1130be76c1d8599ca4266aed6712bc9d2932b75d3e641d58"
+    },
+    "path_edge_w": {
+      "id": "path_edge_w",
+      "file": "assets/harmonia/source/environment/path_edge_w.svg",
+      "logicalSize": [
+        32,
+        32
+      ],
+      "pivot": [
+        0,
+        0
+      ],
+      "category": "environment",
+      "tile": "path-edge",
+      "orientation": "w",
+      "overlay": true,
+      "page": 2,
+      "frame": {
+        "x": 1748,
+        "y": 4,
+        "w": 128,
+        "h": 128
+      },
+      "rotated": false,
+      "trimmed": false,
+      "pivotOutput": [
+        0,
+        0
+      ],
+      "sourceSha256": "6acb41d4d51e8f7f06dc11e915971d232dfca20d300684111937e9dbe752d04a",
+      "pngSha256": "641ad7041e262cd89b6452d5ff494d7c4e738aa428c9bad0d1d4ee84bc05bd35"
+    },
+    "path_outer_ne": {
+      "id": "path_outer_ne",
+      "file": "assets/harmonia/source/environment/path_outer_ne.svg",
+      "logicalSize": [
+        32,
+        32
+      ],
+      "pivot": [
+        0,
+        0
+      ],
+      "category": "environment",
+      "tile": "path-outer-corner",
+      "orientation": "ne",
+      "overlay": true,
+      "page": 2,
+      "frame": {
+        "x": 1884,
+        "y": 4,
+        "w": 128,
+        "h": 128
+      },
+      "rotated": false,
+      "trimmed": false,
+      "pivotOutput": [
+        0,
+        0
+      ],
+      "sourceSha256": "60fc654f60ddd0d1f044dc1f7caf0651baed996f89c497686f9c430027883876",
+      "pngSha256": "36c3878497fd3f8e8107cadc1500078682235810f98366a488dd21dbfee6e295"
+    },
+    "path_outer_se": {
+      "id": "path_outer_se",
+      "file": "assets/harmonia/source/environment/path_outer_se.svg",
+      "logicalSize": [
+        32,
+        32
+      ],
+      "pivot": [
+        0,
+        0
+      ],
+      "category": "environment",
+      "tile": "path-outer-corner",
+      "orientation": "se",
+      "overlay": true,
+      "page": 2,
+      "frame": {
+        "x": 4,
+        "y": 268,
+        "w": 128,
+        "h": 128
+      },
+      "rotated": false,
+      "trimmed": false,
+      "pivotOutput": [
+        0,
+        0
+      ],
+      "sourceSha256": "fff2dc42306ad0a863407e4b1da91242da146033745bf3d947351ce283f27d79",
+      "pngSha256": "8c7220a682de82c82f51d0731215ddce4701a078eea37055d4c2b652beef4fe4"
+    },
+    "path_outer_sw": {
+      "id": "path_outer_sw",
+      "file": "assets/harmonia/source/environment/path_outer_sw.svg",
+      "logicalSize": [
+        32,
+        32
+      ],
+      "pivot": [
+        0,
+        0
+      ],
+      "category": "environment",
+      "tile": "path-outer-corner",
+      "orientation": "sw",
+      "overlay": true,
+      "page": 2,
+      "frame": {
+        "x": 140,
+        "y": 268,
+        "w": 128,
+        "h": 128
+      },
+      "rotated": false,
+      "trimmed": false,
+      "pivotOutput": [
+        0,
+        0
+      ],
+      "sourceSha256": "5c12b48df59dc5ff0faa35e3359b01a7458a06ef9f9e7189a7f7ae5ec9819263",
+      "pngSha256": "89c358f0264ca65101cf5274909349079e0d5c3e0ed6910c32100e5b70f39939"
+    },
+    "path_outer_nw": {
+      "id": "path_outer_nw",
+      "file": "assets/harmonia/source/environment/path_outer_nw.svg",
+      "logicalSize": [
+        32,
+        32
+      ],
+      "pivot": [
+        0,
+        0
+      ],
+      "category": "environment",
+      "tile": "path-outer-corner",
+      "orientation": "nw",
+      "overlay": true,
+      "page": 2,
+      "frame": {
+        "x": 276,
+        "y": 268,
+        "w": 128,
+        "h": 128
+      },
+      "rotated": false,
+      "trimmed": false,
+      "pivotOutput": [
+        0,
+        0
+      ],
+      "sourceSha256": "d3f82ae27a7000bd1d5761d3959eb66e2ebd028e47555e7fc80ee8aae092ea37",
+      "pngSha256": "e6b61dae83928e273b829f0b2fa52c4d6179f45a0ca8509e3c262401d5e2a3e8"
+    },
+    "path_inner_ne": {
+      "id": "path_inner_ne",
+      "file": "assets/harmonia/source/environment/path_inner_ne.svg",
+      "logicalSize": [
+        32,
+        32
+      ],
+      "pivot": [
+        0,
+        0
+      ],
+      "category": "environment",
+      "tile": "path-inner-corner",
+      "orientation": "ne",
+      "overlay": true,
+      "page": 2,
+      "frame": {
+        "x": 412,
+        "y": 268,
+        "w": 128,
+        "h": 128
+      },
+      "rotated": false,
+      "trimmed": false,
+      "pivotOutput": [
+        0,
+        0
+      ],
+      "sourceSha256": "68d5abe01bfd9b86592d30cfd32806cebf96322e17f2bc893ac341853dfee20a",
+      "pngSha256": "bbf4d7eeac747df9275498bad490caf3ebc5d4326ec23b471ca22e90dc0de11e"
+    },
+    "path_inner_se": {
+      "id": "path_inner_se",
+      "file": "assets/harmonia/source/environment/path_inner_se.svg",
+      "logicalSize": [
+        32,
+        32
+      ],
+      "pivot": [
+        0,
+        0
+      ],
+      "category": "environment",
+      "tile": "path-inner-corner",
+      "orientation": "se",
+      "overlay": true,
+      "page": 2,
+      "frame": {
+        "x": 548,
+        "y": 268,
+        "w": 128,
+        "h": 128
+      },
+      "rotated": false,
+      "trimmed": false,
+      "pivotOutput": [
+        0,
+        0
+      ],
+      "sourceSha256": "8c2460994b97371d7fb29d450994d5fc06e829ca3c8ad7f3e798e8d41df1817a",
+      "pngSha256": "18c5034f3d1001292c4b324948c3d1ca106a26e0920ce6e6b0051be36eb2a653"
+    },
+    "path_inner_sw": {
+      "id": "path_inner_sw",
+      "file": "assets/harmonia/source/environment/path_inner_sw.svg",
+      "logicalSize": [
+        32,
+        32
+      ],
+      "pivot": [
+        0,
+        0
+      ],
+      "category": "environment",
+      "tile": "path-inner-corner",
+      "orientation": "sw",
+      "overlay": true,
+      "page": 2,
+      "frame": {
+        "x": 684,
+        "y": 268,
+        "w": 128,
+        "h": 128
+      },
+      "rotated": false,
+      "trimmed": false,
+      "pivotOutput": [
+        0,
+        0
+      ],
+      "sourceSha256": "34b22140a43626c57c81a7490645943e8737a6f03fb3083e32e836d2472d20e2",
+      "pngSha256": "bf4f7816239097fdf125441caa507873d40422859618fc6b848c47794162180c"
+    },
+    "path_inner_nw": {
+      "id": "path_inner_nw",
+      "file": "assets/harmonia/source/environment/path_inner_nw.svg",
+      "logicalSize": [
+        32,
+        32
+      ],
+      "pivot": [
+        0,
+        0
+      ],
+      "category": "environment",
+      "tile": "path-inner-corner",
+      "orientation": "nw",
+      "overlay": true,
+      "page": 2,
+      "frame": {
+        "x": 820,
+        "y": 268,
+        "w": 128,
+        "h": 128
+      },
+      "rotated": false,
+      "trimmed": false,
+      "pivotOutput": [
+        0,
+        0
+      ],
+      "sourceSha256": "b2130f6738cac8a243aca0276b9912cbf5043fba44fd6cc206d7d28d28885464",
+      "pngSha256": "b5f03ae24ab1898fb24a5667c88210a5d8abdacd9350e7dfea2d39e2d6401a4f"
+    },
+    "stone_1": {
+      "id": "stone_1",
+      "file": "assets/harmonia/source/environment/stone_1.svg",
+      "logicalSize": [
+        32,
+        32
+      ],
+      "pivot": [
+        0,
+        0
+      ],
+      "category": "environment",
+      "tile": "stone",
+      "page": 2,
+      "frame": {
+        "x": 956,
+        "y": 268,
+        "w": 128,
+        "h": 128
+      },
+      "rotated": false,
+      "trimmed": false,
+      "pivotOutput": [
+        0,
+        0
+      ],
+      "sourceSha256": "1b1fa8da2c3ff06a16cc2b6eaef8f5aac2bbfeb7ef8b11cc5ee1730fa8e9b59b",
+      "pngSha256": "7cb9d4cad528bafbeedc78f8dd18b1090ca8fce7a0a16579b07a9f528e2cea6c"
+    },
+    "stone_2": {
+      "id": "stone_2",
+      "file": "assets/harmonia/source/environment/stone_2.svg",
+      "logicalSize": [
+        32,
+        32
+      ],
+      "pivot": [
+        0,
+        0
+      ],
+      "category": "environment",
+      "tile": "stone",
+      "page": 2,
+      "frame": {
+        "x": 1092,
+        "y": 268,
+        "w": 128,
+        "h": 128
+      },
+      "rotated": false,
+      "trimmed": false,
+      "pivotOutput": [
+        0,
+        0
+      ],
+      "sourceSha256": "b26eec90e32775154917d6179810eb44d58c9a42f18ecd5e4719f4efe321b474",
+      "pngSha256": "dda72027447cfc3a88fcd513ca5733aa52279544ebc09129bd18936e751f4e41"
+    },
+    "tree_1": {
+      "id": "tree_1",
+      "file": "assets/harmonia/source/environment/tree_1.svg",
+      "logicalSize": [
+        96,
+        112
+      ],
+      "pivot": [
+        48,
+        100
+      ],
+      "category": "environment",
+      "zSort": "foot",
+      "collision": "reuse-existing-boundary",
+      "page": 2,
+      "frame": {
+        "x": 1228,
+        "y": 268,
+        "w": 384,
+        "h": 448
+      },
+      "rotated": false,
+      "trimmed": false,
+      "pivotOutput": [
+        192,
+        400
+      ],
+      "sourceSha256": "84a91eeef69a4829c31dea4aa29aeb40e932b3a28d7f13ac8e3d1142a6d66eee",
+      "pngSha256": "165e39d510b7b3bf315dd4b4c672a601ccf59ef363fae56741cdd278ba550cc0"
+    },
+    "tree_2": {
+      "id": "tree_2",
+      "file": "assets/harmonia/source/environment/tree_2.svg",
+      "logicalSize": [
+        96,
+        112
+      ],
+      "pivot": [
+        48,
+        100
+      ],
+      "category": "environment",
+      "zSort": "foot",
+      "collision": "reuse-existing-boundary",
+      "page": 2,
+      "frame": {
+        "x": 1620,
+        "y": 268,
+        "w": 384,
+        "h": 448
+      },
+      "rotated": false,
+      "trimmed": false,
+      "pivotOutput": [
+        192,
+        400
+      ],
+      "sourceSha256": "7882c9f6518b00e7c5df7e106916100788a5fbc9f3f36d7ae800130892899414",
+      "pngSha256": "78ae773cfffdd8d93d0bf622ca90270c4f05f0dc9a3de094c63056a940e54014"
+    },
+    "tree_3": {
+      "id": "tree_3",
+      "file": "assets/harmonia/source/environment/tree_3.svg",
+      "logicalSize": [
+        96,
+        112
+      ],
+      "pivot": [
+        48,
+        100
+      ],
+      "category": "environment",
+      "zSort": "foot",
+      "collision": "reuse-existing-boundary",
+      "page": 2,
+      "frame": {
+        "x": 4,
+        "y": 724,
+        "w": 384,
+        "h": 448
+      },
+      "rotated": false,
+      "trimmed": false,
+      "pivotOutput": [
+        192,
+        400
+      ],
+      "sourceSha256": "0c5609cbbbbf936ce93babebaee045498ce2fc57ec980902399878368eccb990",
+      "pngSha256": "90e7ff8457a8e8e116a73903ad7974958539f5efd1482bba0c8ca19735ba0bdd"
+    },
+    "bush_1": {
+      "id": "bush_1",
+      "file": "assets/harmonia/source/environment/bush_1.svg",
+      "logicalSize": [
+        64,
+        48
+      ],
+      "pivot": [
+        32,
+        40
+      ],
+      "category": "environment",
+      "zSort": "foot",
+      "collision": false,
+      "page": 2,
+      "frame": {
+        "x": 396,
+        "y": 724,
+        "w": 256,
+        "h": 192
+      },
+      "rotated": false,
+      "trimmed": false,
+      "pivotOutput": [
+        128,
+        160
+      ],
+      "sourceSha256": "af7fdc7db446c8d3c54eecdf7be38557e66ba793779ce5089b96413c4517d28c",
+      "pngSha256": "6f9f7ba5af74645971a57d38bf676052369ef7f86b5505942cfe109e2a33387a"
+    },
+    "bush_2": {
+      "id": "bush_2",
+      "file": "assets/harmonia/source/environment/bush_2.svg",
+      "logicalSize": [
+        64,
+        48
+      ],
+      "pivot": [
+        32,
+        40
+      ],
+      "category": "environment",
+      "zSort": "foot",
+      "collision": false,
+      "page": 2,
+      "frame": {
+        "x": 660,
+        "y": 724,
+        "w": 256,
+        "h": 192
+      },
+      "rotated": false,
+      "trimmed": false,
+      "pivotOutput": [
+        128,
+        160
+      ],
+      "sourceSha256": "6a8860fc66576c9e74ba3d03b0786ba07b7fd5efef0f8ee622bed9e41a1fc067",
+      "pngSha256": "975f37e0a99a8082d066ef87244a82fbf450f77a27f5b2ead88b25933dce78d6"
+    },
+    "bush_3": {
+      "id": "bush_3",
+      "file": "assets/harmonia/source/environment/bush_3.svg",
+      "logicalSize": [
+        64,
+        48
+      ],
+      "pivot": [
+        32,
+        40
+      ],
+      "category": "environment",
+      "zSort": "foot",
+      "collision": false,
+      "page": 2,
+      "frame": {
+        "x": 924,
+        "y": 724,
+        "w": 256,
+        "h": 192
+      },
+      "rotated": false,
+      "trimmed": false,
+      "pivotOutput": [
+        128,
+        160
+      ],
+      "sourceSha256": "9bb8cdf73ebb1ecaedf70e339d7dbb123a6e9a3972051f0021c6e7671a743cfc",
+      "pngSha256": "456f542d2b6a7308c9eca3a23ac67316d486383b954488e42ec418aacd3e957c"
+    },
+    "cluster_1": {
+      "id": "cluster_1",
+      "file": "assets/harmonia/source/environment/cluster_1.svg",
+      "logicalSize": [
+        32,
+        32
+      ],
+      "pivot": [
+        16,
+        28
+      ],
+      "category": "environment",
+      "zSort": "ground",
+      "collision": false,
+      "page": 2,
+      "frame": {
+        "x": 1188,
+        "y": 724,
+        "w": 128,
+        "h": 128
+      },
+      "rotated": false,
+      "trimmed": false,
+      "pivotOutput": [
+        64,
+        112
+      ],
+      "sourceSha256": "75704c33e237605497116b0cea2735a5dfaa22f6980ab3c16677e871caa612fb",
+      "pngSha256": "55198593cfb634236b290f3c88e27bb4a9b344315e595a85d4abc4d7729e765a"
+    },
+    "cluster_2": {
+      "id": "cluster_2",
+      "file": "assets/harmonia/source/environment/cluster_2.svg",
+      "logicalSize": [
+        32,
+        32
+      ],
+      "pivot": [
+        16,
+        28
+      ],
+      "category": "environment",
+      "zSort": "ground",
+      "collision": false,
+      "page": 2,
+      "frame": {
+        "x": 1324,
+        "y": 724,
+        "w": 128,
+        "h": 128
+      },
+      "rotated": false,
+      "trimmed": false,
+      "pivotOutput": [
+        64,
+        112
+      ],
+      "sourceSha256": "302035fcc396aa903236dfa93eaef03be8c711c113c170331b53b2dd4239c119",
+      "pngSha256": "88560f75821ca874264fcca10f3fe66965cf3cff3a6314905e2bd9d2598b12ba"
+    },
+    "cluster_3": {
+      "id": "cluster_3",
+      "file": "assets/harmonia/source/environment/cluster_3.svg",
+      "logicalSize": [
+        32,
+        32
+      ],
+      "pivot": [
+        16,
+        28
+      ],
+      "category": "environment",
+      "zSort": "ground",
+      "collision": false,
+      "page": 2,
+      "frame": {
+        "x": 1460,
+        "y": 724,
+        "w": 128,
+        "h": 128
+      },
+      "rotated": false,
+      "trimmed": false,
+      "pivotOutput": [
+        64,
+        112
+      ],
+      "sourceSha256": "429c1d58c5e5f581dbb987b7aa6f8d136b8916c676c67f9a403bfcaab29eb95e",
+      "pngSha256": "0d0eedd9d2d68f51df9e6b555d314049e45c9d7e0f744d373c68e2d80ed968b8"
+    },
+    "cluster_4": {
+      "id": "cluster_4",
+      "file": "assets/harmonia/source/environment/cluster_4.svg",
+      "logicalSize": [
+        32,
+        32
+      ],
+      "pivot": [
+        16,
+        28
+      ],
+      "category": "environment",
+      "zSort": "ground",
+      "collision": false,
+      "page": 2,
+      "frame": {
+        "x": 1596,
+        "y": 724,
+        "w": 128,
+        "h": 128
+      },
+      "rotated": false,
+      "trimmed": false,
+      "pivotOutput": [
+        64,
+        112
+      ],
+      "sourceSha256": "8960fa6b9fbb4c4e8f8aa018857ab8bdb41b8c4103c4e3d13ebc1c8a9b2917bb",
+      "pngSha256": "ce5e8811b7fb9a425ef0cae08b589eadb9de08ddc6b8750ebeffe57274934e01"
+    },
+    "props_lantern": {
+      "id": "props_lantern",
+      "file": "assets/harmonia/source/environment/props_lantern.svg",
+      "logicalSize": [
+        48,
+        64
+      ],
+      "pivot": [
+        24,
+        56
+      ],
+      "category": "environment",
+      "zSort": "foot",
+      "page": 2,
+      "frame": {
+        "x": 1732,
+        "y": 724,
+        "w": 192,
+        "h": 256
+      },
+      "rotated": false,
+      "trimmed": false,
+      "pivotOutput": [
+        96,
+        224
+      ],
+      "sourceSha256": "6f5ff6a15486593c7d9144a6c1efc77c2ec03c24b51b941cf0e3d9ef81329cde",
+      "pngSha256": "28b69e1d63131574c7bf7f2abafb46c09844bc0eb279175adffe1221af595714"
+    },
+    "props_sign": {
+      "id": "props_sign",
+      "file": "assets/harmonia/source/environment/props_sign.svg",
+      "logicalSize": [
+        48,
+        48
+      ],
+      "pivot": [
+        24,
+        42
+      ],
+      "category": "environment",
+      "zSort": "foot",
+      "symbol": "direction-arrow",
+      "page": 2,
+      "frame": {
+        "x": 4,
+        "y": 1180,
+        "w": 192,
+        "h": 192
+      },
+      "rotated": false,
+      "trimmed": false,
+      "pivotOutput": [
+        96,
+        168
+      ],
+      "sourceSha256": "b25e295a85d0608835d440d15e13ed82dc083a5058a7af431ba753587d302d7c",
+      "pngSha256": "13dc436fcc79bf8424e546cbecf75888a9f1a9d3b930470ecb17fa9346c288a3"
+    },
+    "props_well": {
+      "id": "props_well",
+      "file": "assets/harmonia/source/environment/props_well.svg",
+      "logicalSize": [
+        96,
+        96
+      ],
+      "pivot": [
+        48,
+        84
+      ],
+      "category": "environment",
+      "zSort": "foot",
+      "page": 2,
+      "frame": {
+        "x": 204,
+        "y": 1180,
+        "w": 384,
+        "h": 384
+      },
+      "rotated": false,
+      "trimmed": false,
+      "pivotOutput": [
+        192,
+        336
+      ],
+      "sourceSha256": "0e54bd768b9cfaf7c3c3aefa746bed2f0219b8016e0f29423a564674d896f943",
+      "pngSha256": "760594ac9e41932bfb4e8f579ad3b9f2857b8e734adb5cc56248a167f59494f1"
+    },
+    "ui_move": {
+      "id": "ui_move",
+      "file": "assets/harmonia/source/ui/ui_move.svg",
+      "category": "ui",
+      "logicalSize": [
+        24,
+        24
+      ],
+      "pivot": [
+        12,
+        12
+      ],
+      "page": 2,
+      "frame": {
+        "x": 596,
+        "y": 1180,
+        "w": 96,
+        "h": 96
+      },
+      "rotated": false,
+      "trimmed": false,
+      "pivotOutput": [
+        48,
+        48
+      ],
+      "sourceSha256": "181224ecbd2bb324159684c61aa476854122455127db8467f39e7c55847b3d6a",
+      "pngSha256": "87155b71dd9ca936d214dc3c9d064377f61373896c2b9be0e0d087ff61549c38"
+    },
+    "ui_symbol_bag": {
+      "id": "ui_symbol_bag",
+      "file": "assets/harmonia/source/ui/ui_symbol_bag.svg",
+      "category": "ui",
+      "logicalSize": [
+        24,
+        24
+      ],
+      "pivot": [
+        12,
+        12
+      ],
+      "page": 2,
+      "frame": {
+        "x": 700,
+        "y": 1180,
+        "w": 96,
+        "h": 96
+      },
+      "rotated": false,
+      "trimmed": false,
+      "pivotOutput": [
+        48,
+        48
+      ],
+      "sourceSha256": "1ec42a49ae1442dfcd67d3d7b61a2655d315a62ee91637cde37d70a42f12a91c",
+      "pngSha256": "4c7f875f1d65c3a6e497228a6c0ee7754d82c0eae7097fa0f2eb892fed3db267"
+    },
+    "ui_interact": {
+      "id": "ui_interact",
+      "file": "assets/harmonia/source/ui/ui_interact.svg",
+      "category": "ui",
+      "logicalSize": [
+        24,
+        24
+      ],
+      "pivot": [
+        12,
+        12
+      ],
+      "page": 2,
+      "frame": {
+        "x": 804,
+        "y": 1180,
+        "w": 96,
+        "h": 96
+      },
+      "rotated": false,
+      "trimmed": false,
+      "pivotOutput": [
+        48,
+        48
+      ],
+      "sourceSha256": "ae5c08a6ee15f0d6ddfd5feaa40d609897c96a4ed6bb321e59f861592fd920ad",
+      "pngSha256": "0592ed5f04427df81eca34310a36cf291acf1c2fd90bb3bae0463cd0621bc1d2"
+    },
+    "ui_sound": {
+      "id": "ui_sound",
+      "file": "assets/harmonia/source/ui/ui_sound.svg",
+      "category": "ui",
+      "logicalSize": [
+        24,
+        24
+      ],
+      "pivot": [
+        12,
+        12
+      ],
+      "page": 2,
+      "frame": {
+        "x": 908,
+        "y": 1180,
+        "w": 96,
+        "h": 96
+      },
+      "rotated": false,
+      "trimmed": false,
+      "pivotOutput": [
+        48,
+        48
+      ],
+      "sourceSha256": "85a0ee24edd521ebc5283d1e216cf5f512714b9829782d848db91bf642c6233b",
+      "pngSha256": "702a7dcb8e34bf6279030330c904d7efcc63c1b8648b43b5b688de364448be86"
+    },
+    "ui_sound_off": {
+      "id": "ui_sound_off",
+      "file": "assets/harmonia/source/ui/ui_sound_off.svg",
+      "category": "ui",
+      "logicalSize": [
+        24,
+        24
+      ],
+      "pivot": [
+        12,
+        12
+      ],
+      "page": 2,
+      "frame": {
+        "x": 1012,
+        "y": 1180,
+        "w": 96,
+        "h": 96
+      },
+      "rotated": false,
+      "trimmed": false,
+      "pivotOutput": [
+        48,
+        48
+      ],
+      "sourceSha256": "a040d6951c3515ee902c455269169e2355f1c3ccdc2d06ebe309fa1355d3ae70",
+      "pngSha256": "482a11185a7be2f3636611e0316ebfed914a63291ab5c1d17e6244f98b2c8746"
+    },
+    "ui_pause": {
+      "id": "ui_pause",
+      "file": "assets/harmonia/source/ui/ui_pause.svg",
+      "category": "ui",
+      "logicalSize": [
+        24,
+        24
+      ],
+      "pivot": [
+        12,
+        12
+      ],
+      "page": 2,
+      "frame": {
+        "x": 1116,
+        "y": 1180,
+        "w": 96,
+        "h": 96
+      },
+      "rotated": false,
+      "trimmed": false,
+      "pivotOutput": [
+        48,
+        48
+      ],
+      "sourceSha256": "9667fee684a59a9191549fb8e0b7696ff286dfd4065e51cf6758e02756cf6fdc",
+      "pngSha256": "b7401360c5e624866fc4ac4c02397313c5f65d4531f69cb51faa9b46d617ab41"
+    },
+    "ui_close": {
+      "id": "ui_close",
+      "file": "assets/harmonia/source/ui/ui_close.svg",
+      "category": "ui",
+      "logicalSize": [
+        24,
+        24
+      ],
+      "pivot": [
+        12,
+        12
+      ],
+      "page": 2,
+      "frame": {
+        "x": 1220,
+        "y": 1180,
+        "w": 96,
+        "h": 96
+      },
+      "rotated": false,
+      "trimmed": false,
+      "pivotOutput": [
+        48,
+        48
+      ],
+      "sourceSha256": "416ff0aa4abc1f88f599b1b3ca6930d13f5f067c3eb8977ccd9ad700a2ab65df",
+      "pngSha256": "8dc96f876c73b9616329471f53db90c9a65e92714838086509831cee95aa1882"
+    },
+    "ui_note": {
+      "id": "ui_note",
+      "file": "assets/harmonia/source/ui/ui_note.svg",
+      "category": "ui",
+      "logicalSize": [
+        24,
+        24
+      ],
+      "pivot": [
+        12,
+        12
+      ],
+      "page": 2,
+      "frame": {
+        "x": 1324,
+        "y": 1180,
+        "w": 96,
+        "h": 96
+      },
+      "rotated": false,
+      "trimmed": false,
+      "pivotOutput": [
+        48,
+        48
+      ],
+      "sourceSha256": "24b6de7783bc3d49772827c50a6357242389d361b6f4c9ecb2e066a0d9bea7c5",
+      "pngSha256": "d2d4e182e970396a925ab6948477828532065a44e7ede2101acd060ae7a18154"
+    },
+    "fx_attach_glow_0": {
+      "id": "fx_attach_glow_0",
+      "file": "assets/harmonia/source/effects/fx_attach_glow_0.svg",
+      "category": "effects",
+      "logicalSize": [
+        64,
+        64
+      ],
+      "pivot": [
+        32,
+        32
+      ],
+      "animation": "attach_glow",
+      "frame": {
+        "x": 1428,
+        "y": 1180,
+        "w": 256,
+        "h": 256
+      },
+      "fps": 8,
+      "frameIndex": 0,
+      "page": 2,
+      "rotated": false,
+      "trimmed": false,
+      "pivotOutput": [
+        128,
+        128
+      ],
+      "sourceSha256": "cc915232de42ced1b9dff6e4274d6b9e9e975f02be0ca1af2b3080cc98096c01",
+      "pngSha256": "fc05ff543a84bd3148dad45a42b35ad3af3089219d81b8f76b33cbadbbc13cea"
+    },
+    "fx_attach_glow_1": {
+      "id": "fx_attach_glow_1",
+      "file": "assets/harmonia/source/effects/fx_attach_glow_1.svg",
+      "category": "effects",
+      "logicalSize": [
+        64,
+        64
+      ],
+      "pivot": [
+        32,
+        32
+      ],
+      "animation": "attach_glow",
+      "frame": {
+        "x": 1692,
+        "y": 1180,
+        "w": 256,
+        "h": 256
+      },
+      "fps": 8,
+      "frameIndex": 1,
+      "page": 2,
+      "rotated": false,
+      "trimmed": false,
+      "pivotOutput": [
+        128,
+        128
+      ],
+      "sourceSha256": "be4b4fe6ce9c87be7d806c70c1f51a581ca58a43882b84968ca9c9cacc862812",
+      "pngSha256": "59b723f616c4684907d8745328b8ffdeef1b754ba85d6d995abc092b61fa092d"
+    },
+    "fx_attach_glow_2": {
+      "id": "fx_attach_glow_2",
+      "file": "assets/harmonia/source/effects/fx_attach_glow_2.svg",
+      "category": "effects",
+      "logicalSize": [
+        64,
+        64
+      ],
+      "pivot": [
+        32,
+        32
+      ],
+      "animation": "attach_glow",
+      "frame": {
+        "x": 4,
+        "y": 1572,
+        "w": 256,
+        "h": 256
+      },
+      "fps": 8,
+      "frameIndex": 2,
+      "page": 2,
+      "rotated": false,
+      "trimmed": false,
+      "pivotOutput": [
+        128,
+        128
+      ],
+      "sourceSha256": "cb49a31e1a7a644b953ca77b1c28a6b24f08d5a57db3b0f731bcab50814de694",
+      "pngSha256": "4307569e357dfcd018b625101f339de32e0ab16204fc9551579a0d9e8b706535"
+    },
+    "fx_attach_glow_3": {
+      "id": "fx_attach_glow_3",
+      "file": "assets/harmonia/source/effects/fx_attach_glow_3.svg",
+      "category": "effects",
+      "logicalSize": [
+        64,
+        64
+      ],
+      "pivot": [
+        32,
+        32
+      ],
+      "animation": "attach_glow",
+      "frame": {
+        "x": 268,
+        "y": 1572,
+        "w": 256,
+        "h": 256
+      },
+      "fps": 8,
+      "frameIndex": 3,
+      "page": 2,
+      "rotated": false,
+      "trimmed": false,
+      "pivotOutput": [
+        128,
+        128
+      ],
+      "sourceSha256": "b0bd3f87546e4406445fb65caef128f3661aa6716a5aee9515de11c088cdf192",
+      "pngSha256": "5a022ef4b6646880dde5357b869b984020a8a4892a04cd3115e200ccca7beec6"
+    },
+    "fx_attach_glow_4": {
+      "id": "fx_attach_glow_4",
+      "file": "assets/harmonia/source/effects/fx_attach_glow_4.svg",
+      "category": "effects",
+      "logicalSize": [
+        64,
+        64
+      ],
+      "pivot": [
+        32,
+        32
+      ],
+      "animation": "attach_glow",
+      "frame": {
+        "x": 532,
+        "y": 1572,
+        "w": 256,
+        "h": 256
+      },
+      "fps": 8,
+      "frameIndex": 4,
+      "page": 2,
+      "rotated": false,
+      "trimmed": false,
+      "pivotOutput": [
+        128,
+        128
+      ],
+      "sourceSha256": "539a871ff2a701e1fcea791b7a306de31aaa1de0ff5afc07dd2eadd8b9c8fab9",
+      "pngSha256": "a5672b9ec92ef1ac53fa1a350d3ad77f560857defa4ea640ffef3c440f48106c"
+    },
+    "fx_door_response_0": {
+      "id": "fx_door_response_0",
+      "file": "assets/harmonia/source/effects/fx_door_response_0.svg",
+      "category": "effects",
+      "logicalSize": [
+        64,
+        64
+      ],
+      "pivot": [
+        32,
+        32
+      ],
+      "animation": "door_response",
+      "frame": {
+        "x": 796,
+        "y": 1572,
+        "w": 256,
+        "h": 256
+      },
+      "fps": 8,
+      "frameIndex": 0,
+      "page": 2,
+      "rotated": false,
+      "trimmed": false,
+      "pivotOutput": [
+        128,
+        128
+      ],
+      "sourceSha256": "f3cf8829355585bf1464f45b5320a8154ffa533138468e21d12e4a4e7645ec68",
+      "pngSha256": "5bed9bc13291b58fbd4fc706f74abe2330a69f364b42bed132ecc884c9da9116"
+    },
+    "fx_door_response_1": {
+      "id": "fx_door_response_1",
+      "file": "assets/harmonia/source/effects/fx_door_response_1.svg",
+      "category": "effects",
+      "logicalSize": [
+        64,
+        64
+      ],
+      "pivot": [
+        32,
+        32
+      ],
+      "animation": "door_response",
+      "frame": {
+        "x": 1060,
+        "y": 1572,
+        "w": 256,
+        "h": 256
+      },
+      "fps": 8,
+      "frameIndex": 1,
+      "page": 2,
+      "rotated": false,
+      "trimmed": false,
+      "pivotOutput": [
+        128,
+        128
+      ],
+      "sourceSha256": "fae87091b52521078f70946f3cd9309982e1888ca270f023610cc3e3b4f37a3e",
+      "pngSha256": "f4b84f0db5589e825a3c3663cd371eac9176bc3accd6ea80f6f0a360b92555e3"
+    },
+    "fx_door_response_2": {
+      "id": "fx_door_response_2",
+      "file": "assets/harmonia/source/effects/fx_door_response_2.svg",
+      "category": "effects",
+      "logicalSize": [
+        64,
+        64
+      ],
+      "pivot": [
+        32,
+        32
+      ],
+      "animation": "door_response",
+      "frame": {
+        "x": 1324,
+        "y": 1572,
+        "w": 256,
+        "h": 256
+      },
+      "fps": 8,
+      "frameIndex": 2,
+      "page": 2,
+      "rotated": false,
+      "trimmed": false,
+      "pivotOutput": [
+        128,
+        128
+      ],
+      "sourceSha256": "4e2a60b12793c85f2f1f8e01de4269f2b0f5bd0527f72e8a40eec7fadbda325d",
+      "pngSha256": "3f54c4b7d600ceba648d3b2f9bf1682760c5d23e7f708c5c42d8126160dde861"
+    },
+    "fx_door_response_3": {
+      "id": "fx_door_response_3",
+      "file": "assets/harmonia/source/effects/fx_door_response_3.svg",
+      "category": "effects",
+      "logicalSize": [
+        64,
+        64
+      ],
+      "pivot": [
+        32,
+        32
+      ],
+      "animation": "door_response",
+      "frame": {
+        "x": 1588,
+        "y": 1572,
+        "w": 256,
+        "h": 256
+      },
+      "fps": 8,
+      "frameIndex": 3,
+      "page": 2,
+      "rotated": false,
+      "trimmed": false,
+      "pivotOutput": [
+        128,
+        128
+      ],
+      "sourceSha256": "7c13309293b18304f3eb5fef4ea24b7b89e5ada3ee2ae3cbaa63b8a56dedb598",
+      "pngSha256": "b38500328f7a4c6f8fac32dbf9f6a28f634aa500870b31794f6e02b5a442f513"
+    },
+    "fx_door_response_4": {
+      "id": "fx_door_response_4",
+      "file": "assets/harmonia/source/effects/fx_door_response_4.svg",
+      "category": "effects",
+      "logicalSize": [
+        64,
+        64
+      ],
+      "pivot": [
+        32,
+        32
+      ],
+      "animation": "door_response",
+      "frame": {
+        "x": 4,
+        "y": 4,
+        "w": 256,
+        "h": 256
+      },
+      "fps": 8,
+      "frameIndex": 4,
+      "page": 3,
+      "rotated": false,
+      "trimmed": false,
+      "pivotOutput": [
+        128,
+        128
+      ],
+      "sourceSha256": "c4f79b7efdade7e5f9d0ccceb83301e7016bec96ead0ce096aedfbf35f096f3f",
+      "pngSha256": "b5ae2cb70281272f7f1f9494280775f9827e78a80070d724d645952d543a351e"
+    },
+    "fx_foot_dust_0": {
+      "id": "fx_foot_dust_0",
+      "file": "assets/harmonia/source/effects/fx_foot_dust_0.svg",
+      "category": "effects",
+      "logicalSize": [
+        64,
+        64
+      ],
+      "pivot": [
+        32,
+        32
+      ],
+      "animation": "foot_dust",
+      "frame": {
+        "x": 268,
+        "y": 4,
+        "w": 256,
+        "h": 256
+      },
+      "fps": 8,
+      "frameIndex": 0,
+      "page": 3,
+      "rotated": false,
+      "trimmed": false,
+      "pivotOutput": [
+        128,
+        128
+      ],
+      "sourceSha256": "cfa2d8b35d0eff1d50ac90d8671b7ccc5079a5ca41c3875b71fcef5fea5df07e",
+      "pngSha256": "4174d3df9efec032d6a2c4fb30d6cfee0b0a21d05744b82b76c14bed8f03d1b9"
+    },
+    "fx_foot_dust_1": {
+      "id": "fx_foot_dust_1",
+      "file": "assets/harmonia/source/effects/fx_foot_dust_1.svg",
+      "category": "effects",
+      "logicalSize": [
+        64,
+        64
+      ],
+      "pivot": [
+        32,
+        32
+      ],
+      "animation": "foot_dust",
+      "frame": {
+        "x": 532,
+        "y": 4,
+        "w": 256,
+        "h": 256
+      },
+      "fps": 8,
+      "frameIndex": 1,
+      "page": 3,
+      "rotated": false,
+      "trimmed": false,
+      "pivotOutput": [
+        128,
+        128
+      ],
+      "sourceSha256": "193b5d3a911516e4bc45386909736478a8cf9630c99ecb1b0fc9165ded72a4d9",
+      "pngSha256": "3a2afcf412d576ec2a5ae820769419fbff342f8b7f6979fec38a627318357c03"
+    },
+    "fx_foot_dust_2": {
+      "id": "fx_foot_dust_2",
+      "file": "assets/harmonia/source/effects/fx_foot_dust_2.svg",
+      "category": "effects",
+      "logicalSize": [
+        64,
+        64
+      ],
+      "pivot": [
+        32,
+        32
+      ],
+      "animation": "foot_dust",
+      "frame": {
+        "x": 796,
+        "y": 4,
+        "w": 256,
+        "h": 256
+      },
+      "fps": 8,
+      "frameIndex": 2,
+      "page": 3,
+      "rotated": false,
+      "trimmed": false,
+      "pivotOutput": [
+        128,
+        128
+      ],
+      "sourceSha256": "30091295978af647a4e14e6814a2a2d00b2c1ccb0e3c8f743809037dbaf27d6d",
+      "pngSha256": "056e86e313a8d098446b2114e4aaa76953d973296f73a19a12402c57f69ff1b5"
+    },
+    "fx_foot_dust_3": {
+      "id": "fx_foot_dust_3",
+      "file": "assets/harmonia/source/effects/fx_foot_dust_3.svg",
+      "category": "effects",
+      "logicalSize": [
+        64,
+        64
+      ],
+      "pivot": [
+        32,
+        32
+      ],
+      "animation": "foot_dust",
+      "frame": {
+        "x": 1060,
+        "y": 4,
+        "w": 256,
+        "h": 256
+      },
+      "fps": 8,
+      "frameIndex": 3,
+      "page": 3,
+      "rotated": false,
+      "trimmed": false,
+      "pivotOutput": [
+        128,
+        128
+      ],
+      "sourceSha256": "dc7cf2db2876f29dccd9871197c8632ee847e2d97e9da9a5acbf2a1c8d473ef9",
+      "pngSha256": "3d76793c8bc520aa70257baec5f2cb5214d407eb78c5b464b05d2a9618e244c4"
+    },
+    "fx_foot_dust_4": {
+      "id": "fx_foot_dust_4",
+      "file": "assets/harmonia/source/effects/fx_foot_dust_4.svg",
+      "category": "effects",
+      "logicalSize": [
+        64,
+        64
+      ],
+      "pivot": [
+        32,
+        32
+      ],
+      "animation": "foot_dust",
+      "frame": {
+        "x": 1324,
+        "y": 4,
+        "w": 256,
+        "h": 256
+      },
+      "fps": 8,
+      "frameIndex": 4,
+      "page": 3,
+      "rotated": false,
+      "trimmed": false,
+      "pivotOutput": [
+        128,
+        128
+      ],
+      "sourceSha256": "795308424a14103cb1ff01da269aa5b439bc17647e9365a6d2d9248b25534df3",
+      "pngSha256": "fb4f37709ac455260ce07d493ce2d019ad9fe623f848ebd9bc27a7854bdb8afd"
+    }
+  },
+  "animations": {
+    "sol.idle.down": {
+      "frames": [
+        "sol.idle.down.0",
+        "sol.idle.down.1"
+      ],
+      "fps": 2
+    },
+    "sol.walk.down": {
+      "frames": [
+        "sol.walk.down.0",
+        "sol.walk.down.1",
+        "sol.walk.down.2",
+        "sol.walk.down.3",
+        "sol.walk.down.4",
+        "sol.walk.down.5"
+      ],
+      "fps": 8
+    },
+    "sol.idle.up": {
+      "frames": [
+        "sol.idle.up.0",
+        "sol.idle.up.1"
+      ],
+      "fps": 2
+    },
+    "sol.walk.up": {
+      "frames": [
+        "sol.walk.up.0",
+        "sol.walk.up.1",
+        "sol.walk.up.2",
+        "sol.walk.up.3",
+        "sol.walk.up.4",
+        "sol.walk.up.5"
+      ],
+      "fps": 8
+    },
+    "sol.idle.left": {
+      "frames": [
+        "sol.idle.left.0",
+        "sol.idle.left.1"
+      ],
+      "fps": 2
+    },
+    "sol.walk.left": {
+      "frames": [
+        "sol.walk.left.0",
+        "sol.walk.left.1",
+        "sol.walk.left.2",
+        "sol.walk.left.3",
+        "sol.walk.left.4",
+        "sol.walk.left.5"
+      ],
+      "fps": 8
+    },
+    "sol.idle.right": {
+      "frames": [
+        "sol.idle.right.0",
+        "sol.idle.right.1"
+      ],
+      "fps": 2
+    },
+    "sol.walk.right": {
+      "frames": [
+        "sol.walk.right.0",
+        "sol.walk.right.1",
+        "sol.walk.right.2",
+        "sol.walk.right.3",
+        "sol.walk.right.4",
+        "sol.walk.right.5"
+      ],
+      "fps": 8
+    },
+    "sol.interact.down": {
+      "frames": [
+        "sol.interact.down.0",
+        "sol.interact.down.1",
+        "sol.interact.down.2"
+      ],
+      "fps": 6
+    },
+    "sol.acquire.down": {
+      "frames": [
+        "sol.acquire.down.0",
+        "sol.acquire.down.1",
+        "sol.acquire.down.2",
+        "sol.acquire.down.3"
+      ],
+      "fps": 6
+    },
+    "clef.idle.down": {
+      "frames": [
+        "clef.idle.down.0",
+        "clef.idle.down.1"
+      ],
+      "fps": 2
+    },
+    "clef.talk.down": {
+      "frames": [
+        "clef.talk.down.0",
+        "clef.talk.down.1",
+        "clef.talk.down.2"
+      ],
+      "fps": 6
+    },
+    "clef.react.down": {
+      "frames": [
+        "clef.react.down.0",
+        "clef.react.down.1",
+        "clef.react.down.2"
+      ],
+      "fps": 6
+    },
+    "fx.attach_glow": {
+      "frames": [
+        "fx_attach_glow_0",
+        "fx_attach_glow_1",
+        "fx_attach_glow_2",
+        "fx_attach_glow_3",
+        "fx_attach_glow_4"
+      ],
+      "fps": 8
+    },
+    "fx.door_response": {
+      "frames": [
+        "fx_door_response_0",
+        "fx_door_response_1",
+        "fx_door_response_2",
+        "fx_door_response_3",
+        "fx_door_response_4"
+      ],
+      "fps": 8
+    },
+    "fx.foot_dust": {
+      "frames": [
+        "fx_foot_dust_0",
+        "fx_foot_dust_1",
+        "fx_foot_dust_2",
+        "fx_foot_dust_3",
+        "fx_foot_dust_4"
+      ],
+      "fps": 8
+    }
+  }
+}

@@ -1,0 +1,4 @@
+# Atlas source hashes must survive Windows checkouts byte for byte.
+assets/harmonia/**/*.svg text eol=lf
+assets/harmonia/**/*.json text eol=lf
+assets/harmonia/**/*.png binary

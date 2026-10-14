@@ -8,6 +8,9 @@ window.createHarmoniaArt = function createHarmoniaArt(g) {
   const P = { ink:'#233d38', teal:'#24594e', mint:'#a3c5aa', gold:'#e9bd63', cream:'#fff8e8', paper:'#f3ead5', stone:'#decda7' };
   let c = ctx;
   let terrain;
+  const assets = g.assetRenderer || null;
+  const scenery = [];
+  const animationState = new Map();
   const offset = 120;
   const time = () => CONFIG.REDUCED_MOTION ? 0 : performance.now() / 1000;
   function round(x,y,w,h,r,fill,stroke) {
@@ -24,6 +27,60 @@ window.createHarmoniaArt = function createHarmoniaArt(g) {
   function sprig(x,y,scale=1){c.save();c.translate(x,y);c.scale(scale,scale);path('M0 2 Q-6 -4 -4 -8 Q1 -7 0 2 M0 2 Q2 -9 6 -8 Q7 -2 0 2', '#648b58');line(0,3,0,-7,'#4f774b',.7);c.restore();}
   function bush(x,y,s=1){c.save();c.translate(x,y);c.scale(s,s);shadow(0,4,23,7);ellipse(0,-4,25,13,'#547d56');ellipse(-12,-10,14,11,'#75995e');ellipse(7,-14,18,13,'#8aa765');ellipse(18,-5,12,10,'#658b55');ellipse(2,-19,10,4,'#abc17b');for(let i=0;i<7;i++){ellipse(-17+i*5,-9-hash(i,x)*8,1.3,1.8,i%3?'#b4c67a':'#f2d38a');}c.restore();}
   function tree(x,y,s=1){c.save();c.translate(x,y);c.scale(s,s);path('M-9 10 L28 23 L47 12 L7 -13Z','rgba(30,59,43,.14)');shadow(1,6,29,10);path('M-5 6 L-4 -30 L5 -35 L7 5 L16 10 L2 8 L-11 10Z','#716647');path('M0 3 L-1 -29 L3 -30 L4 3Z','#a18b58');ellipse(0,-39,37,28,'#3d6a50');ellipse(20,-45,24,23,'#477c58');ellipse(-20,-47,25,22,'#648d5b');ellipse(-8,-64,27,23,'#78a16a');ellipse(14,-67,23,19,'#92b178');ellipse(-12,-76,15,8,'#b8ca8c');path('M-32 -40 Q-25 -48 -16 -42 M-14 -60 Q-5 -68 6 -62 M12 -48 Q21 -57 30 -51',null,'rgba(220,228,159,.28)',3);c.restore();}
+  function drawAsset(id,x,y,options={}) { return assets.draw(id,x,y,{ctx:c,...options}); }
+  function symbol(id,x,y,w,h,color=P.gold) { return g.symbolArt(id,x,y,w,h,color); }
+  function assetTerrainLayer(){
+    const canvas=document.createElement('canvas');canvas.width=1920;canvas.height=1280;
+    const previous=c;c=canvas.getContext('2d');c.scale(2,2);
+    const map=g.map();const road=(x,y)=>map.ground[y]?.[x]===1;
+    for(let y=0;y<20;y++)for(let x=0;x<30;x++){
+      drawAsset(`grass_${1+Math.floor(hash(x,y)*3)}`,x*32,y*32);
+      if(!road(x,y))continue;
+      drawAsset(`path_center_${1+Math.floor(hash(y,x)*2)}`,x*32,y*32);
+      const n=road(x,y-1),e=road(x+1,y),s=road(x,y+1),w=road(x-1,y);
+      for(const [side,on] of [['n',n],['e',e],['s',s],['w',w]])if(!on)drawAsset(`path_edge_${side}`,x*32,y*32);
+      for(const [corner,a,b,dx,dy] of [['ne',n,e,1,-1],['se',s,e,1,1],['sw',s,w,-1,1],['nw',n,w,-1,-1]]){
+        if(!a&&!b)drawAsset(`path_outer_${corner}`,x*32,y*32);
+        else if(a&&b&&!road(x+dx,y+dy))drawAsset(`path_inner_${corner}`,x*32,y*32);
+      }
+    }
+    assets.drawRect('tower_ground_shadow',416,-16,192,224,{ctx:c});
+    // Every tall sprite joins the same feet-depth sort as gameplay objects.
+    scenery.length=0;
+    for(const x of [358,389,610,647])for(const y of [93,148,219,404,447])scenery.push({id:`bush_${1+Math.floor(hash(x,y)*3)}`,x:x+(hash(x,y)-.5)*12,y:y+(hash(y,x)-.5)*15,scale:.6+hash(x,y)*.45});
+    for(let x=24;x<960;x+=48){scenery.push({id:`tree_${1+Math.floor(hash(x,4)*3)}`,x,y:24,scale:.85+hash(x,4)*.25});scenery.push({id:`tree_${1+Math.floor(hash(x,5)*3)}`,x,y:642,scale:1.1});}
+    for(let y=90;y<590;y+=69){scenery.push({id:`tree_${1+Math.floor(hash(y,6)*3)}`,x:14,y,scale:1});scenery.push({id:`tree_${1+Math.floor(hash(y,7)*3)}`,x:951,y,scale:1.2});}
+    for(let i=0;i<75;i++){const x=40+hash(i,12)*880,y=45+hash(i,13)*560;if(!road(Math.floor(x/32),Math.floor(y/32)))drawAsset(`cluster_${1+i%4}`,x,y,{scale:.65+hash(i,14)*.3});}
+    for(const x of [391,620]){drawAsset('stone_1',x-30,260);drawAsset('stone_2',x,260);drawAsset('cluster_4',x,261);}
+    for(const x of [438,586])scenery.push({id:'props_lantern',x,y:204,scale:.65});
+    for(const x of [96,672])scenery.push({house:true,x,y:544});
+    c=previous;return canvas;
+  }
+  function assetPerson(x,y,role,faceX,faceY,moving,pose){
+    const direction=faceX<0?'left':faceX>0?'right':faceY<0?'up':'down';
+    const character=role==='elder'?'clef':'sol';
+    const doorReact=role==='elder'&&g.map().objects.some(o=>o.type==='towerDoor'&&o.openAnim);
+    let animation=role==='elder'?(doorReact?'react':g.state()==='Dialogue'&&g.dialogue.active?.speaker==='클레프'?'talk':'idle'):pose==='lift'?'acquire':g.state()==='Dialogue'||g.state()==='SymbolSelect'?'interact':moving?'walk':'idle';
+    // The acquisition and conversation sprites intentionally face the viewer.
+    const facing=animation==='acquire'||animation==='interact'||character==='clef'?'down':direction;
+    let name=`${character}.${animation}.${facing}`;
+    if(!assets.manifest.animations[name]&&animation==='interact')name=`${character}.interact.down`;
+    const key=character;let state=animationState.get(key);
+    if(!state||state.name!==name){state={name,start:time()};animationState.set(key,state);}
+    const elapsed=animation==='acquire'?(UI.itemGet?.timer||0):time()-state.start;
+    shadow(x,y,14,4.5);
+    if(moving&&!CONFIG.REDUCED_MOTION&&assets.has('fx_foot_dust_0'))drawAsset(`fx_foot_dust_${Math.floor(elapsed*8)%5}`,x,y,{alpha:.55,pivot:[32,44]});
+    const fps=animation==='walk'?8:animation==='idle'?2:character==='clef'?5:6;
+    const frameId=assets.animationFrame(name,elapsed,{fps,reducedMotion:CONFIG.REDUCED_MOTION,loop:animation!=='acquire'});
+    assets.sceneState[character]={frameId,direction:facing,animation,fps,flipX:false,timeSeconds:CONFIG.REDUCED_MOTION?0:elapsed,feet:[x,y]};
+    if(frameId)drawAsset(frameId,x,y);else assets.drawAnimation(name,x,y,elapsed,{fps});
+  }
+  function assetHouse(x){
+    shadow(x+64,545,74,18);round(x,448,128,96,5,'#d8c9a7','#9b9473');
+    for(let y=474;y<542;y+=15)line(x+2,y,x+126,y,'#c1b894');
+    roof(x-1,428,130,45);round(x+51,503,26,41,[12,12,0,0],'#796d4e');
+    for(const dx of [19,87]){round(x+dx,489,22,27,[9,9,1,1],'#467265','#baaa78');line(x+dx+11,491,x+dx+11,515,'#dbca97',2);round(x+dx-4,515,30,5,2,'#ecdbb2');}
+  }
   function terrainLayer(){
     const canvas=document.createElement('canvas');canvas.width=1920;canvas.height=1280;
     const previous=c;c=canvas.getContext('2d');c.scale(2,2);
@@ -66,6 +123,12 @@ window.createHarmoniaArt = function createHarmoniaArt(g) {
     path(`M${x-8} ${y+h} Q${x+w/2} ${y+h+8} ${x+w+8} ${y+h}`,null,'#d6be7e',3);
   }
   function tower(){
+    if(assets){
+      for(const id of ['tower_body','tower_roof','tower_foreground_trim'])assets.drawRect(id,416,-16,192,224,{ctx:c});
+      drawAsset('ui_note',512,95,{scale:.75});
+      text('오르골 탑',512,174,9,'#fff2cc','center',700);
+      return;
+    }
     c.save();c.translate(448,64);
     path('M-8 126 L45 170 L151 166 L163 146 L128 89Z','rgba(35,63,44,.16)');shadow(66,138,77,20);
     round(-6,123,140,14,5,'#8e997f');round(-9,119,146,11,4,'#ded6b7');round(-5,116,138,7,3,'#f7edcf');
@@ -85,11 +148,21 @@ window.createHarmoniaArt = function createHarmoniaArt(g) {
     for(const x of [13,114]){ellipse(x,112,16,20,'rgba(255,213,112,.11)');line(x,101,x,110,'#54634b',2);round(x-4,108,8,11,2,'#8c743f');round(x-2.5,109,5,7,1,'#ffe4a3');}
     c.restore();
   }
-  function door(obj){const x=obj.x*32,y=obj.y*32;const open=g.data().flags.tower_door_open;shadow(x+32,y+31,33,8);round(x-5,y-8,74,42,[17,17,3,3],'#c1b08b');round(x,y-6,64,38,[15,15,2,2],open?'#24483f':'#725e3e','#394d3c');
+  function door(obj){const x=obj.x*32,y=obj.y*32;const open=g.data().flags.tower_door_open;
+    if(assets){
+      const animating=Boolean(obj.openAnim&&!open);
+      drawAsset(open?'tower_door_open':animating?'tower_door_half_open':'tower_door_closed',x+32,y+32);
+      if(!open&&!animating)symbol('clef_g',x+24,y-1,16,26,'#f0d082');
+      if(animating)drawAsset(`fx_door_response_${CONFIG.REDUCED_MOTION?2:Math.min(4,Math.floor(obj.openAnim/.9*5))}`,x+32,y+20);
+      if(UI.symbolMenu?.mode==='target'&&g.state()==='SymbolSelect')drawAsset(`fx_attach_glow_${CONFIG.REDUCED_MOTION?2:Math.floor(time()*4)%5}`,x+32,y+13);
+      return;
+    }
+    shadow(x+32,y+31,33,8);round(x-5,y-8,74,42,[17,17,3,3],'#c1b08b');round(x,y-6,64,38,[15,15,2,2],open?'#24483f':'#725e3e','#394d3c');
     if(open){round(x+5,y,54,28,[12,12,0,0],gradient(0,y,0,y+30,[[0,'#152f2d'],[1,'#c9c894']]));line(x+13,y+30,x+51,y+30,'#f0d38b',2);}else{for(let i=1;i<7;i++)line(x+i*9,y+1,x+i*9,y+30,'#554b35');round(x+24,y-1,16,26,5,'#315d53','#bea56b');text('𝄞',x+32,y+22,25,'#f0d082','center');ellipse(x+47,y+16,2,2,'#e6c473');}
     if(obj.openAnim&&!CONFIG.REDUCED_MOTION){const a=Math.min(1,obj.openAnim/.9);ellipse(x+32,y+15,35+a*12,22,'rgba(243,210,129,.15)');}
   }
   function person(x,y,role='sol',faceX=0,faceY=1,moving=false,pose='normal'){
+    if(assets&&role!=='child'){assetPerson(x,y,role,faceX,faceY,moving,pose);return;}
     const t=time();const step=moving?Math.sin(t*14)*2:0;const bob=moving?Math.abs(step)*.4:Math.sin(t*2.3)*.45;
     shadow(x,y,14,4.5);c.save();c.translate(x,y+bob);
     const elder=role==='elder',child=role==='child';const coat=elder?'#61765c':child?'#d4ab5c':'#376f72';
@@ -110,30 +183,33 @@ window.createHarmoniaArt = function createHarmoniaArt(g) {
     if(obj.id==='tower_body'){tower();return;}
     if(obj.type==='towerDoor'){door(obj);return;}
     if(obj.type==='npc'){person(x,y-2,obj.role);if(UI.interactTarget===obj&&g.state()==='Explore'){round(x-26,y-67,52,19,8,P.cream);text(obj.label,x,y-54,10,P.teal,'center');}return;}
+    if(assets&&obj.id==='well'){drawAsset('props_well',x,y);return;}
+    if(assets&&obj.type==='sign'){drawAsset('props_sign',x,y);return;}
+    if(assets&&obj.type==='pickup'){drawAsset('bush_3',x,y);symbol(obj.symbol,x-10,y-33,20,28,'#f0d082');return;}
     if(obj.id==='well'){shadow(x,y,36,9);round(r.x+1,r.y+33,62,30,8,'#b5b397','#747d66');ellipse(x,r.y+36,30,12,'#e0d8b6');ellipse(x,r.y+35,23,8,'#365d55');for(const dx of [7,53])round(r.x+dx,r.y+5,4,42,2,'#877951');roof(r.x-2,r.y-7,68,24);line(x,r.y+17,x,r.y+37,'#c7b585',1);return;}
     if(obj.type==='sign'){shadow(x,y,20);round(x-3,r.y+9,6,r.h-5,2,'#82714f');round(r.x+1,r.y+2,r.w-2,24,4,'#d7bd82','#8c805b');text('→',x,r.y+21,19,P.teal,'center');return;}
     g.originalObject(obj);
   }
   function world(){
-    if(!terrain)terrain=terrainLayer();
+    if(!terrain)terrain=assets?assetTerrainLayer():terrainLayer();
     c=ctx;c.fillStyle='#9cb77a';c.fillRect(0,0,360,CONFIG.H);c.save();c.translate(-Math.round(SCENES.camera.x),offset-Math.round(SCENES.camera.y));
     c.drawImage(terrain,0,0,960,640);
-    const items=g.map().objects.filter(g.visible).map(obj=>({obj,y:(obj.y+(obj.h||1))*32}));items.push({player:true,y:ENTITIES.player.y+24});items.sort((a,b)=>a.y-b.y);
-    items.forEach(item=>{if(item.player){const p=ENTITIES.player;person(p.x+10,p.y+24,'sol',p.faceX,p.faceY,p.moving,p.pose);}else object(item.obj);});
+    const items=g.map().objects.filter(g.visible).map(obj=>({obj,y:(obj.y+(obj.h||1))*32}));items.push({player:true,y:ENTITIES.player.y+24});if(assets)items.push(...scenery.map(sprite=>({sprite,y:sprite.y})));items.sort((a,b)=>a.y-b.y);
+    items.forEach(item=>{if(item.player){const p=ENTITIES.player;person(p.x+10,p.y+24,'sol',p.faceX,p.faceY,p.moving,p.pose);}else if(item.sprite){const s=item.sprite;if(s.house)assetHouse(s.x);else drawAsset(s.id,s.x,s.y,{scale:s.scale});}else object(item.obj);});
     // Tiny drifting pollen; at rest under reduced-motion preference.
     for(let i=0;i<12;i++){const x=330+hash(i,44)*370+Math.sin(time()*.25+i)*4,y=70+hash(i,45)*370+Math.cos(time()*.2+i)*3;ellipse(x,y,1,1,'rgba(255,246,198,.65)');}
-    ENTITIES.particles.forEach(p=>{c.globalAlpha=Math.max(0,p.life);if(p.kind==='dot')ellipse(p.x,p.y,p.r||2,p.r||2,p.color);else text(p.text,p.x,p.y,18,p.color,'center');});c.globalAlpha=1;c.restore();
+    ENTITIES.particles.forEach(p=>{c.globalAlpha=Math.max(0,p.life);if(p.kind==='dot')ellipse(p.x,p.y,p.r||2,p.r||2,p.color);else if(assets&&p.text==='♪')drawAsset('ui_note',p.x,p.y,{scale:.7});else text(p.text,p.x,p.y,18,p.color,'center');});c.globalAlpha=1;c.restore();
     c.fillStyle=gradient(0,CONFIG.H-220,0,CONFIG.H-90,[[0,'rgba(34,66,49,0)'],[1,'rgba(34,66,49,.18)']]);c.fillRect(0,CONFIG.H-220,360,130);
   }
-  function icon(kind,x,y,color=P.cream){c.save();c.translate(x,y);c.lineCap='round';c.lineJoin='round';if(kind==='pause'){line(-3,-5,-3,5,color,2);line(3,-5,3,5,color,2);}else if(kind==='sound'){path('M-7 -3 L-3 -3 L2 -7 L2 7 L-3 3 L-7 3Z',null,color,1.5);path('M5 -4 Q9 0 5 4',null,color,1.5);}else if(kind==='book'){path('M0 -5 Q-6 -9 -10 -6 L-10 8 Q-5 5 0 8 Q5 5 10 8 L10 -6 Q6 -9 0 -5 L0 8',null,color,1.5);}else if(kind==='arrow'){path('M-6 0 L6 0 M1 -5 L6 0 L1 5',null,color,1.8);}c.restore();}
+  function icon(kind,x,y,color=P.cream){if(assets){drawAsset({pause:'ui_pause',sound:g.data().soundOn?'ui_sound':'ui_sound_off',book:'ui_symbol_bag',arrow:'ui_interact'}[kind],x,y,{tint:color});return;}c.save();c.translate(x,y);c.lineCap='round';c.lineJoin='round';if(kind==='pause'){line(-3,-5,-3,5,color,2);line(3,-5,3,5,color,2);}else if(kind==='sound'){path('M-7 -3 L-3 -3 L2 -7 L2 7 L-3 3 L-7 3Z',null,color,1.5);path('M5 -4 Q9 0 5 4',null,color,1.5);}else if(kind==='book'){path('M0 -5 Q-6 -9 -10 -6 L-10 8 Q-5 5 0 8 Q5 5 10 8 L10 -6 Q6 -9 0 -5 L0 8',null,color,1.5);}else if(kind==='arrow'){path('M-6 0 L6 0 M1 -5 L6 0 L1 5',null,color,1.8);}c.restore();}
   function panel(x,y,w,h){c.save();c.shadowColor='rgba(32,53,38,.15)';c.shadowBlur=12;c.shadowOffsetY=4;round(x,y,w,h,12,P.cream);c.restore();}
   function hud(){
     const data=g.data(),active=g.quest();c=ctx;
     c.fillStyle=gradient(0,0,0,116,[[0,'rgba(27,55,47,.98)'],[.62,'rgba(27,55,47,.91)'],[1,'rgba(27,55,47,0)']]);c.fillRect(0,0,360,116);
     text('MELODIA',17,22,10,'#d5bd80','left',800);text('하모니아 마을',17,43,16,'#fff8e8','left',700);
-    text(`♪ ${data.goldenNotes.length}`,222,34,17,'#efd58e','center',700);
+    if(assets){drawAsset('ui_note',211,29,{scale:.75});text(String(data.goldenNotes.length),231,34,17,'#efd58e','center',700);}else text(`♪ ${data.goldenNotes.length}`,222,34,17,'#efd58e','center',700);
     UI.button('soundHud',248,8,44,44,'소리');UI.button('pause',302,8,44,44,'일시정지');
-    round(248,8,44,44,12,'rgba(255,249,225,.08)','rgba(231,222,189,.16)');icon('sound',270,30);if(!data.soundOn)line(261,39,279,21,'#deb67d',1.5);
+    round(248,8,44,44,12,'rgba(255,249,225,.08)','rgba(231,222,189,.16)');icon('sound',270,30);if(!assets&&!data.soundOn)line(261,39,279,21,'#deb67d',1.5);
     round(302,8,44,44,12,'rgba(255,249,225,.08)','rgba(231,222,189,.16)');icon('pause',324,30);
     UI.button('objectiveHud',12,62,336,49,'현재 목표');panel(12,62,336,49);round(23,73,26,26,8,'#e4ead5');text('01',36,90,10,P.teal,'center',800);
     text(active?g.questTitle(active[0]):'마을 산책',60,79,10,'#78826b');
@@ -141,7 +217,7 @@ window.createHarmoniaArt = function createHarmoniaArt(g) {
     if(UI.objectiveBubbleTimer>0){panel(28,121,304,43);text('기호 가방에서 높은음자리표를 골라 문에 놓으세요.',180,146,10,P.ink,'center');}
     // Context appears next to its target, with an unambiguous action button below.
     const target=UI.interactTarget,enabled=Boolean(target),open=data.flags.tower_door_open;
-    if(target?.type==='towerDoor'&&g.state()==='Explore'){const x=target.x*32+32-SCENES.camera.x,y=target.y*32+offset-26;round(x-42,y,84,21,9,P.teal,'#c6cda3');text(open?'탑 안으로 들어가기':'기호가 잠든 문',x,y+14,10,P.cream,'center');}
+    if(target?.type==='towerDoor'&&g.state()==='Explore'){const x=target.x*32+32-SCENES.camera.x,y=target.y*32+offset-26-SCENES.camera.y;round(x-42,y,84,21,9,P.teal,'#c6cda3');text(open?'탑 안으로 들어가기':'기호가 잠든 문',x,y+14,10,P.cream,'center');}
     // Bottom dock is anchored to the canvas safe area. Interactive dimensions >=44px.
     const extra=CONFIG.H-640;
     c.save();c.translate(0,extra);
@@ -149,10 +225,11 @@ window.createHarmoniaArt = function createHarmoniaArt(g) {
     line(16,528,344,528,'#d4ceb4');text('이동',70,550,10,'#657563','center');
     const joy=INPUT.joy,baseX=joy.active?joy.baseX:70,baseY=joy.active?joy.baseY-extra:591;
     ellipse(baseX,baseY,35,35,'rgba(46,83,67,.07)');c.strokeStyle='#b9c4a6';c.lineWidth=1;c.beginPath();c.arc(baseX,baseY,35,0,Math.PI*2);c.stroke();
+    if(assets)drawAsset('ui_move',baseX,baseY,{scale:2.5,alpha:.5,tint:P.teal});
     for(const [dx,dy] of [[0,-25],[25,0],[0,25],[-25,0]])ellipse(baseX+dx,baseY+dy,1.5,1.5,'#84977c');
     ellipse(joy.active?joy.x:baseX,joy.active?joy.y-extra:baseY+2,17,17,'rgba(35,68,54,.14)');ellipse(joy.active?joy.x:baseX,joy.active?joy.y-extra:baseY,17,17,'#fff9e8');
     text('W A S D',70,637,8,'#8b927d','center');
-    UI.button('palette',137,554+extra,90,70,'기호 가방',data.symbols.length>0);panel(137,554,90,70);text('♪',157,580,21,'#a78a4a','center');text('Q',211,574,8,'#929a80','center');text('기호 가방',182,597,12,P.teal,'center',700);text(`${data.symbols.length}개 발견`,182,612,9,'#839074','center');
+    UI.button('palette',137,554+extra,90,70,'기호 가방',data.symbols.length>0);panel(137,554,90,70);if(assets)drawAsset('ui_symbol_bag',157,573,{tint:P.teal});else text('♪',157,580,21,'#a78a4a','center');text('Q',211,574,8,'#929a80','center');text('기호 가방',182,597,12,P.teal,'center',700);text(`${data.symbols.length}개 발견`,182,612,9,'#839074','center');
     UI.button('interact',240,554+extra,105,70,'상호작용',enabled);round(240,557,105,70,13,'#bac3a1');round(240,554,105,70,13,enabled?P.teal:'#d8dec9');text('E',330,570,8,enabled?'#b8cbb0':'#798875','center');icon('arrow',291,575,enabled?'#ebd69a':'#81947b');text(enabled?UI.verbFor(target):'둘러보기',292,599,14,enabled?P.cream:'#617560','center',700);text(target?.label||'가까이 다가가세요',292,615,9,enabled?'#b9cbb0':'#7a8c70','center');
     if(CONFIG.DEBUG)text(`${Math.round(g.fps())} FPS`,16,515,9,P.cream);
     c.restore();
@@ -160,13 +237,13 @@ window.createHarmoniaArt = function createHarmoniaArt(g) {
   function palette(){
     c=ctx;const menu=UI.symbolMenu;
     if(menu.mode==='target'){
-      panel(12,62,336,62);const s=SYMBOLS[menu.selected];text(s.glyph,37,106,34,'#b08e46','center');text(s.name,62,86,12,P.teal);text('빛나는 문에 기호를 놓아 보세요',62,109,10,'#778773');
+      panel(12,62,336,62);const s=SYMBOLS[menu.selected];if(assets)symbol(menu.selected,24,73,26,38,'#b08e46');else text(s.glyph,37,106,34,'#b08e46','center');text(s.name,62,86,12,P.teal);text('빛나는 문에 기호를 놓아 보세요',62,109,10,'#778773');
       UI.button('cancelAttach',274,72,64,44,'취소');round(274,72,64,44,9,'#e4e8d7');text('취소',306,99,12,P.teal,'center');return;
     }
     c.fillStyle='rgba(22,43,35,.4)';c.fillRect(0,0,360,CONFIG.H);panel(32,66,296,412);text('발견한 음악기호',56,105,19,P.teal);
-    UI.button('closePalette',270,80,44,44,'닫기');round(270,80,44,44,10,'#e4e8d7');text('×',292,109,24,P.teal,'center');
+    UI.button('closePalette',270,80,44,44,'닫기');round(270,80,44,44,10,'#e4e8d7');if(assets)drawAsset('ui_close',292,102,{tint:P.teal});else text('×',292,109,24,P.teal,'center');
     const list=menu.filter||g.data().symbols;
-    list.forEach((id,i)=>{const s=SYMBOLS[id],y=128+i*64;round(56,y,248,56,10,'#e7ebd9','#c5d0b6');round(64,y+6,40,44,9,P.teal);text(s.glyph,84,y+40,33,'#f0d082','center');text(s.name,116,y+24,14,P.teal);text('선택해서 사용하기',116,y+43,11,'#7c8c70');icon('arrow',284,y+28,'#729171');});
+    list.forEach((id,i)=>{const s=SYMBOLS[id],y=128+i*64;round(56,y,248,56,10,'#e7ebd9','#c5d0b6');round(64,y+6,40,44,9,P.teal);if(assets)symbol(id,72,y+10,24,36,'#f0d082');else text(s.glyph,84,y+40,33,'#f0d082','center');text(s.name,116,y+24,14,P.teal);text('선택해서 사용하기',116,y+43,11,'#7c8c70');icon('arrow',284,y+28,'#729171');});
     if(list.length===1){const s=SYMBOLS[list[0]];line(56,220,304,220,'#d5dcc6');text('기호가 들려주는 이야기',56,250,11,'#8b9579');text(s.theory,56,278,12,P.teal);g.wrap(s.effect,56,306,248,20,3);}
     text('빈 곳을 누르면 가방을 닫아요',180,454,11,'#8a947c','center');
   }
@@ -177,5 +254,5 @@ window.createHarmoniaArt = function createHarmoniaArt(g) {
     if(g.dialogue.chars>=content.length){text('눌러서 계속',305,602,10,'#7b8a6e','right');icon('arrow',321,598,'#7b8a6e');}
     c.restore();
   }
-  return { offset, world, hud, palette, dialogue };
+  return { offset, world, hud, palette, dialogue, assetRenderer: assets };
 };
