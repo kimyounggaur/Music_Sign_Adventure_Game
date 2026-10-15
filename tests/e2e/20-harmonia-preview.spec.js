@@ -1,4 +1,5 @@
 const { test, expect } = require('@playwright/test');
+const touchPages = new WeakSet();
 
 const preview = '/index.html?preview=harmonia&art=remaster&seed=42&test=1';
 async function ready(page, url = preview) {
@@ -9,7 +10,7 @@ async function tap(page,x,y) {
   const b=await page.locator('#game').boundingBox();
   const height=await page.evaluate(()=>MelodiaDebug.CONFIG.H);
   const point={x:b.x+x*b.width/360,y:b.y+y*b.height/height};
-  if(await page.evaluate(()=>navigator.maxTouchPoints>0)) await page.touchscreen.tap(point.x,point.y);
+  if(touchPages.has(page)) await page.touchscreen.tap(point.x,point.y);
   else await page.mouse.click(point.x,point.y);
 }
 async function clickButton(page,id){
@@ -39,7 +40,7 @@ test('HP-02 matching fixture and preview save isolation',async({page})=>{
 
 test('HP-03 real touch palette selection opens the tower and preserves next map',async({browser})=>{
   const context=await browser.newContext({viewport:{width:390,height:844},deviceScaleFactor:3,isMobile:true,hasTouch:true});
-  const page=await context.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));await ready(page);
+  const page=await context.newPage();touchPages.add(page);const errors=[];page.on('pageerror',e=>errors.push(e.message));await ready(page);
   await clickButton(page,'palette');await expect(page.locator('body')).toHaveAttribute('data-game-state','SymbolSelect');
   expect(await page.evaluate(()=>MelodiaDebug.SYMBOLS.clef_g.theory)).toBe('소용돌이가 감는 둘째 줄이 [솔]이에요.');
   await tap(page,180,156);

@@ -2,8 +2,8 @@
 <html lang="ko">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
-  <meta name="theme-color" content="#111318">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#24594e">
   <link rel="manifest" href="manifest.webmanifest">
   <!-- ?debug=1 : FPS 표시 · ?test=1 : 자동 테스트 모드 · ?seed=N : 퍼즐 난수 고정 -->
   <title>멜로디아: 끝나지 않는 노래 v0.1</title>
@@ -58,6 +58,8 @@
 <body>
   <canvas id="game" aria-label="멜로디아 게임 화면"></canvas>
   <div id="rotateOverlay">𝄞<br>세로 화면으로 돌려주세요.<br>멜로디아는 모바일 세로 모드에 맞춰져 있어요.</div>
+  <script src="adventure-art.js"></script>
+  <script src="game-accessibility.js"></script>
   <script src="scene-remaster.js"></script>
   <script src="harmonia-assets.js"></script>
   <script>
@@ -68,8 +70,9 @@
     const seedRaw = PARAMS.get('seed');
     const PREVIEW = PARAMS.get('preview') === 'harmonia';
     const PREVIEW_ART = ['remaster', 'assets'].includes(PARAMS.get('art')) ? PARAMS.get('art') : 'original';
-    const ART_PREVIEW = PREVIEW && PREVIEW_ART !== 'original';
-    const ASSET_PREVIEW = PREVIEW && PREVIEW_ART === 'assets';
+    const FULL_ART = !PREVIEW;
+    const ART_PREVIEW = FULL_ART || (PREVIEW && PREVIEW_ART !== 'original');
+    const ASSET_PREVIEW = FULL_ART || (PREVIEW && PREVIEW_ART === 'assets');
     let resolvePreviewReady, rejectPreviewReady;
     const previewReady = new Promise((resolve, reject) => { resolvePreviewReady = resolve; rejectPreviewReady = reject; });
     previewReady.catch(() => {});
@@ -240,7 +243,7 @@
       if (ART_PREVIEW) {
         // Keep square world pixels on tall phones; the extra height extends the
         // scene and moves the dock down instead of stretching the artwork.
-        CONFIG.H = DATA.currentMap === 'village' ? Math.max(640, Math.min(800, Math.round(cssH / cssW * CONFIG.W))) : 640;
+        CONFIG.H = (FULL_ART || DATA.currentMap === 'village') ? Math.max(640, Math.min(800, Math.round(cssH / cssW * CONFIG.W))) : 640;
       }
       const ratio = CONFIG.W / CONFIG.H;
       if (cssW / cssH > ratio) cssW = Math.floor(cssH * ratio);
@@ -1643,7 +1646,11 @@
         this.buttons.push({ id, x, y, w, h, label, enabled, variant });
       },
       hitButton(p, id = null) {
-        return [...this.buttons].reverse().find((b) => (!id || b.id === id) && b.enabled && p.x >= b.x && p.x <= b.x + b.w && p.y >= b.y && p.y <= b.y + b.h);
+        const minimum = FULL_ART ? 44 * CONFIG.W / canvas.getBoundingClientRect().width : 0;
+        return [...this.buttons].reverse().find((b) => {
+          const dx=Math.max(0,minimum-b.w)/2,dy=Math.max(0,minimum-b.h)/2;
+          return (!id || b.id === id) && b.enabled && p.x >= b.x-dx && p.x <= b.x+b.w+dx && p.y >= b.y-dy && p.y <= b.y+b.h+dy;
+        });
       },
       getInteractTarget() {
         const map = currentMap();
@@ -1985,9 +1992,10 @@
         const map = currentMap();
         if (map) {
           const maxX = Math.max(0, t2p(map.w) - CONFIG.W);
-          const maxY = Math.max(0, t2p(map.h) - CONFIG.H);
+          const viewH = FULL_ART ? CONFIG.H - 240 : CONFIG.H;
+          const maxY = Math.max(0, t2p(map.h) - viewH);
           const targetX = clamp(ENTITIES.player.x + CONFIG.PLAYER_W / 2 - CONFIG.W / 2, 0, maxX);
-          const targetY = clamp(ENTITIES.player.y + CONFIG.PLAYER_H / 2 - CONFIG.H / 2, 0, maxY);
+          const targetY = clamp(ENTITIES.player.y + CONFIG.PLAYER_H / 2 - viewH / 2, 0, maxY);
           this.camera.x = lerp(this.camera.x, targetX, 0.1);
           this.camera.y = lerp(this.camera.y, targetY, 0.1);
         }
@@ -2018,6 +2026,7 @@
       bridge: { order: ['slot_c', 'slot_e', 'slot_g'], progress: 0, shake: 0, success: 0, hadMistake: false },
       endingDelay: 0,
       update(dt) {
+        this.bird.cueTimer = Math.max(0, (this.bird.cueTimer || 0) - dt);
         const map = currentMap();
         if (map) {
           map.objects.forEach((obj) => {
@@ -2043,6 +2052,9 @@
           this.bird.timer -= dt;
           if (this.bird.timer <= 0) {
             const note = this.bird.sequence[this.bird.index];
+            this.bird.lastNote = {C:'도',E:'미',G:'솔'}[note];
+            this.bird.cueTimer = 0.6;
+            this.bird.cueIndex = this.bird.index + 1;
             AUDIO.playNote(`${note}4`, 0.38);
             const bell = currentMap()?.objects.find((obj) => obj.type === 'bell' && obj.note === note);
             if (bell) {
@@ -2419,14 +2431,14 @@
     function drawUiBox(x, y, w, h, r = 12, fill = CONFIG.LA.ui, stroke = CONFIG.LA.uiStroke) {
       ctx.save();
       ctx.shadowColor = CONFIG.LA.uiShadow;
-      ctx.shadowBlur = 0;
+      ctx.shadowBlur = FULL_ART ? 10 : 0;
       ctx.shadowOffsetY = 4;
       ctx.fillStyle = fill;
       drawRoundRect(x, y, w, h, r);
       ctx.fill();
       ctx.shadowColor = 'transparent';
       ctx.strokeStyle = stroke;
-      ctx.lineWidth = 3;
+      ctx.lineWidth = FULL_ART ? 1 : 3;
       ctx.stroke();
       const grad = ctx.createLinearGradient(x, y, x, y + Math.min(34, h));
       grad.addColorStop(0, 'rgba(255,255,255,.48)');
@@ -2480,10 +2492,11 @@
       ctx.restore();
     }
 
-    // This opt-in renderer is limited to the representative village scene.
+    // Production uses the approved artwork across all implemented maps; previews remain isolated.
     // It receives the same objects, camera, quest and input state as the original.
     const assetRenderer = ASSET_PREVIEW ? window.createHarmoniaAssetRenderer(ctx) : null;
     const remaster = ART_PREVIEW ? window.createHarmoniaArt({
+      full: FULL_ART, hint: () => HINTS[HINT.activeKey]?.t2,
       ctx, UI, INPUT, ENTITIES, SCENES, CONFIG, SYMBOLS,
       data: () => DATA, map: currentMap, state: () => gameState,
       quest: () => QUEST.activeQuest(), questTitle: (id) => QUEST.defs[id].title,
@@ -2491,7 +2504,7 @@
       dialogue: DIALOGUE, wrap: fillTextWrapped,
       assetRenderer, symbolArt: drawStudySymbol
     }) : null;
-    function remasterActive() { return Boolean(remaster && DATA.currentMap === 'village'); }
+    function remasterActive() { return Boolean(remaster && (FULL_ART || DATA.currentMap === 'village')); }
 
     function render() {
       UI.buttons = [];
@@ -2523,6 +2536,7 @@
         drawDioramaOverlay();
         drawHud();
       }
+      if (FULL_ART && gameState !== 'Explore') UI.buttons = [];
       drawPuzzleFeedback();
       if (gameState === 'SymbolSelect' && UI.symbolMenu.mode === 'target') drawAttachHighlights();
       if (gameState === 'Dialogue') remasterActive() ? remaster.dialogue() : drawDialogue();
@@ -2570,7 +2584,9 @@
     }
 
     function drawTitle() {
-      const time = performance.now() * 0.001;
+      if (FULL_ART) remaster.title();
+      else {
+      const time = CONFIG.REDUCED_MOTION ? 0 : performance.now() * 0.001;
       const grad = ctx.createLinearGradient(0, 0, 0, CONFIG.H);
       grad.addColorStop(0, '#FFD9A0');
       grad.addColorStop(0.45, CONFIG.LA.cream);
@@ -2610,6 +2626,7 @@
       ctx.font = '15px system-ui';
       ctx.fillText('v0.1 프롤로그 + 1막', CONFIG.W / 2, 296);
 
+      }
       const has = SCENES.titleHasSave;
       UI.button('new', 56, 348, 248, 56, '새로 시작');
       UI.button('continue', 56, 416, 248, 56, has ? '이어하기' : '이어하기 없음', has);
@@ -2619,8 +2636,9 @@
       drawButton(UI.buttons[2]);
       ctx.fillStyle = 'rgba(43,39,36,.72)';
       ctx.font = '12px system-ui';
-      ctx.fillText('자료 기반: 01 Source 음악 기호 이미지 · Canvas 2D', CONFIG.W / 2, 582);
+      if (!FULL_ART) ctx.fillText('자료 기반: 01 Source 음악 기호 이미지 · Canvas 2D', CONFIG.W / 2, 582);
       if (UI.resetConfirm?.type === 'new') {
+        if (FULL_ART) UI.buttons = [];
         drawConfirmPanel(
           '저장된 모험이 있어요. 처음부터 시작할까요?',
           'confirmNew',
@@ -3370,7 +3388,7 @@
 
     function drawPuzzleFeedback() {
       if (gameState !== 'Explore' || DATA.currentMap !== 'forest') return;
-      let y = 64;
+      let y = FULL_ART ? 124 : 64;
       const drawPipRow = (x, rowY, total, activeCount, playIndex = -1, labels = []) => {
         for (let i = 0; i < total; i += 1) {
           const cx = x + i * 25;
@@ -3396,7 +3414,7 @@
         ctx.fillStyle = CONFIG.colors.text;
         ctx.font = '900 12px system-ui';
         ctx.textAlign = 'left';
-        ctx.fillText('새소리', 24 + dx, y + 18);
+        ctx.fillText(FULL_ART && PUZZLES.bird.cueTimer > 0 ? `새: ${PUZZLES.bird.lastNote}` : '새소리', 24 + dx, y + 18);
         const total = Math.max(3, PUZZLES.bird.sequence.length || 3);
         drawPipRow(82 + dx, y + 17, total, PUZZLES.bird.input.length, PUZZLES.bird.playback ? PUZZLES.bird.index : -1);
         y += 52;
@@ -3416,7 +3434,7 @@
         const next = PUZZLES.bridge.hadMistake ? currentMap().objects.find((obj) => obj.id === PUZZLES.bridge.order[PUZZLES.bridge.progress]) : null;
         if (next) {
           const sx = t2p(next.x) + 16 - SCENES.camera.x;
-          const sy = t2p(next.y) - 10 - SCENES.camera.y;
+          const sy = t2p(next.y) - 10 - SCENES.camera.y + (remasterActive() ? remaster.offset : 0);
           if (sx > 12 && sx < CONFIG.W - 12 && sy > 58 && sy < CONFIG.H - 20) {
             ctx.fillStyle = CONFIG.colors.cyan;
             ctx.beginPath();
@@ -3554,10 +3572,14 @@
         const s = SYMBOLS[item.id];
         const t = item.timer;
         if (!item.card) {
-          const scale = 1 + Math.sin(Math.min(1, t / 0.25) * Math.PI) * 0.08;
+          const scale = CONFIG.REDUCED_MOTION ? 1 : 1 + Math.sin(Math.min(1, t / 0.25) * Math.PI) * 0.08;
           ctx.save();
           ctx.translate(180, 310);
           ctx.scale(scale, scale);
+          if (FULL_ART) {
+            assetRenderer.drawAnimation('sol.acquire.down',0,48,t,{scale:2,loop:false,reducedMotion:CONFIG.REDUCED_MOTION});
+            remaster.symbol(item.id,-24,-65,48,60,'#e9bd63');
+          } else {
           drawBlobShadow(0, 42, 42);
           ctx.fillStyle = CONFIG.LA.blue;
           drawRoundRect(-14, 6, 28, 24, 12);
@@ -3580,6 +3602,7 @@
           const wobble = Math.sin(t * 10) * 4;
           ctx.rotate(wobble * Math.PI / 180);
           ctx.fillText(s.glyph, 0, -42);
+          }
           ctx.restore();
           ctx.strokeStyle = `rgba(255,213,79,${Math.max(0, 1 - t)})`;
           ctx.lineWidth = 3;
@@ -3757,6 +3780,7 @@
     }
 
     function drawSymbolArt(s, x, y, w, h, fallbackSize = 72) {
+      if (FULL_ART) { remaster.symbol(Object.keys(SYMBOLS).find(id => SYMBOLS[id] === s), x, y, w, h, CONFIG.colors.text); return; }
       const img = ASSETS[s.asset];
       if (img && img.complete && img.naturalWidth) {
         const prev = ctx.imageSmoothingEnabled;
@@ -3869,6 +3893,7 @@
       UI.button('resetSave', 72, 286, 216, 48, '저장 초기화', SCENES.titleHasSave, 'danger');
       drawButton(UI.buttons.find((b) => b.id === 'resetSave'));
       if (UI.resetConfirm?.type === 'clear') {
+        if (FULL_ART) UI.buttons = [];
         drawConfirmPanel(
           '정말 처음부터 시작할까요? 황금 음표와 도감도 사라져요.',
           'confirmClear',
@@ -3899,7 +3924,7 @@
       const boxW = clamp(textW + 30, 132, 312);
       const boxH = 18 + lines.length * 18;
       const x = (CONFIG.W - boxW) / 2;
-      const y = 72;
+      const y = FULL_ART ? CONFIG.H - 178 : 72;
       const fade = UI.toastDuration > 0 ? Math.min(1, UI.toastTimer * 2.5, (UI.toastDuration - UI.toastTimer) * 6 + 0.45) : Math.min(1, UI.toastTimer * 2);
       ctx.globalAlpha = fade;
       drawUiBox(x, y, boxW, boxH, 10);
@@ -3972,6 +3997,7 @@
         accumulator -= fixed;
       }
       render();
+      accessibility?.sync();
       requestAnimationFrame(loop);
     }
 
@@ -4104,7 +4130,7 @@
       AUDIO.unlock();
       AUDIO.resume();
       const p = screenToGame(e);
-      canvas.setPointerCapture?.(e.pointerId);
+      if (e.pointerId !== undefined) canvas.setPointerCapture?.(e.pointerId);
       const pressed = UI.hitButton(p);
       if (shouldDeferButton(pressed)) {
         UI.pressedId = pressed.id;
@@ -4254,6 +4280,7 @@
     }
 
     function pointerUp(e) {
+      if(e.type === 'pointercancel') { UI.pressedId=null;UI.logDrag=null;INPUT.up(e.pointerId);return; }
       const p = screenToGame(e);
       if (UI.pressedId) {
         const id = UI.pressedId;
@@ -4268,6 +4295,9 @@
     }
 
     function keyDown(e) {
+      if (e.target instanceof HTMLButtonElement && ['Enter','Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code)) return;
+      if (['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code)) e.preventDefault();
+      if (e.repeat && ['KeyE','KeyQ','Escape','Enter','Space'].includes(e.code)) return;
       AUDIO.unlock();
       AUDIO.resume();
       INPUT.keys.add(e.code);
@@ -4327,10 +4357,23 @@
       saveBackgroundProgress();
     }
 
+    const accessibility = FULL_ART ? window.createGameAccessibility({
+      canvas, CONFIG, UI, DIALOGUE, SYMBOLS, data: () => DATA, map: currentMap,
+      state: () => gameState, quest: () => QUEST.activeQuest(),
+      cue: () => PUZZLES.bird.cueTimer > 0 ? `새소리 ${PUZZLES.bird.cueIndex}: ${PUZZLES.bird.lastNote}` : '',
+      activate(x,y) {
+        const r=canvas.getBoundingClientRect();
+        const e={clientX:r.left+x*r.width/CONFIG.W,clientY:r.top+y*r.height/CONFIG.H,preventDefault(){}};
+        pointerDown(e);pointerUp(e);
+      },
+      advance() { if(gameState==='Dialogue')DIALOGUE.advance();else if(gameState==='Cutscene')UI.closeCutscene(); },
+      target(o) { tryAttachToObject(UI.symbolMenu.selected,o); }
+    }) : null;
+
     function registerServiceWorker() {
       if (PREVIEW || CONFIG.TEST || !('serviceWorker' in navigator)) return;
       try {
-        navigator.serviceWorker.register('sw.js');
+        navigator.serviceWorker.register('sw.js').catch(() => {});
       } catch (err) {
         // PWA support is optional; the game still runs as a normal page.
       }
@@ -4344,6 +4387,11 @@
       AUDIO.muted = !DATA.soundOn;
       SCENES.titleHasSave = SAVE.hasSave();
       if (PARAMS.get('selftest') === '1') SELFTEST.run();
+      if (FULL_ART) {
+        Object.assign(CONFIG.colors,{ink:'#233d38',panel:'#fff8e8',text:'#233d38',gold:'#b59041',cyan:'#377c72'});
+        Object.assign(CONFIG.LA,{ui:'#fff8e8',uiStroke:'#c0c6aa',uiShadow:'rgba(30,57,44,.18)'});
+        document.body.dataset.artVersion='harmonia-full-1';
+      }
       registerServiceWorker();
       window.addEventListener('resize', resize);
       window.visualViewport?.addEventListener('resize', resize);
@@ -4357,7 +4405,7 @@
       window.addEventListener('pagehide', handlePageHide);
       document.addEventListener('visibilitychange', handleVisibilityChange);
       setTimeout(async () => {
-        if (!PREVIEW) { setState('Title'); resolvePreviewReady({ art:'original', preview:false }); return; }
+        // Both production and the asset comparison wait for validated atlas pages.
         if (assetRenderer) {
           try {
             await Promise.all([assetRenderer.ready, waitForSymbolAsset('clef_g')]);
@@ -4367,6 +4415,7 @@
             document.body.dataset.assetStatus='error';rejectPreviewReady(error);return;
           }
         }
+        if (!PREVIEW) { setState('Title'); resolvePreviewReady({ art:'assets', preview:false, assets:assetRenderer.state }); return; }
         // A deterministic, playable point after the existing clef pickup quest.
         // Separate keys prevent this comparison from touching a player's save.
         DATA = defaultDataSafe();
@@ -4411,7 +4460,7 @@
         SAVE,
         UI,
         SCENES,
-        preview: { art: PREVIEW ? PREVIEW_ART : null, ready: previewReady, assets: assetRenderer },
+        preview: { art: PREVIEW ? PREVIEW_ART : 'assets', ready: previewReady, assets: assetRenderer },
         get state() { return gameState; },
         get DATA() { return DATA; },
         noteToFreq: (name) => AUDIO.noteToFreq(name)

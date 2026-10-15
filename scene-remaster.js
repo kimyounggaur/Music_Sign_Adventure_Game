@@ -7,7 +7,9 @@ window.createHarmoniaArt = function createHarmoniaArt(g) {
   const { ctx, UI, INPUT, ENTITIES, SCENES, CONFIG, SYMBOLS } = g;
   const P = { ink:'#233d38', teal:'#24594e', mint:'#a3c5aa', gold:'#e9bd63', cream:'#fff8e8', paper:'#f3ead5', stone:'#decda7' };
   let c = ctx;
-  let terrain;
+  let terrain, terrainMap;
+  const terrainCache = new Map();
+  const extended = g.full ? window.createAdventureArt(g) : null;
   const assets = g.assetRenderer || null;
   const scenery = [];
   const animationState = new Map();
@@ -20,7 +22,8 @@ window.createHarmoniaArt = function createHarmoniaArt(g) {
   function ellipse(x,y,rx,ry,fill) { c.beginPath();c.ellipse(x,y,rx,ry,0,0,Math.PI*2);c.fillStyle=fill;c.fill(); }
   function path(d,fill,stroke,width=1) { const p=new Path2D(d);if(fill){c.fillStyle=fill;c.fill(p);}if(stroke){c.strokeStyle=stroke;c.lineWidth=width;c.stroke(p);} }
   function line(x,y,x2,y2,color,width=1) { c.beginPath();c.moveTo(x,y);c.lineTo(x2,y2);c.strokeStyle=color;c.lineWidth=width;c.stroke(); }
-  function text(s,x,y,size=12,color=P.ink,align='left',weight=600) {c.font=`${weight} ${size}px "Malgun Gothic", system-ui, sans-serif`;c.fillStyle=color;c.textAlign=align;c.textBaseline='alphabetic';c.fillText(s,x,y);}
+  const secondaryText = new Set(['#78826b','#8b927d','#929a80','#839074','#798875','#7a8c70','#778773','#8b9579','#8a947c','#7b8a6e']);
+  function text(s,x,y,size=12,color=P.ink,align='left',weight=600) {c.font=`${weight} ${size}px "Malgun Gothic", system-ui, sans-serif`;c.fillStyle=g.full&&secondaryText.has(color)?'#536b59':color;c.textAlign=align;c.textBaseline='alphabetic';c.fillText(s,x,y);}
   function gradient(x,y,x2,y2,stops){const a=c.createLinearGradient(x,y,x2,y2);stops.forEach(([p,col])=>a.addColorStop(p,col));return a;}
   function shadow(x,y,rx,ry=rx*.28){ellipse(x+5,y+4,rx,ry,'rgba(24,52,40,.18)');ellipse(x,y,rx*.7,ry*.55,'rgba(24,52,40,.16)');}
   function hash(x,y){return ((Math.sin(x*127.1+y*311.7)*43758.5453)%1+1)%1;}
@@ -28,7 +31,7 @@ window.createHarmoniaArt = function createHarmoniaArt(g) {
   function bush(x,y,s=1){c.save();c.translate(x,y);c.scale(s,s);shadow(0,4,23,7);ellipse(0,-4,25,13,'#547d56');ellipse(-12,-10,14,11,'#75995e');ellipse(7,-14,18,13,'#8aa765');ellipse(18,-5,12,10,'#658b55');ellipse(2,-19,10,4,'#abc17b');for(let i=0;i<7;i++){ellipse(-17+i*5,-9-hash(i,x)*8,1.3,1.8,i%3?'#b4c67a':'#f2d38a');}c.restore();}
   function tree(x,y,s=1){c.save();c.translate(x,y);c.scale(s,s);path('M-9 10 L28 23 L47 12 L7 -13Z','rgba(30,59,43,.14)');shadow(1,6,29,10);path('M-5 6 L-4 -30 L5 -35 L7 5 L16 10 L2 8 L-11 10Z','#716647');path('M0 3 L-1 -29 L3 -30 L4 3Z','#a18b58');ellipse(0,-39,37,28,'#3d6a50');ellipse(20,-45,24,23,'#477c58');ellipse(-20,-47,25,22,'#648d5b');ellipse(-8,-64,27,23,'#78a16a');ellipse(14,-67,23,19,'#92b178');ellipse(-12,-76,15,8,'#b8ca8c');path('M-32 -40 Q-25 -48 -16 -42 M-14 -60 Q-5 -68 6 -62 M12 -48 Q21 -57 30 -51',null,'rgba(220,228,159,.28)',3);c.restore();}
   function drawAsset(id,x,y,options={}) { return assets.draw(id,x,y,{ctx:c,...options}); }
-  function symbol(id,x,y,w,h,color=P.gold) { return g.symbolArt(id,x,y,w,h,color); }
+  function symbol(id,x,y,w,h,color=P.gold) { return extended ? extended.musicalNote(id,x,y,w,h,color) : g.symbolArt(id,x,y,w,h,color); }
   function assetTerrainLayer(){
     const canvas=document.createElement('canvas');canvas.width=1920;canvas.height=1280;
     const previous=c;c=canvas.getContext('2d');c.scale(2,2);
@@ -162,10 +165,10 @@ window.createHarmoniaArt = function createHarmoniaArt(g) {
     if(obj.openAnim&&!CONFIG.REDUCED_MOTION){const a=Math.min(1,obj.openAnim/.9);ellipse(x+32,y+15,35+a*12,22,'rgba(243,210,129,.15)');}
   }
   function person(x,y,role='sol',faceX=0,faceY=1,moving=false,pose='normal'){
-    if(assets&&role!=='child'){assetPerson(x,y,role,faceX,faceY,moving,pose);return;}
+    if(assets&&role!=='child'&&role!=='bard'){assetPerson(x,y,role,faceX,faceY,moving,pose);return;}
     const t=time();const step=moving?Math.sin(t*14)*2:0;const bob=moving?Math.abs(step)*.4:Math.sin(t*2.3)*.45;
     shadow(x,y,14,4.5);c.save();c.translate(x,y+bob);
-    const elder=role==='elder',child=role==='child';const coat=elder?'#61765c':child?'#d4ab5c':'#376f72';
+    const elder=role==='elder',child=role==='child';const coat=elder?'#61765c':child?'#d4ab5c':role==='bard'?'#867398':'#376f72';
     ellipse(-5,-2+step,4,3,'#4a4940');ellipse(5,-2-step,4,3,'#4a4940');
     path('M-8 -23 Q0 -28 8 -23 L11 -5 Q0 0 -11 -5Z',coat,'#355548');
     path('M-7 -22 Q-1 -25 1 -23 L-1 -6 L-9 -7Z',elder?'#8d9e78':'#609698');
@@ -176,10 +179,12 @@ window.createHarmoniaArt = function createHarmoniaArt(g) {
     if(elder){path('M-8 -24 Q0 -19 8 -24 Q7 -11 0 -9 Q-8 -12 -8 -24Z','#e0dcc4');line(14,-29,14,0,'#806c43',2);ellipse(14,-30,3,3,'#bcab73');}
     else if(child){ellipse(-11,-34,5,6,'#6c5037');ellipse(11,-34,5,6,'#6c5037');}
     else{path('M-9 -20 Q-2 -16 9 -21 L9 -17 Q0 -12 -8 -16Z','#e1b968');path('M7 -17 L15 -10 L12 -6 L5 -17Z','#c29b53');line(-7,-18,8,-6,'#463f31',2);round(5,-10,8,8,2,'#a87d4d','#745d3b');text('♪',-8,-35,13,'#efcb70','center',800);}
+    if(role==='bard'){ellipse(10,-10,8,10,'#c6a570');ellipse(10,-11,3,4,'#5d6350');line(11,-17,16,-31,'#a38755',4);for(let i=0;i<3;i++)line(9+i,-7,15+i*.4,-28,'#eee0a8',.5);}
     c.restore();
   }
   function object(obj){
     const r=g.objectRect(obj),x=r.x+r.w/2,y=r.y+r.h;
+    if(extended?.object(obj))return;
     if(obj.id==='tower_body'){tower();return;}
     if(obj.type==='towerDoor'){door(obj);return;}
     if(obj.type==='npc'){person(x,y-2,obj.role);if(UI.interactTarget===obj&&g.state()==='Explore'){round(x-26,y-67,52,19,8,P.cream);text(obj.label,x,y-54,10,P.teal,'center');}return;}
@@ -191,11 +196,20 @@ window.createHarmoniaArt = function createHarmoniaArt(g) {
     g.originalObject(obj);
   }
   function world(){
-    if(!terrain)terrain=assets?assetTerrainLayer():terrainLayer();
-    c=ctx;c.fillStyle='#9cb77a';c.fillRect(0,0,360,CONFIG.H);c.save();c.translate(-Math.round(SCENES.camera.x),offset-Math.round(SCENES.camera.y));
-    c.drawImage(terrain,0,0,960,640);
+    const map=g.map();
+    if(terrainMap!==map.id){
+      let entry=terrainCache.get(map.id);
+      if(!entry){
+        if(extended&&map.id!=='village')entry=extended.terrain(map);
+        else {const canvas=assets?assetTerrainLayer():terrainLayer();entry={canvas,scenery:scenery.slice()};}
+        terrainCache.set(map.id,entry);
+      }
+      terrain=entry.canvas;scenery.length=0;scenery.push(...entry.scenery);terrainMap=map.id;
+    }
+    c=ctx;c.fillStyle=map.id==='tower'?'#243f3c':'#9cb77a';c.fillRect(0,0,360,CONFIG.H);c.save();c.translate(-Math.round(SCENES.camera.x),offset-Math.round(SCENES.camera.y));
+    c.drawImage(terrain,0,0,map.w*32,map.h*32);
     const items=g.map().objects.filter(g.visible).map(obj=>({obj,y:(obj.y+(obj.h||1))*32}));items.push({player:true,y:ENTITIES.player.y+24});if(assets)items.push(...scenery.map(sprite=>({sprite,y:sprite.y})));items.sort((a,b)=>a.y-b.y);
-    items.forEach(item=>{if(item.player){const p=ENTITIES.player;person(p.x+10,p.y+24,'sol',p.faceX,p.faceY,p.moving,p.pose);}else if(item.sprite){const s=item.sprite;if(s.house)assetHouse(s.x);else drawAsset(s.id,s.x,s.y,{scale:s.scale});}else object(item.obj);});
+    items.forEach(item=>{if(item.y<SCENES.camera.y-120||item.y>SCENES.camera.y+CONFIG.H)return;if(item.player){const p=ENTITIES.player;person(p.x+10,p.y+24,'sol',p.faceX,p.faceY,p.moving,p.pose);}else if(item.sprite){const s=item.sprite;if(s.house)assetHouse(s.x);else drawAsset(s.id,s.x,s.y,{scale:s.scale});}else object(item.obj);});
     // Tiny drifting pollen; at rest under reduced-motion preference.
     for(let i=0;i<12;i++){const x=330+hash(i,44)*370+Math.sin(time()*.25+i)*4,y=70+hash(i,45)*370+Math.cos(time()*.2+i)*3;ellipse(x,y,1,1,'rgba(255,246,198,.65)');}
     ENTITIES.particles.forEach(p=>{c.globalAlpha=Math.max(0,p.life);if(p.kind==='dot')ellipse(p.x,p.y,p.r||2,p.r||2,p.color);else if(assets&&p.text==='♪')drawAsset('ui_note',p.x,p.y,{scale:.7});else text(p.text,p.x,p.y,18,p.color,'center');});c.globalAlpha=1;c.restore();
@@ -206,15 +220,15 @@ window.createHarmoniaArt = function createHarmoniaArt(g) {
   function hud(){
     const data=g.data(),active=g.quest();c=ctx;
     c.fillStyle=gradient(0,0,0,116,[[0,'rgba(27,55,47,.98)'],[.62,'rgba(27,55,47,.91)'],[1,'rgba(27,55,47,0)']]);c.fillRect(0,0,360,116);
-    text('MELODIA',17,22,10,'#d5bd80','left',800);text('하모니아 마을',17,43,16,'#fff8e8','left',700);
+    text('MELODIA',17,22,10,'#d5bd80','left',800);text(g.full?g.map().name:'하모니아 마을',17,43,16,'#fff8e8','left',700);
     if(assets){drawAsset('ui_note',211,29,{scale:.75});text(String(data.goldenNotes.length),231,34,17,'#efd58e','center',700);}else text(`♪ ${data.goldenNotes.length}`,222,34,17,'#efd58e','center',700);
     UI.button('soundHud',248,8,44,44,'소리');UI.button('pause',302,8,44,44,'일시정지');
     round(248,8,44,44,12,'rgba(255,249,225,.08)','rgba(231,222,189,.16)');icon('sound',270,30);if(!assets&&!data.soundOn)line(261,39,279,21,'#deb67d',1.5);
     round(302,8,44,44,12,'rgba(255,249,225,.08)','rgba(231,222,189,.16)');icon('pause',324,30);
-    UI.button('objectiveHud',12,62,336,49,'현재 목표');panel(12,62,336,49);round(23,73,26,26,8,'#e4ead5');text('01',36,90,10,P.teal,'center',800);
+    UI.button('objectiveHud',12,62,336,49,'현재 목표');panel(12,62,336,49);round(23,73,26,26,8,'#e4ead5');text(active?.[0]==='MQ02'?'02':'01',36,90,10,P.teal,'center',800);
     text(active?g.questTitle(active[0]):'마을 산책',60,79,10,'#78826b');
     text(active?active[1].objective:'마을 사람들과 이야기해 보세요',60,98,12,P.ink,'left',700);
-    if(UI.objectiveBubbleTimer>0){panel(28,121,304,43);text('기호 가방에서 높은음자리표를 골라 문에 놓으세요.',180,146,10,P.ink,'center');}
+    if(UI.objectiveBubbleTimer>0){panel(28,121,304,43);c.font='600 11px system-ui';c.fillStyle=P.ink;c.textAlign='left';g.wrap(g.full?(g.hint()||active?.[1].objective||'이야기를 나누고 반짝이는 기호를 찾아보세요.'):'기호 가방에서 높은음자리표를 골라 문에 놓으세요.',42,139,276,17,2);}
     // Context appears next to its target, with an unambiguous action button below.
     const target=UI.interactTarget,enabled=Boolean(target),open=data.flags.tower_door_open;
     if(target?.type==='towerDoor'&&g.state()==='Explore'){const x=target.x*32+32-SCENES.camera.x,y=target.y*32+offset-26-SCENES.camera.y;round(x-42,y,84,21,9,P.teal,'#c6cda3');text(open?'탑 안으로 들어가기':'기호가 잠든 문',x,y+14,10,P.cream,'center');}
@@ -243,7 +257,7 @@ window.createHarmoniaArt = function createHarmoniaArt(g) {
     c.fillStyle='rgba(22,43,35,.4)';c.fillRect(0,0,360,CONFIG.H);panel(32,66,296,412);text('발견한 음악기호',56,105,19,P.teal);
     UI.button('closePalette',270,80,44,44,'닫기');round(270,80,44,44,10,'#e4e8d7');if(assets)drawAsset('ui_close',292,102,{tint:P.teal});else text('×',292,109,24,P.teal,'center');
     const list=menu.filter||g.data().symbols;
-    list.forEach((id,i)=>{const s=SYMBOLS[id],y=128+i*64;round(56,y,248,56,10,'#e7ebd9','#c5d0b6');round(64,y+6,40,44,9,P.teal);if(assets)symbol(id,72,y+10,24,36,'#f0d082');else text(s.glyph,84,y+40,33,'#f0d082','center');text(s.name,116,y+24,14,P.teal);text('선택해서 사용하기',116,y+43,11,'#7c8c70');icon('arrow',284,y+28,'#729171');});
+    list.forEach((id,i)=>{const s=SYMBOLS[id],y=128+i*64;round(56,y,248,56,10,'#e7ebd9','#c5d0b6');round(64,y+6,40,44,9,P.teal);if(assets)symbol(id,72,y+10,24,36,'#f0d082');else text(s.glyph,84,y+40,33,'#f0d082','center');text(s.name,116,y+24,14,P.teal);text(g.full&&s.pitch?s.theory:'선택해서 사용하기',116,y+43,10,'#526e59');icon('arrow',284,y+28,'#729171');});
     if(list.length===1){const s=SYMBOLS[list[0]];line(56,220,304,220,'#d5dcc6');text('기호가 들려주는 이야기',56,250,11,'#8b9579');text(s.theory,56,278,12,P.teal);g.wrap(s.effect,56,306,248,20,3);}
     text('빈 곳을 누르면 가방을 닫아요',180,454,11,'#8a947c','center');
   }
@@ -254,5 +268,5 @@ window.createHarmoniaArt = function createHarmoniaArt(g) {
     if(g.dialogue.chars>=content.length){text('눌러서 계속',305,602,10,'#7b8a6e','right');icon('arrow',321,598,'#7b8a6e');}
     c.restore();
   }
-  return { offset, world, hud, palette, dialogue, assetRenderer: assets };
+  return { offset, world, hud, palette, dialogue, symbol, title:()=>extended?.title(), assetRenderer: assets };
 };

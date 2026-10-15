@@ -1,4 +1,5 @@
 const { test, expect } = require('@playwright/test');
+const touchPages = new WeakSet();
 
 const preview = '/index.html?preview=harmonia&art=assets&seed=42&test=1';
 async function ready(page) {
@@ -14,7 +15,7 @@ async function point(page, x, y) {
 }
 async function tap(page, x, y) {
   const p = await point(page, x, y);
-  if (await page.evaluate(() => navigator.maxTouchPoints > 0)) await page.touchscreen.tap(p.x, p.y);
+  if (touchPages.has(page)) await page.touchscreen.tap(p.x, p.y);
   else await page.mouse.click(p.x, p.y);
 }
 async function button(page, id) {
@@ -26,7 +27,7 @@ async function evidence(testInfo, name, value) {
   await testInfo.attach(name, { body: Buffer.from(JSON.stringify(value, null, 2)), contentType: 'application/json' });
 }
 
-test('HA-01 atlas is opt-in, complete, and preserves music data and production storage', async ({ page }, testInfo) => {
+test('HA-01 production atlas is complete and comparisons preserve music data and production storage', async ({ page }, testInfo) => {
   const atlasRequests = [], failures = [];
   page.on('request', r => { if (r.url().includes('/assets/harmonia/')) atlasRequests.push(r.url()); });
   page.on('response', r => { if (r.url().includes('/assets/harmonia/') && !r.ok()) failures.push(`${r.status()} ${r.url()}`); });
@@ -34,6 +35,8 @@ test('HA-01 atlas is opt-in, complete, and preserves music data and production s
   await page.goto('/index.html?test=1');
   await expect(page.locator('body')).toHaveAttribute('data-game-state', 'Title');
   const original = await page.evaluate(() => ({ symbols: MelodiaDebug.SYMBOLS, save: MelodiaDebug.CONFIG.SAVE_KEY, settings: MelodiaDebug.CONFIG.SETTINGS_KEY }));
+  expect(atlasRequests.length).toBeGreaterThan(0);
+  atlasRequests.length = 0;
   await page.evaluate(() => {
     localStorage.setItem('melodia_v01_save', 'production-progress-sentinel');
     localStorage.setItem('melodia_ui_settings_v1', 'production-settings-sentinel');
@@ -79,6 +82,7 @@ test('HA-02 asset scene and palette fit all three review sizes with usable touch
   for (const [width, height] of [[360, 640], [390, 844], [320, 568]]) {
     const context = await browser.newContext({ viewport: { width, height }, deviceScaleFactor: 2, isMobile: true, hasTouch: true });
     const page = await context.newPage(), errors = [];
+    touchPages.add(page);
     page.on('pageerror', e => errors.push(e.message));
     await ready(page);
     for (const palette of [false, true]) {
@@ -105,6 +109,7 @@ test('HA-02 asset scene and palette fit all three review sizes with usable touch
 test('HA-03 real touch uses source clef, renders all door states, and enters original tower', async ({ browser }, testInfo) => {
   const context = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true });
   const page = await context.newPage(), errors = [];
+  touchPages.add(page);
   page.on('pageerror', e => errors.push(e.message));
   await ready(page);
   await button(page, 'palette');
@@ -229,6 +234,7 @@ test('HA-07 missing atlas shows an explicit load error without entering a broken
   expect(result.error).toContain('Atlas page failed');
   expect(result.rejected).toBe(true);
   expect(errors).toEqual([]);
+  await page.unroute('**/assets/harmonia/atlas-0.png');
   await page.goto('/index.html?test=1');
   await expect(page.locator('body')).toHaveAttribute('data-game-state', 'Title');
 });

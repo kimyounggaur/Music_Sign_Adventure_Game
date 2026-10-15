@@ -4,6 +4,7 @@
 *.md
 .github
 tests
-package.json
-package-lock.json
 playwright.config.js
+artifacts
+test-results
+playwright-report

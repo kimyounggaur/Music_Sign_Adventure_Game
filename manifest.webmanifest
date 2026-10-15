@@ -3,8 +3,8 @@
   "short_name": "멜로디아",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#111318",
-  "theme_color": "#111318",
+  "background_color": "#f4edd8",
+  "theme_color": "#24594e",
   "start_url": "./index.html",
   "lang": "ko",
   "icons": [

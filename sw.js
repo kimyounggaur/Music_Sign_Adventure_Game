@@ -1,9 +1,17 @@
-const CACHE_NAME = 'melodia-v0.1-20261013-scene-study';
+const CACHE_NAME = 'melodia-v0.2-20261014-full-art';
 
 // Update CACHE_NAME whenever index.html or the asset list changes for a fresh offline bundle.
 const PRECACHE = [
   './index.html',
   './scene-remaster.js',
+  './adventure-art.js',
+  './game-accessibility.js',
+  './harmonia-assets.js',
+  './assets/harmonia/atlas.json',
+  './assets/harmonia/atlas-0.png',
+  './assets/harmonia/atlas-1.png',
+  './assets/harmonia/atlas-2.png',
+  './assets/harmonia/atlas-3.png',
   './manifest.webmanifest',
   './icons/icon-192.png',
   './icons/icon-512.png',
@@ -28,7 +36,7 @@ self.addEventListener('install', (event) => {
 
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then((keys) => Promise.all(keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key))))
+    caches.keys().then((keys) => Promise.all(keys.filter((key) => key.startsWith('melodia-') && key !== CACHE_NAME).map((key) => caches.delete(key))))
   );
   self.clients.claim();
 });
@@ -36,14 +44,16 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
   if (url.origin !== self.location.origin || event.request.method !== 'GET') return;
+  if (url.searchParams.has('test') || url.searchParams.has('preview')) return;
+  const key = event.request.mode === 'navigate' ? './index.html' : event.request;
   event.respondWith(
-    caches.match(event.request).then((cached) => {
+    caches.open(CACHE_NAME).then(async (cache) => {
+      const cached = await cache.match(key);
       const fresh = fetch(event.request).then((response) => {
-        const copy = response.clone();
-        caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
+        if (response.ok) cache.put(key, response.clone()).catch(() => {});
         return response;
-      }).catch(() => cached);
-      return cached || fresh;
+      }).catch(() => cached || new Response('Offline resource unavailable', {status: 503}));
+      return event.request.mode === 'navigate' ? fresh : cached || fresh;
     })
   );
 });

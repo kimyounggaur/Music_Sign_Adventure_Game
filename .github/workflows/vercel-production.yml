@@ -32,7 +32,10 @@ jobs:
         run: npx playwright install --with-deps chromium
 
       - name: Run tests
-        run: npm run test:full
+        run: |
+          npm run assets:validate
+          npm run build
+          npm run test:full
 
   deploy:
     name: Deploy production
@@ -55,13 +58,13 @@ jobs:
           exit 1
 
       - name: Install Vercel CLI
-        run: npm install --global vercel@latest
+        run: npm install --global vercel@64.0.2
 
       - name: Pull Vercel project settings
-        run: vercel pull --yes --environment=production --token="$VERCEL_TOKEN"
+        run: vercel pull --yes --environment=production
 
       - name: Build static deployment
-        run: vercel build --prod --token="$VERCEL_TOKEN"
+        run: vercel build --prod
 
       - name: Deploy to Vercel production
-        run: vercel deploy --prebuilt --prod --token="$VERCEL_TOKEN"
+        run: vercel deploy --prebuilt --prod
