@@ -1,8 +1,22 @@
-const CACHE_NAME = 'melodia-v0.2-20261014-full-art';
+const CACHE_NAME = 'melodia-v0.2-20261112-rulebook';
 
 // Update CACHE_NAME whenever index.html or the asset list changes for a fresh offline bundle.
 const PRECACHE = [
   './index.html',
+  './rulebook.js',
+  './rulebook.css',
+  './assets/rulebook/05-symbol-palette.svg',
+  './assets/rulebook/10-bridge.svg',
+  './assets/rulebook/11-codex.svg',
+  './assets/rulebook/start.svg',
+  './assets/rulebook/controls.svg',
+  './assets/rulebook/village.svg',
+  './assets/rulebook/tower.svg',
+  './assets/rulebook/forest.svg',
+  './assets/rulebook/bird.svg',
+  './assets/rulebook/rock.svg',
+  './assets/rulebook/staff.svg',
+  './assets/rulebook/save.svg',
   './scene-remaster.js',
   './adventure-art.js',
   './game-accessibility.js',

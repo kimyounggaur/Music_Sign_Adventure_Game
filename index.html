@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#24594e">
   <link rel="manifest" href="manifest.webmanifest">
+  <link rel="stylesheet" href="rulebook.css">
   <!-- ?debug=1 : FPS 표시 · ?test=1 : 자동 테스트 모드 · ?seed=N : 퍼즐 난수 고정 -->
   <title>멜로디아: 끝나지 않는 노래 v0.1</title>
   <style>
@@ -58,6 +59,7 @@
 <body>
   <canvas id="game" aria-label="멜로디아 게임 화면"></canvas>
   <div id="rotateOverlay">𝄞<br>세로 화면으로 돌려주세요.<br>멜로디아는 모바일 세로 모드에 맞춰져 있어요.</div>
+  <script src="rulebook.js"></script>
   <script src="adventure-art.js"></script>
   <script src="game-accessibility.js"></script>
   <script src="scene-remaster.js"></script>
@@ -3971,6 +3973,7 @@
       }
     }
 
+    let rulebook;
     function loop(ts) {
       if (!lastTime) lastTime = ts;
       let delta = Math.min(0.1, (ts - lastTime) / 1000);
@@ -3993,7 +3996,7 @@
       }
       const fixed = 1 / 60;
       while (accumulator >= fixed) {
-        update(fixed);
+        if (!rulebook?.isOpen()) update(fixed);
         accumulator -= fixed;
       }
       render();
@@ -4381,6 +4384,7 @@
 
     function init() {
       resize();
+      rulebook = window.createRulebook({ canvas, onOpen: clearHeldInput, onClose: clearHeldInput });
       loadAssets();
       buildMaps();
       SETTINGS.apply();

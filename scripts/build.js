@@ -5,7 +5,7 @@ const path = require('node:path');
 const vm = require('node:vm');
 const root = path.resolve(__dirname, '..');
 const out = path.join(root, 'dist');
-const entries = ['index.html','adventure-art.js','game-accessibility.js','scene-remaster.js','harmonia-assets.js','comparison.html','comparison.css','comparison.js','asset-review.html','asset-review.css','asset-review.js','style-sheet.html','sw.js','manifest.webmanifest'];
+const entries = ['index.html','rulebook.js','rulebook.css','adventure-art.js','game-accessibility.js','scene-remaster.js','harmonia-assets.js','comparison.html','comparison.css','comparison.js','asset-review.html','asset-review.css','asset-review.js','style-sheet.html','sw.js','manifest.webmanifest'];
 for (const file of entries) {
   const source = fs.readFileSync(path.join(root, file), 'utf8');
   if (file.endsWith('.js')) new vm.Script(source, { filename: file });
